@@ -49,18 +49,19 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
     let result;
 
     if (opportunityId) {
-        // Update existing
-        result = await prisma.opportunity.update({
+        // Upsert: Update if exists, otherwise create with the SAME ID (restoring it)
+        result = await prisma.opportunity.upsert({
             where: { id: opportunityId },
-            data: opportunityData
+            update: opportunityData,
+            create: {
+                ...opportunityData,
+                id: opportunityId // Force specific ID to keep client sync
+            }
         });
     } else {
-        // Create new
+        // Create new (DB generates ID)
         result = await prisma.opportunity.create({
-            data: {
-                ...opportunityData,
-                // Ensure required strings are present if they weren't in opportunityData (they are)
-            }
+            data: opportunityData
         });
     }
 

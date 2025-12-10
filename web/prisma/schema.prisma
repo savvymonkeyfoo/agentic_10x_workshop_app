@@ -26,6 +26,9 @@ model Opportunity {
   workshopId      String
   workshop        Workshop @relation(fields: [workshopId], references: [id])
   
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
   // Tab A: Strategic Context
   projectName       String
   frictionStatement String
