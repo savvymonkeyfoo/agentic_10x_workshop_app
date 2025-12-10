@@ -3,7 +3,8 @@
 import React from 'react';
 import { SpiderChart } from '@/components/ui/SpiderChart';
 import { MiniMatrix } from '@/components/ui/MiniMatrix';
-import { motion, AnimatePresence } from 'framer-motion';
+import { VennDiagram } from '@/components/ui/VennDiagram';
+import { DFVAssessment, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
 import { calculateEfficiencyRatio } from '@/lib/logic/efficiency';
 
 interface StrategicProfileProps {
@@ -12,12 +13,11 @@ interface StrategicProfileProps {
         capability: number;
         complexity: number;
         riskFinal: number;
-    }
+    };
+    dfvAssessment?: DFVAssessment;
 }
 
-export function StrategicProfile({ data }: StrategicProfileProps) {
-    // No state needed anymore - simultaneous display
-
+export function StrategicProfile({ data, dfvAssessment = DEFAULT_DFV_ASSESSMENT }: StrategicProfileProps) {
     const efficiency = calculateEfficiencyRatio(data.value);
 
     let efficiencyColor = "text-slate-400"; // Default Grey (1.7x - 2.5x)
@@ -34,10 +34,10 @@ export function StrategicProfile({ data }: StrategicProfileProps) {
             </div>
 
             {/* Stacked Chart Area */}
-            <div className="w-full flex-1 flex flex-col gap-6 overflow-hidden">
+            <div className="w-full flex-1 flex flex-col gap-4 overflow-hidden">
 
                 {/* 1. Scale/Shape Analysis (Kite) */}
-                <div className="flex-1 min-h-[30vh] relative">
+                <div className="flex-1 min-h-[25vh] relative">
                     <SpiderChart
                         data={{
                             value: data.value,
@@ -49,8 +49,13 @@ export function StrategicProfile({ data }: StrategicProfileProps) {
                 </div>
 
                 {/* 2. Portfolio Position (Matrix) */}
-                <div className="flex-1 min-h-[30vh] relative">
+                <div className="flex-1 min-h-[20vh] relative">
                     <MiniMatrix complexity={data.complexity} value={data.value} />
+                </div>
+
+                {/* 3. DFV Assessment (Venn) */}
+                <div className="flex-1 min-h-[20vh] relative">
+                    <VennDiagram data={dfvAssessment} />
                 </div>
 
             </div>

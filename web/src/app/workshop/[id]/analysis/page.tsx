@@ -1,5 +1,5 @@
 import React from 'react';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import MatrixView from '@/components/matrix/MatrixView';
 // import { detectCircularDependency, LogicOpportunity } from '@/lib/logic/graph'; 
 // Temporarily disabling complex graph logic to focus on Matrix visualization first as per user request.
@@ -7,7 +7,7 @@ import MatrixView from '@/components/matrix/MatrixView';
 // Prevent Next.js from caching dynamic data too aggressively
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
+
 
 async function getAnalysisData(workshopId: string) {
     const workshop = await prisma.workshop.findUnique({

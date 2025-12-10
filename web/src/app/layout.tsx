@@ -31,7 +31,7 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
         </nav>
-        <div className="pt-20"> {/* Offset for fixed nav */}
+        <div className="pt-20 bg-transparent min-h-screen"> {/* Offset for fixed nav, enforce transparent background */}
           {children}
         </div>
       </body>

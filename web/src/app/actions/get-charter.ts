@@ -1,8 +1,6 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function getCharterData() {
     // Fetch the first Opportunity (Highest Rank) from 'Acme Global'

@@ -6,7 +6,6 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 interface VRCCSliderProps {
     label: string;
     value: number; // 1-5
-    aiValue?: number; // 1-5 (Ghost)
     onChange?: (val: number) => void;
     disabled?: boolean;
 }
@@ -42,7 +41,7 @@ const RUBRICS: Record<string, Record<number, string>> = {
     }
 };
 
-export function VRCCSlider({ label, value, aiValue, onChange, disabled = false }: VRCCSliderProps) {
+export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSliderProps) {
     const constraintsRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
 
@@ -81,18 +80,7 @@ export function VRCCSlider({ label, value, aiValue, onChange, disabled = false }
                     style={{ width: `${getPercent(value)}%` }}
                 />
 
-                {/* AI Ghost Thumb */}
-                {aiValue !== undefined && aiValue !== value && (
-                    <div
-                        className="absolute top-1/2 -ml-3 w-6 h-6 rounded-full border-2 border-brand-cyan opacity-50 bg-white cursor-pointer z-10 hover:opacity-100 transition-opacity"
-                        style={{
-                            left: `${getPercent(aiValue)}%`,
-                            transform: 'translateY(-50%)'
-                        }}
-                        title={`AI Recommendation: ${aiValue}`}
-                        onClick={() => !disabled && onChange && onChange(aiValue)}
-                    />
-                )}
+
 
                 {/* User Thumb (Interactive) */}
                 {!disabled && (

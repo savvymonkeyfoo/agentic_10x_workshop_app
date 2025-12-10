@@ -16,13 +16,13 @@
   --status-value: #D97706;
 
   /* LIGHT MODE (Default) */
-  --bg-core: #F0F3F5;
-  --glass-surface: rgba(255, 255, 255, 0.95);
+  --bg-core: radial-gradient(at 0% 0%, #E0F7FA 0%, #F0F3F5 80%, #FFFFFF 100%);
+  --glass-surface: rgba(255, 255, 255, 0.5) !important;
   --glass-border: #cbd5e1;
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-tertiary: #94a3b8;
-  --chart-stroke: var(--brand-blue);
+  --chart-stroke: #1BB1E7;
   --chart-fill: rgba(0, 112, 173, 0.1);
   --shadow-elevation: 0 10px 30px rgba(0, 45, 64, 0.1);
 }
@@ -41,13 +41,13 @@
 }
 
 body {
-  background-color: var(--bg-core);
+  background: var(--bg-core);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-xl;
+    @apply bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-xl;
   }
 }

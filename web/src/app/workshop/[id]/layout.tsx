@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { WorkshopHeader } from '@/components/workshop/WorkshopHeader';
 
-const prisma = new PrismaClient();
 
 async function getWorkshop(id: string) {
     const workshop = await prisma.workshop.findUnique({

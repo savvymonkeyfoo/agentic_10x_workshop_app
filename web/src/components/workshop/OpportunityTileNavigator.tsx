@@ -29,8 +29,9 @@ export const OpportunityTileNavigator = ({
     return (
         <motion.div
             initial={false}
-            animate={{ height: isExpanded ? 240 : 48 }} // 48px collapsed (Sun Visor), 240px expanded
-            className={`w-full sticky top-0 z-50 transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md shadow-xl border-b' : 'bg-transparent hover:bg-slate-50/50 backdrop-blur-sm'} border-slate-200/50 dark:border-slate-800/50`}
+            animate={{ height: isExpanded ? 240 : 48 }} // 48px collapsed (Sun Visor)
+            // REMOVED: position:sticky - Navigator now scrolls with content per user request
+            className={`w-full transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md shadow-xl border-b' : 'bg-transparent hover:bg-slate-50/50 backdrop-blur-sm'} border-slate-200/50 dark:border-slate-800/50`}
         >
             {/* Header / Toggle Bar */}
             <div
@@ -98,7 +99,7 @@ export const OpportunityTileNavigator = ({
                                     className={`
                                         relative min-w-[160px] w-[160px] h-[140px] rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all duration-300 shrink-0
                                         ${isActive
-                                            ? 'bg-white dark:bg-slate-800 shadow-lg shadow-brand-cyan/20 border-2 border-brand-cyan scale-105'
+                                            ? 'bg-white dark:bg-slate-800 shadow-xl shadow-brand-cyan/40 border-[3px] border-brand-cyan scale-105 z-10'
                                             : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-brand-blue/30'
                                         }
                                     `}

@@ -49,17 +49,24 @@ model Opportunity {
   tShirtSize        String   // "XS", "S", "M", "L", "XL"
   
   benefitRevenue    Float?
-  benefitCost       Float?
+  benefitCostAvoidance Float? // Renamed from benefitCost
+  benefitEstCost    Float?   // One-Time Implementation Cost
   benefitEfficiency Float?
+  benefitTimeframe  String?   // "Monthly" or "Annually"
   
-  dfvDesirability   String   // "HIGH", "MED", "LOW"
-  dfvFeasibility    String
-  dfvViability      String
+  // DFV Assessment - JSON structure: { desirability: {score: 1-5, justification: string}, feasibility: {...}, viability: {...} }
+  dfvAssessment     Json?
 
   // Tab D: Execution
   definitionOfDone  String   
   keyDecisions      String   
   impactedSystems   String[]
+  
+  // New Execution Fields
+  systemGuardrails     String?
+  aiOpsRequirements    String?
+  changeManagement     String?
+  trainingRequirements String?
 
   // Capability Mapping (New Tagging Fields)
   capabilitiesExisting String[]

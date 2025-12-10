@@ -9,48 +9,15 @@ import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
 import { deleteOpportunity } from '@/app/actions/delete-opportunity';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
+import { TShirtSizeSelector } from '@/components/ui/TShirtSizeSelector';
+import { DFVAssessment, DFVAssessmentInput, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { SmartListTextarea } from '@/components/ui/SmartListTextarea';
 
-// --- Types & Initial State (Mirroring Schema) ---
-interface WorkflowPhase {
-    id: string; // purely for UI key
-    name: string;
-    autonomy: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
-    guardrail: string;
-}
+import { OpportunityState, WorkflowPhase } from '@/types/workshop';
+import { calculateCompleteness } from '@/utils/completeness';
 
-interface OpportunityState {
-    // Tab A
-    projectName: string;
-    frictionStatement: string;
-    strategicHorizon: string[]; // Changed to array for multi-select, will join on save
-    whyDoIt: string; // Stored concatenated string
-
-    // Tab B (Refactored)
-    workflowPhases: WorkflowPhase[];
-    capabilitiesExisting: string[];
-    capabilitiesMissing: string[];
-
-    // Tab C
-    vrcc: {
-        value: number;
-        capability: number;
-        complexity: number;
-        riskFinal: number;
-        riskAI: number;
-    };
-    tShirtSize: 'XS' | 'S' | 'M' | 'L' | 'XL';
-    benefitRevenue: number | undefined;
-    benefitCost: number | undefined;
-    benefitEfficiency: number | undefined;
-    dfvDesirability: 'HIGH' | 'MED' | 'LOW';
-    dfvFeasibility: 'HIGH' | 'MED' | 'LOW';
-    dfvViability: 'HIGH' | 'MED' | 'LOW';
-
-    // Tab D
-    definitionOfDone: string;
-    keyDecisions: string;
-    impactedSystems: string[]; // Converted to string[] for UI, assumed CSV or Tag in future
-}
+// --- Initial State (Mirroring Schema) ---
 
 const INITIAL_STATE: OpportunityState = {
     projectName: '',
@@ -62,25 +29,36 @@ const INITIAL_STATE: OpportunityState = {
     capabilitiesExisting: [],
     capabilitiesMissing: [],
 
-    vrcc: { value: 3, capability: 3, complexity: 3, riskFinal: 3, riskAI: 0 },
+    vrcc: {
+        value: 3,
+        capability: 3,
+        complexity: 3,
+        riskFinal: 3,
+        riskAI: 0,
+        riskOverrideLog: '',
+    },
     tShirtSize: 'M',
     benefitRevenue: undefined,
-    benefitCost: undefined,
+    benefitCostAvoidance: undefined,
+    benefitEstCost: undefined,
     benefitEfficiency: undefined,
-    dfvDesirability: 'MED',
-    dfvFeasibility: 'MED',
-    dfvViability: 'MED',
+    benefitTimeframe: 'Monthly',
+    dfvAssessment: DEFAULT_DFV_ASSESSMENT,
     definitionOfDone: '',
     keyDecisions: '',
-    impactedSystems: []
+    impactedSystems: [],
+    systemGuardrails: '',
+    aiOpsRequirements: '',
+    changeManagement: '',
+    trainingRequirements: ''
 };
 
 // --- Config: Tabs ---
 const TABS = [
     { id: 'A', label: 'OPPORTUNITY' },
     { id: 'B', label: 'THE WORKFLOW' },
-    { id: 'C', label: 'BUSINESS CASE' }, // Renamed from VRCC SCORING
-    { id: 'D', label: 'EXECUTION' }
+    { id: 'C', label: 'EXECUTION' },
+    { id: 'D', label: 'BUSINESS CASE' }
 ] as const;
 
 // --- Config: Strategic Horizons ---
@@ -90,56 +68,6 @@ const HORIZONS = [
     { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-status-risk text-white', border: 'border-status-risk' } // Red
 ] as const;
 
-// --- Helper: Tab Validation ---
-function isTabComplete(tabId: string, state: OpportunityState): boolean {
-    switch (tabId) {
-        case 'A':
-            // Check horizon length > 0
-            return !!(state.projectName && state.frictionStatement && state.strategicHorizon.length > 0 && state.whyDoIt);
-        case 'B':
-            // At least one phase
-            return state.workflowPhases.length > 0 && state.workflowPhases.every(p => p.name);
-        case 'C':
-            // Check essential VRCC
-            return !!(state.vrcc.value > 0 && state.vrcc.capability > 0 && state.vrcc.complexity > 0 && state.vrcc.riskFinal > 0);
-        case 'D':
-            return !!(state.definitionOfDone);
-        default:
-            return false;
-    }
-}
-
-// --- Helper: Completeness Logic ---
-function calculateCompleteness(state: OpportunityState): number {
-    let filled = 0;
-    let total = 0;
-
-    // Tab A (4 fields)
-    total += 4;
-    if (state.projectName) filled++;
-    if (state.frictionStatement) filled++;
-    if (state.strategicHorizon.length > 0) filled++;
-    if (state.whyDoIt) filled++;
-
-    // Tab B (Workflow) - check for at least one valid phase
-    total += 1;
-    if (state.workflowPhases.length > 0 && state.workflowPhases[0].name) filled++;
-
-    // Tab C (7 fields: 4 VRCC + TShirt + 3 DFV) - skipping financials as optional? No, PRD check implies important.
-    // Let's stick to core VRCC + T-Shirt for "Blocking" completeness to keep it usable.
-    total += 5;
-    if (state.vrcc.value > 0) filled++;
-    if (state.vrcc.capability > 0) filled++;
-    if (state.vrcc.complexity > 0) filled++;
-    if (state.vrcc.riskFinal > 0) filled++;
-    if (state.tShirtSize) filled++;
-
-    // Tab D (1 field core)
-    total += 1;
-    if (state.definitionOfDone) filled++;
-
-    return (filled / total) * 100;
-}
 
 // --- Subcomponent: Phase Card ---
 const AUTONOMY_LABELS = {
@@ -159,7 +87,10 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
     return (
         <Reorder.Item value={phase} id={phase.id} className="flex items-center cursor-grab active:cursor-grabbing">
             {/* Card */}
-            <div className="w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 relative group flex flex-col gap-3 shrink-0 mx-2 select-none">
+            <div className={`w-72 bg-white dark:bg-slate-800 border rounded-xl transition-all p-4 relative group flex flex-col gap-3 shrink-0 mx-2 select-none ${['L4', 'L5'].includes(phase.autonomy)
+                ? 'shadow-[0_0_20px_rgba(27,177,231,0.25)] border-brand-cyan/60'
+                : 'border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'
+                }`}>
 
                 {/* Drag Handle & Delete (Top Row) */}
                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -364,8 +295,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
     const router = useRouter();
 
-    const completeness = calculateCompleteness(data);
-    const isComplete = completeness === 100;
+    const completenessStatus = calculateCompleteness(data);
+    const completeness = completenessStatus.total;
+    const isComplete = completenessStatus.total === 100;
 
     // --- Data Fetching ---
     // Kept to allow refreshing list after updates
@@ -439,18 +371,23 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     capability: selected.scoreCapability || 3,
                     complexity: selected.scoreComplexity || 3,
                     riskFinal: selected.scoreRiskFinal || 3,
-                    riskAI: selected.scoreRiskAI || 0
+                    riskAI: selected.scoreRiskAI || 0,
+                    riskOverrideLog: selected.riskOverrideLog || '',
                 },
                 tShirtSize: selected.tShirtSize || 'M',
                 benefitRevenue: selected.benefitRevenue || undefined,
-                benefitCost: selected.benefitCost || undefined,
+                benefitCostAvoidance: selected.benefitCostAvoidance || undefined,
+                benefitEstCost: selected.benefitEstCost || undefined,
                 benefitEfficiency: selected.benefitEfficiency || undefined,
-                dfvDesirability: selected.dfvDesirability || 'MED',
-                dfvFeasibility: selected.dfvFeasibility || 'MED',
-                dfvViability: selected.dfvViability || 'MED',
+                benefitTimeframe: selected.benefitTimeframe || 'Monthly',
+                dfvAssessment: selected.dfvAssessment || DEFAULT_DFV_ASSESSMENT,
                 definitionOfDone: selected.definitionOfDone || '',
                 keyDecisions: selected.keyDecisions || '',
-                impactedSystems: selected.impactedSystems || []
+                impactedSystems: selected.impactedSystems || [],
+                systemGuardrails: selected.systemGuardrails || '',
+                aiOpsRequirements: selected.aiOpsRequirements || '',
+                changeManagement: selected.changeManagement || '',
+                trainingRequirements: selected.trainingRequirements || ''
             });
         }
     };
@@ -573,21 +510,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         }));
     };
 
-    const handleSystemAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && e.currentTarget.value) {
-            const sys = e.currentTarget.value;
-            if (!data.impactedSystems.includes(sys)) {
-                setSaveStatus('idle');
-                setData(prev => ({ ...prev, impactedSystems: [...prev.impactedSystems, sys] }));
-            }
-            e.currentTarget.value = '';
-        }
-    };
 
-    const removeSystem = (sys: string) => {
-        setSaveStatus('idle');
-        setData(prev => ({ ...prev, impactedSystems: prev.impactedSystems.filter(s => s !== sys) }));
-    };
 
     return (
         <div className="min-h-screen bg-[var(--bg-core)] text-[var(--text-primary)] font-sans flex flex-col relative">
@@ -653,7 +576,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         </div>
 
                         {/* Completeness Ring */}
-                        <div className={`h-8 w-8 rounded-full border-4 flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${isComplete ? 'border-status-safe text-status-safe' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`}>
+                        <div className={`h-8 w-8 rounded-full border-4 flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${isComplete ? 'border-status-safe text-status-safe' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`} style={{ borderColor: isComplete ? '#10B981' : undefined }}>
                             {isComplete ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                                     <polyline points="20 6 9 17 4 12" />
@@ -673,15 +596,19 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 </div>
             </header>
 
-            {/* Main Split Grid */}
-            <main className="grid grid-cols-[3fr_1fr] gap-6 flex-1 pb-8 px-8">
+            {/* Main Split Grid - Dynamic width based on tab */}
+            <main className={`grid gap-6 flex-1 pb-8 px-8 transition-all duration-300 ${activeTab === 'D' ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
 
                 {/* Left Panel: Input Tabs */}
                 <div className="glass-panel p-8 flex flex-col h-full">
                     {/* Tabs Header */}
                     <div className="flex space-x-6 border-b border-[var(--glass-border)] mb-6 pb-2">
                         {TABS.map((tab) => {
-                            const isTabValid = isTabComplete(tab.id, data);
+                            let isTabValid = false;
+                            if (tab.id === 'A') isTabValid = completenessStatus.tabs.opportunity;
+                            if (tab.id === 'B') isTabValid = completenessStatus.tabs.workflow;
+                            if (tab.id === 'C') isTabValid = completenessStatus.tabs.execution;
+                            if (tab.id === 'D') isTabValid = completenessStatus.tabs.businessCase;
                             return (
                                 <button
                                     key={tab.id}
@@ -691,7 +618,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     {tab.label}
                                     {isTabValid && <span className="w-1.5 h-1.5 rounded-full bg-status-safe" />}
 
-                                    {activeTab === tab.id && <motion.div layoutId="underline" className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-blue" />}
+                                    {activeTab === tab.id && <motion.div layoutId="underline" className="absolute bottom-0 left-0 w-full h-0.5" style={{ backgroundColor: tab.id === 'A' ? '#0070AD' : tab.id === 'B' ? '#1BB1E7' : tab.id === 'C' ? '#F59E0B' : '#EF4444' }} />}
                                 </button>
                             );
                         })}
@@ -722,8 +649,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 placeholder="What is the problem?"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Strategic Horizon</label>
+                                        <div className="mb-6">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</label>
                                             <div className="flex gap-2 flex-wrap">
                                                 {HORIZONS.map(h => (
                                                     <button
@@ -819,74 +746,90 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             {activeTab === 'C' && (
                                 <motion.div key="C" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
-                                        {/* T-Shirt Size */}
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">T-Shirt Size (Estimate)</label>
-                                            <div className="flex gap-2">
-                                                {['XS', 'S', 'M', 'L', 'XL'].map((s) => (
-                                                    <button
-                                                        key={s}
-                                                        onClick={() => handleInputChange('tShirtSize', s)}
-                                                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${data.tShirtSize === s ? 'bg-brand-blue text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
-                                                    >
-                                                        {s}
-                                                    </button>
-                                                ))}
+                                        {/* Systems & Capabilities Sync */}
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Impacted Systems (Existing)</label>
+                                                <TagInput
+                                                    tags={data.capabilitiesExisting}
+                                                    addTag={(v) => addCapability('existing', v)}
+                                                    removeTag={(v) => removeCapability('existing', v)}
+                                                    placeholder="Add system..."
+                                                    colorClass="bg-status-safe"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Required Capabilities (Gap)</label>
+                                                <TagInput
+                                                    tags={data.capabilitiesMissing}
+                                                    addTag={(v) => addCapability('missing', v)}
+                                                    removeTag={(v) => removeCapability('missing', v)}
+                                                    placeholder="Add capability..."
+                                                    colorClass="bg-status-gap"
+                                                />
                                             </div>
                                         </div>
 
-                                        {/* VRCC Sliders */}
-                                        <div className="space-y-2">
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">VRCC Scores</label>
-                                            <VRCCSlider label="Value" value={data.vrcc.value} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, value: val } }))} />
-                                            <VRCCSlider label="Risk" value={data.vrcc.riskFinal} aiValue={data.vrcc.riskAI} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, riskFinal: val } }))} />
-                                            <VRCCSlider label="Capability" value={data.vrcc.capability} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, capability: val } }))} />
-                                            <VRCCSlider label="Complexity" value={data.vrcc.complexity} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, complexity: val } }))} />
-                                        </div>
+                                        {/* 3x2 Manual Execution Grid */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {/* Row 1 */}
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Success Metrics / Definition of Done</label>
+                                                <SmartListTextarea
+                                                    value={data.definitionOfDone}
+                                                    onValueChange={(val) => handleInputChange('definitionOfDone', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Success criteria..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Key Decisions</label>
+                                                <SmartListTextarea
+                                                    value={data.keyDecisions}
+                                                    onValueChange={(val) => handleInputChange('keyDecisions', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Architectural or Policy decisions..."
+                                                />
+                                            </div>
 
-                                        {/* Financials (Rows) */}
-                                        <div className="grid grid-cols-3 gap-4">
+                                            {/* Row 2 */}
                                             <div>
-                                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rev. Uplift ($)</label>
-                                                <input type="number" value={data.benefitRevenue || ''} onChange={(e) => handleInputChange('benefitRevenue', parseFloat(e.target.value))} className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none" placeholder="0.00" />
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Change Management</label>
+                                                <SmartListTextarea
+                                                    value={data.changeManagement}
+                                                    onValueChange={(val) => handleInputChange('changeManagement', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Staff impact, Process changes..."
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Cost Avoid. ($)</label>
-                                                <input type="number" value={data.benefitCost || ''} onChange={(e) => handleInputChange('benefitCost', parseFloat(e.target.value))} className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none" placeholder="0.00" />
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Training Requirements</label>
+                                                <SmartListTextarea
+                                                    value={data.trainingRequirements}
+                                                    onValueChange={(val) => handleInputChange('trainingRequirements', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Upskilling needs..."
+                                                />
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Hrs Saved</label>
-                                                <input type="number" value={data.benefitEfficiency || ''} onChange={(e) => handleInputChange('benefitEfficiency', parseFloat(e.target.value))} className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none" placeholder="0" />
-                                            </div>
-                                        </div>
 
-                                        {/* DFV Assessment */}
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">DFV Assessment</label>
-                                            <div className="grid grid-cols-3 gap-4">
-                                                {['Desirability', 'Feasibility', 'Viability'].map((dim) => {
-                                                    const key = `dfv${dim}` as keyof OpportunityState;
-                                                    const val = data[key];
-                                                    return (
-                                                        <div key={dim} className="space-y-1">
-                                                            <div className="text-[10px] font-bold text-slate-400 uppercase">{dim}</div>
-                                                            <div className="flex gap-1">
-                                                                {['LOW', 'MED', 'HIGH'].map(lvl => (
-                                                                    <button
-                                                                        key={lvl}
-                                                                        onClick={() => handleInputChange(key, lvl)}
-                                                                        className={`flex-1 py-1 text-[8px] font-bold rounded ${val === lvl
-                                                                            ? (lvl === 'HIGH' ? 'bg-status-safe text-white' : lvl === 'LOW' ? 'bg-status-risk text-white' : 'bg-status-value text-white')
-                                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                                                                            }`}
-                                                                    >
-                                                                        {lvl[0]}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
+                                            {/* Row 3 */}
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">AI Ops / Infra</label>
+                                                <SmartListTextarea
+                                                    value={data.aiOpsRequirements}
+                                                    onValueChange={(val) => handleInputChange('aiOpsRequirements', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Compute, Hosting, Latency..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">System Guardrails</label>
+                                                <SmartListTextarea
+                                                    value={data.systemGuardrails}
+                                                    onValueChange={(val) => handleInputChange('systemGuardrails', val)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
+                                                    placeholder="Global AI boundaries..."
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -896,40 +839,103 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             {activeTab === 'D' && (
                                 <motion.div key="D" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Definition of Done</label>
-                                            <textarea
-                                                value={data.definitionOfDone}
-                                                onChange={(e) => handleInputChange('definitionOfDone', e.target.value)}
-                                                className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-24 transition-all resize-none"
-                                                placeholder="Success criteria..."
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Key Decisions</label>
-                                            <textarea
-                                                value={data.keyDecisions}
-                                                onChange={(e) => handleInputChange('keyDecisions', e.target.value)}
-                                                className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-24 transition-all resize-none"
-                                                placeholder="Architectural or Policy decisions..."
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Impacted Systems</label>
-                                            <div className="flex flex-wrap gap-2 mb-2 p-2 min-h-[40px] bg-white/50 dark:bg-black/20 rounded border border-slate-200 dark:border-slate-700">
-                                                {data.impactedSystems.map(sys => (
-                                                    <span key={sys} className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-xs rounded flex items-center gap-2">
-                                                        {sys}
-                                                        <button onClick={() => removeSystem(sys)} className="text-slate-500 hover:text-red-500">×</button>
-                                                    </span>
-                                                ))}
-                                                <input
-                                                    onKeyDown={handleSystemAdd}
-                                                    className="bg-transparent outline-none text-sm min-w-[100px] flex-1"
-                                                    placeholder="Type & Enter..."
+                                        {/* 2-Column Grid: T-Shirt Size | Estimated Benefit */}
+                                        <div className="grid grid-cols-2 gap-8 mb-6">
+                                            {/* Left Column: T-Shirt Size */}
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">T-Shirt Size (Estimate)</label>
+                                                <TShirtSizeSelector
+                                                    value={data.tShirtSize}
+                                                    onChange={(size) => handleInputChange('tShirtSize', size)}
                                                 />
                                             </div>
+
+                                            {/* Right Column: Estimated Benefit */}
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Estimated Benefit</label>
+
+                                                {/* Timeframe Toggle */}
+                                                <div className="flex gap-1 mb-4 bg-slate-100 dark:bg-slate-800 rounded-full p-1 w-fit">
+                                                    {['Monthly', 'Annually'].map((tf) => (
+                                                        <button
+                                                            key={tf}
+                                                            onClick={() => handleInputChange('benefitTimeframe', tf)}
+                                                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${data.benefitTimeframe === tf
+                                                                ? 'bg-brand-cyan text-white shadow-md'
+                                                                : 'text-slate-500 hover:text-slate-700'
+                                                                }`}
+                                                        >
+                                                            {tf}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {/* Stacked Benefit Inputs */}
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rev. Uplift ($)</label>
+                                                        <CurrencyInput
+                                                            value={data.benefitRevenue}
+                                                            onChange={(val) => handleInputChange('benefitRevenue', val)}
+                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Cost Avoid. ($)</label>
+                                                        <CurrencyInput
+                                                            value={data.benefitCostAvoidance}
+                                                            onChange={(val) => handleInputChange('benefitCostAvoidance', val)}
+                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Hrs Saved</label>
+                                                        <CurrencyInput
+                                                            value={data.benefitEfficiency}
+                                                            onChange={(val) => handleInputChange('benefitEfficiency', val)}
+                                                            prefix=""
+                                                            suffix="hrs"
+                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 mt-2">
+                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Est. Implementation Cost ($)</label>
+                                                        <CurrencyInput
+                                                            value={data.benefitEstCost}
+                                                            onChange={(val) => handleInputChange('benefitEstCost', val)}
+                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            placeholder="One-time cost..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        {/* VRCC Sliders - UNCHANGED */}
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">VRCC Scores</label>
+                                            <VRCCSlider label="Value" value={data.vrcc.value} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, value: val } }))} />
+                                            <div>
+                                                <VRCCSlider
+                                                    label="Risk"
+                                                    value={data.vrcc.riskFinal}
+                                                    onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, riskFinal: val } }))}
+                                                />
+                                            </div>
+                                            <VRCCSlider label="Capability" value={data.vrcc.capability} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, capability: val } }))} />
+                                            <VRCCSlider label="Complexity" value={data.vrcc.complexity} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, complexity: val } }))} />
+                                        </div>
+
+
+                                        {/* DFV Assessment - Star Rating */}
+                                        <DFVAssessmentInput
+                                            value={data.dfvAssessment}
+                                            onChange={(assessment) => setData(prev => ({ ...prev, dfvAssessment: assessment }))}
+                                        />
+
                                     </div>
                                 </motion.div>
                             )}
@@ -937,10 +943,21 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     </div>
                 </div>
 
-                {/* Right Panel: Visualization */}
-                <div className="min-w-[280px] w-[280px] xl:w-[420px] h-full transition-all">
-                    <StrategicProfile data={data.vrcc} />
-                </div>
+                {/* Right Panel: Visualization - Only visible on Business Case tab */}
+                <AnimatePresence>
+                    {activeTab === 'D' && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 50 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="flex-shrink-0 min-w-[280px] w-[280px] xl:w-[420px] h-full shrink-0"
+                            style={{ minWidth: '280px', flexShrink: 0 }}
+                        >
+                            <StrategicProfile data={data.vrcc} dfvAssessment={data.dfvAssessment} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
             </main>
         </div>

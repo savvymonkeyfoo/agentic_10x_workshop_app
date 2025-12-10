@@ -1,12 +1,12 @@
+```
 import React from 'react';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import MatrixView from '@/components/matrix/MatrixView';
 import { detectCircularDependency, LogicOpportunity } from '@/lib/logic/graph';
 
 // Prevent Next.js from caching dynamic data too aggressively
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
 
 async function getAnalysisData() {
     // Fetch the "Acme Global" workshop (Assuming seeded)

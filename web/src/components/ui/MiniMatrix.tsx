@@ -35,8 +35,8 @@ export function MiniMatrix({ complexity, value }: MiniMatrixProps) {
                     <ZAxis type="number" dataKey="z" range={[50, 400]} />
 
                     {/* Quadrant Lines */}
-                    <ReferenceLine x={3} stroke="var(--glass-border)" strokeDasharray="3 3" />
-                    <ReferenceLine y={3} stroke="var(--glass-border)" strokeDasharray="3 3" />
+                    <ReferenceLine x={3} stroke="#1BB1E7" strokeDasharray="3 3" strokeOpacity={0.5} />
+                    <ReferenceLine y={3} stroke="#1BB1E7" strokeDasharray="3 3" strokeOpacity={0.5} />
 
                     <Scatter name="Current Opportunity" data={data}>
                         <Cell fill={isVirgin ? 'transparent' : 'var(--brand-blue)'} stroke={isVirgin ? 'var(--text-secondary)' : 'none'} />

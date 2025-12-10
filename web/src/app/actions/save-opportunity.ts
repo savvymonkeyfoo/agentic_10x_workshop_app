@@ -1,9 +1,7 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-
-const prisma = new PrismaClient();
 
 export async function saveOpportunity(workshopId: string, data: any, opportunityId?: string) {
     if (!workshopId) throw new Error("Workshop ID required");
@@ -25,21 +23,27 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
         scoreComplexity: Number(data.vrcc.complexity),
         scoreRiskFinal: Number(data.vrcc.riskFinal),
         scoreRiskAI: Number(data.vrcc.riskAI),
+        riskOverrideLog: data.vrcc.riskOverrideLog || "",
 
         tShirtSize: data.tShirtSize || "M",
 
         // Financials - Ensure numbers or null/undefined if empty
         benefitRevenue: data.benefitRevenue ? Number(data.benefitRevenue) : null,
-        benefitCost: data.benefitCost ? Number(data.benefitCost) : null,
+        benefitCostAvoidance: data.benefitCostAvoidance ? Number(data.benefitCostAvoidance) : null,
+        benefitEstCost: data.benefitEstCost ? Number(data.benefitEstCost) : null,
         benefitEfficiency: data.benefitEfficiency ? Number(data.benefitEfficiency) : null,
+        benefitTimeframe: data.benefitTimeframe || 'Monthly',
 
-        dfvDesirability: data.dfvDesirability || "TBD",
-        dfvFeasibility: data.dfvFeasibility || "TBD",
-        dfvViability: data.dfvViability || "TBD",
+        // DFV Assessment (JSON)
+        dfvAssessment: data.dfvAssessment || null,
 
         definitionOfDone: data.definitionOfDone || "",
         keyDecisions: data.keyDecisions || "",
         impactedSystems: Array.isArray(data.impactedSystems) ? data.impactedSystems : [],
+        systemGuardrails: data.systemGuardrails || "",
+        aiOpsRequirements: data.aiOpsRequirements || "",
+        changeManagement: data.changeManagement || "",
+        trainingRequirements: data.trainingRequirements || "",
 
         // Capability Mapping
         capabilitiesExisting: Array.isArray(data.capabilitiesExisting) ? data.capabilitiesExisting : [],

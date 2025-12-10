@@ -1,10 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { createWorkshop } from './actions/create-workshop';
 
 // Prevent caching so new workshops appear immediately
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
 
 async function getWorkshops() {
   return await prisma.workshop.findMany({
