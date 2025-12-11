@@ -138,22 +138,13 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                     {/* Workshop Date */}
                     <div>
                         <label className="block text-sm font-bold text-slate-500 mb-2">Workshop Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                required
-                                value={workshopDate}
-                                onChange={(e) => setWorkshopDate(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue [color-scheme:light] dark:[color-scheme:dark] opacity-0 absolute inset-0 z-10 cursor-pointer"
-                            />
-                            <div className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white">
-                                {new Date(workshopDate).toLocaleDateString('en-GB', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric'
-                                })}
-                            </div>
-                        </div>
+                        <input
+                            type="date"
+                            required
+                            value={workshopDate}
+                            onChange={(e) => setWorkshopDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue [color-scheme:light] dark:[color-scheme:dark]"
+                        />
                     </div>
 
                     {/* Logo Upload */}
