@@ -2,9 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
-import { X, GripVertical, Plus } from 'lucide-react';
+import { X, GripVertical, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { recommendCapabilities } from '@/app/actions/recommend-capabilities';
 
-// --- Simple Add Modal ---
+// --- 1. THE STANDARD BANK (30 Enterprise Items) ---
+const STANDARD_CAPABILITIES = [
+    "SAP (ERP)", "Salesforce (CRM)", "ServiceNow", "Workday (HRIS)", "Jira",
+    "Microsoft 365", "Slack / Teams", "SharePoint", "Snowflake", "Databricks",
+    "Oracle DB", "PostgreSQL", "AWS S3", "Kafka", "MuleSoft",
+    "UiPath (RPA)", "Power Automate", "Azure OpenAI", "AWS Bedrock", "Python Runtime",
+    "Docker/K8s", "Okta / AD", "Splunk", "Tableau / PowerBI", "Adobe Cloud",
+    "Stripe", "Twilio", "DocuSign", "Genesys", "Legacy Mainframe"
+];
+
+// --- 2. SUB-COMPONENTS ---
+
+// Simple Add Modal
 const AddCapModal = ({ isOpen, onClose, onConfirm, title }: any) => {
     const [val, setVal] = useState("");
     if (!isOpen) return null;
@@ -37,18 +50,6 @@ const AddCapModal = ({ isOpen, onClose, onConfirm, title }: any) => {
         </div>
     );
 };
-
-// --- 1. THE STANDARD BANK (30 Enterprise Items) ---
-const STANDARD_CAPABILITIES = [
-    "SAP (ERP)", "Salesforce (CRM)", "ServiceNow", "Workday (HRIS)", "Jira",
-    "Microsoft 365", "Slack / Teams", "SharePoint", "Snowflake", "Databricks",
-    "Oracle DB", "PostgreSQL", "AWS S3", "Kafka", "MuleSoft",
-    "UiPath (RPA)", "Power Automate", "Azure OpenAI", "AWS Bedrock", "Python Runtime",
-    "Docker/K8s", "Okta / AD", "Splunk", "Tableau / PowerBI", "Adobe Cloud",
-    "Stripe", "Twilio", "DocuSign", "Genesys", "Legacy Mainframe"
-];
-
-// --- 2. SUB-COMPONENTS ---
 
 // The Draggable Chip
 const CapChip = ({ id, label, color, onDelete }: { id: string, label: string, color: string, onDelete?: () => void }) => {
@@ -109,6 +110,7 @@ const DropZone = ({ id, title, items, colorClass, bgClass, placeholder, onDelete
                     )}
                 </div>
             </div>
+
             <div className="flex flex-wrap gap-2 content-start h-full">
                 {items.length === 0 && !isOver && (
                     <div className="text-slate-300 text-xs italic w-full text-center mt-4 border-2 border-dashed border-slate-100 rounded-lg p-4">
@@ -134,11 +136,13 @@ const DropZone = ({ id, title, items, colorClass, bgClass, placeholder, onDelete
 export default function CapabilitiesManager({
     existingCaps,
     missingCaps,
-    onUpdate
+    onUpdate,
+    workflowContext
 }: {
     existingCaps: string[],
     missingCaps: string[],
-    onUpdate: (field: 'capabilitiesExisting' | 'capabilitiesMissing', newVal: string[]) => void
+    onUpdate: (field: 'capabilitiesExisting' | 'capabilitiesMissing', newVal: string[]) => void,
+    workflowContext?: any
 }) {
 
     // Local state for the "Bank" (Filter out items already used)
@@ -146,9 +150,8 @@ export default function CapabilitiesManager({
     const [bank, setBank] = useState(STANDARD_CAPABILITIES.filter(c => !usedCaps.has(c)));
     const [activeDrag, setActiveDrag] = useState<any>(null);
     const [mounted, setMounted] = useState(false);
-
-    // NEW: Track which add modal is open ('existing' | 'missing' | null)
     const [addingZone, setAddingZone] = useState<'existing' | 'missing' | null>(null);
+    const [isRecommending, setIsRecommending] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -201,7 +204,7 @@ export default function CapabilitiesManager({
         }
     };
 
-    // NEW: Handle Manual Add
+    // Handle Manual Add
     const handleManualAdd = (newItem: string) => {
         if (addingZone === 'existing') {
             if (!existingCaps.includes(newItem)) {
@@ -225,6 +228,32 @@ export default function CapabilitiesManager({
         setBank(prev => [...prev, label].sort());
     };
 
+    // AI Recommendation Logic
+    const handleAIRecommend = async () => {
+        if (!workflowContext) return;
+        setIsRecommending(true);
+        try {
+            const result = await recommendCapabilities(workflowContext);
+            if (result.success && result.data) {
+                const currentSafe = new Set(existingCaps);
+                const currentGap = new Set(missingCaps);
+                const currentBank = new Set(bank);
+
+                const newItems = result.data.filter((item: string) => {
+                    return !currentSafe.has(item) && !currentGap.has(item) && !currentBank.has(item);
+                });
+
+                if (newItems.length > 0) {
+                    setBank(prev => [...newItems, ...prev]);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsRecommending(false);
+        }
+    };
+
     return (
         <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="space-y-6">
@@ -238,7 +267,7 @@ export default function CapabilitiesManager({
                         colorClass="bg-emerald-100 text-emerald-800 border-emerald-200"
                         placeholder="Drag 'Safe' systems here..."
                         onDelete={(item: string) => handleDelete('existing', item)}
-                        onAdd={() => setAddingZone('existing')} // <--- Trigger
+                        onAdd={() => setAddingZone('existing')}
                     />
                     <DropZone
                         id="missing"
@@ -247,14 +276,24 @@ export default function CapabilitiesManager({
                         colorClass="bg-amber-100 text-amber-800 border-amber-200"
                         placeholder="Drag 'Gap' systems here..."
                         onDelete={(item: string) => handleDelete('missing', item)}
-                        onAdd={() => setAddingZone('missing')} // <--- Trigger
+                        onAdd={() => setAddingZone('missing')}
                     />
                 </div>
 
                 {/* BOTTOM: The Bank */}
-                <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Enterprise Capability Bank</h4>
-                    <div className="flex flex-wrap gap-2">
+                <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 transition-all">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Enterprise Capability Bank</h4>
+                        <button
+                            onClick={handleAIRecommend}
+                            disabled={isRecommending || !workflowContext}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isRecommending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                            {isRecommending ? "Analysing..." : "Recommend"}
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 min-h-[60px]">
                         {bank.map(cap => (
                             <CapChip key={cap} id={`bank-${cap}`} label={cap} color="bg-blue-500 text-white hover:bg-blue-600" />
                         ))}
@@ -263,7 +302,7 @@ export default function CapabilitiesManager({
 
             </div>
 
-            {/* Drag Overlay - PORTALED to Body to fix offset issues */}
+            {/* Drag Overlay Portal */}
             {mounted && createPortal(
                 <DragOverlay>
                     {activeDrag ? (
@@ -275,7 +314,7 @@ export default function CapabilitiesManager({
                 document.body
             )}
 
-            {/* NEW: The Add Modal (Portaled) */}
+            {/* Add Modal Portal */}
             {mounted && createPortal(
                 <AddCapModal
                     isOpen={!!addingZone}
@@ -285,6 +324,7 @@ export default function CapabilitiesManager({
                 />,
                 document.body
             )}
+
         </DndContext>
     );
 }

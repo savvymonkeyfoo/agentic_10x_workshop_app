@@ -411,6 +411,23 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [isZoomedOut, setIsZoomedOut] = useState(false);
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
+    // Smart Navigator State
+    const [isNavOpen, setIsNavOpen] = useState(true); // Default open
+    const navTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    const handleSmartSelect = (opp: any) => {
+        // 1. Perform the normal selection
+        handleSelectOpportunity(opp.id);
+
+        // 2. Manage the Timer
+        if (navTimerRef.current) clearTimeout(navTimerRef.current);
+
+        // 3. Set new Auto-Close Timer (5 seconds)
+        navTimerRef.current = setTimeout(() => {
+            setIsNavOpen(false);
+        }, 5000);
+    };
+
     // Scroll Handling: (Removed Auto-Scroll to allow context retention)
 
     const router = useRouter();
@@ -743,27 +760,28 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
             {/* Confirmation Modal (Phase) */}
             <AnimatePresence>
+                {/* Delete Confirmation Modal */}
                 {deleteModalId && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
                         onClick={() => setDeleteModalId(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.95 }}
+                            initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
-                            exit={{ scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl max-w-sm w-full border border-slate-200 dark:border-slate-700"
+                            exit={{ scale: 0.9 }}
+                            className="bg-white p-6 rounded-lg shadow-xl w-[400px]"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h3 className="text-lg font-bold mb-2">Delete Phase?</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Are you sure you want to delete this phase? This action cannot be undone.</p>
+                            <h3 className="text-xl font-bold mb-2">Delete Phase?</h3>
+                            <p className="text-slate-600 mb-6">Are you sure you want to delete this phase? This action cannot be undone.</p>
                             <div className="flex justify-end gap-3">
                                 <button
                                     onClick={() => setDeleteModalId(null)}
-                                    className="px-4 py-2 rounded text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                                    className="px-4 py-2 rounded text-slate-500 hover:bg-slate-100 font-medium"
                                 >
                                     Cancel
                                 </button>
@@ -779,55 +797,64 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 )}
             </AnimatePresence>
 
-            {/* Sun Visor Navigator (Sticky Top) */}
+            {/* --- HEADER SECTION --- */}
+            <div className="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center sticky top-0 z-30">
+                <div className="flex items-baseline gap-3">
+                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+                        Opportunity Capture
+                    </h1>
+                    {/* DYNAMIC TITLE */}
+                    {data.projectName && (
+                        <span className="text-xl font-medium text-slate-400 border-l border-slate-300 pl-3 animate-in fade-in">
+                            {data.projectName}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                    {/* Autosave Indicator */}
+                    <div className="text-xs font-medium text-slate-400 w-20 text-right">
+                        {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
+                        {saveStatus === 'saved' && <span className="text-status-safe">Saved</span>}
+                        {saveStatus === 'error' && <span className="text-status-risk">Error</span>}
+                    </div>
+
+                    {/* Completeness Ring */}
+                    <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
+                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
+                        : 'bg-transparent border-slate-200 dark:border-slate-700 text-emerald-600'
+                        }`}>
+                        {isComplete || isGlobalReady ? (
+                            <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                        ) : (
+                            <span className="text-[10px] font-bold">
+                                {Math.round(isGlobalReady ? 100 : completeness)}%
+                            </span>
+                        )}
+                    </div>
+                    <button
+                        disabled={!isComplete && !isGlobalReady}
+                        onClick={handleAnalyse}
+                        className={`px-6 py-2 rounded-full font-semibold transition-all ${isComplete || isGlobalReady ? 'bg-brand-blue text-white shadow-lg hover:shadow-xl hover:scale-105' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                    >
+                        Analyse
+                    </button>
+                </div>
+            </div>
+
+            {/* --- NAVIGATOR (Controlled) --- */}
             <OpportunityTileNavigator
                 opportunities={allOpportunities}
-                activeId={opportunityId}
-                onSelect={handleSelectOpportunity}
-                onAdd={handleAddOpportunity}
+                selectedId={opportunityId || null}
+                onSelect={handleSmartSelect} // Use the new smart handler
+                onCreate={handleAddOpportunity}
                 onDelete={handleDeleteOpportunity}
+                isOpen={isNavOpen}
+                onToggle={() => setIsNavOpen(!isNavOpen)}
             />
 
-            {/* Header / Nav */}
-            <header className="flex flex-col gap-6 mb-8 px-8 pt-4">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold tracking-tight">Opportunity Capture</h1>
-
-                    <div className="flex items-center gap-4">
-                        {/* Autosave Indicator */}
-                        <div className="text-xs font-medium text-slate-400 w-20 text-right">
-                            {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
-                            {saveStatus === 'saved' && <span className="text-status-safe">Saved</span>}
-                            {saveStatus === 'error' && <span className="text-status-risk">Error</span>}
-                        </div>
-
-                        {/* Completeness Ring */}
-                        {/* Completeness Ring */}
-                        <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
-                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
-                            : 'bg-transparent border-slate-200 dark:border-slate-700 text-emerald-600'
-                            }`}>
-                            {isComplete || isGlobalReady ? (
-                                <Check className="w-5 h-5 text-white" strokeWidth={3} />
-                            ) : (
-                                <span className="text-[10px] font-bold">
-                                    {Math.round(isGlobalReady ? 100 : completeness)}%
-                                </span>
-                            )}
-                        </div>
-                        <button
-                            disabled={!isComplete && !isGlobalReady}
-                            onClick={handleAnalyse}
-                            className={`px-6 py-2 rounded-full font-semibold transition-all ${isComplete || isGlobalReady ? 'bg-brand-blue text-white shadow-lg hover:shadow-xl hover:scale-105' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
-                        >
-                            Analyse
-                        </button>
-                    </div>
-                </div>
-            </header>
-
             {/* Main Split Grid - Dynamic width based on tab */}
-            <main className={`grid gap-6 flex-1 pb-8 px-8 transition-all duration-300 ${activeTab === 'D' ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
+            <main className={`grid gap-6 flex-1 pb-8 pt-8 px-8 transition-all duration-300 ${activeTab === 'D' ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
 
                 {/* Left Panel: Input Tabs */}
                 <div className="glass-panel p-8 flex flex-col h-full">
@@ -1056,6 +1083,11 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             existingCaps={data.capabilitiesExisting || []}
                                             missingCaps={data.capabilitiesMissing || []}
                                             onUpdate={(field, newVal) => setData(prev => ({ ...prev, [field]: newVal }))}
+                                            workflowContext={{
+                                                name: data.projectName,
+                                                friction: data.frictionStatement,
+                                                phases: data.workflowPhases
+                                            }}
                                         />
                                     </div>
                                 </motion.div>
@@ -1160,12 +1192,61 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         {/* 2-Column Grid: T-Shirt Size | Estimated Benefit */}
                                         <div className="grid grid-cols-2 gap-8 mb-6">
                                             {/* Left Column: T-Shirt Size */}
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">T-Shirt Size (Estimate)</label>
-                                                <TShirtSizeSelector
-                                                    value={data.tShirtSize}
-                                                    onChange={(size) => handleInputChange('tShirtSize', size)}
-                                                />
+                                            {/* --- T-SHIRT SIZE SELECTOR (Clean, Centered, Scaled) --- */}
+                                            <div className="flex flex-col h-full min-h-[160px]">
+                                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                    T-Shirt Size (Estimate)
+                                                </h3>
+
+                                                {/* Container: Flex-1 pushes content to vertical center */}
+                                                <div className="flex-1 flex items-center justify-center w-full">
+                                                    <div className="grid grid-cols-5 gap-4 w-full items-end justify-items-center">
+                                                        {['XS', 'S', 'M', 'L', 'XL'].map((size) => {
+                                                            const isSelected = data.tShirtSize === size;
+
+                                                            // Proportional Sizing (Bigger Base)
+                                                            const scaleMap: Record<string, number> = {
+                                                                'XS': 32,
+                                                                'S': 42,
+                                                                'M': 52,
+                                                                'L': 64,
+                                                                'XL': 76
+                                                            };
+                                                            const iconSize = scaleMap[size];
+
+                                                            return (
+                                                                <button
+                                                                    key={size}
+                                                                    onClick={() => handleInputChange('tShirtSize', size)}
+                                                                    className="group flex flex-col items-center gap-2 transition-all duration-200 outline-none"
+                                                                >
+                                                                    {/* Icon Wrapper - No Border, Just the Shirt */}
+                                                                    <div
+                                                                        className={`transition-all duration-300 ${isSelected ? 'scale-110 drop-shadow-md' : 'scale-100 opacity-40 group-hover:opacity-100'}`}
+                                                                    >
+                                                                        <svg
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="currentColor"
+                                                                            className={isSelected ? 'text-blue-600' : 'text-slate-600'}
+                                                                            width={iconSize}
+                                                                            height={iconSize}
+                                                                        >
+                                                                            <path d="M20.38 3.55a.8.8 0 0 0-.46-.17h-.06l-4.5.56a6.23 6.23 0 0 1-6.72 0l-4.5-.56h-.06a.8.8 0 0 0-.46.17L.55 6.27a.8.8 0 0 0-.21 1l2.4 4.8a.8.8 0 0 0 1.25.17l1-1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8.73l1 1a.8.8 0 0 0 1.25-.17l2.4-4.8a.8.8 0 0 0-.21-1z" />
+                                                                        </svg>
+                                                                    </div>
+
+                                                                    {/* Label */}
+                                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-blue-600' : 'text-slate-300 group-hover:text-slate-500'}`}>
+                                                                        {size}
+                                                                    </span>
+
+                                                                    {/* Active Dot (Subtle Indicator) */}
+                                                                    <div className={`w-1.5 h-1.5 rounded-full mt-1 transition-colors ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Right Column: Estimated Benefit */}
