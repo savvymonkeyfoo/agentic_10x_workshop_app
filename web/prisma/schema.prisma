@@ -17,6 +17,9 @@ model Workshop {
   workshopDate  DateTime @default(now())
   createdAt   DateTime @default(now())
   status      String   @default("INPUT") // Draft, Input, Analysis
+  strategyNarrative    String? @db.Text // Executive Summary
+  strategyDependencies String? @db.Text // The Architect's Analysis
+  strategyRisks        String? @db.Text // The Risk Officer's Analysis
   opportunities Opportunity[]
 }
 

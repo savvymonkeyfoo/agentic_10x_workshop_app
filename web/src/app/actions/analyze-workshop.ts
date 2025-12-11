@@ -58,6 +58,10 @@ export async function analyzeWorkshop(workshopId: string) {
             }),
             prompt: `You are a Board-Level Strategic Advisor presenting to C-Suite executives. Review these projects and determine the optimal execution sequence using structured risk management principles.
 
+PROTOCOL (THINK STEP-BY-STEP):
+1. ARCHITECT (Dependencies): Identify semantic overlaps. Use bullet points (•) for each distinct dependency found.
+2. RISK OFFICER (Staircasing): Identify risk mitigations. Use bullet points (•) for each specific de-risking move.
+
 DATA DOSSIER:
 ${context}
 
@@ -70,8 +74,10 @@ PROTOCOL (ANALYZE STEP-BY-STEP):
 3. STRATEGIC SEQUENCING:
    - Rank 1: Foundation Enablers (Low Risk projects that build capabilities required by others).
    - Rank 2: High-Value Accelerators (Projects that leverage newly validated capabilities).
-   - Rank 3+: Parallel Quick Wins (High Value / Low Complexity projects that are independent. Note: These can often execute in parallel with Rank 1 if resources permit).
-   - Final Priority: Strategic Deprioritization (High Effort / Low Yield initiatives requiring further justification).
+   - Rank 3: Parallel Quick Wins (High Value / Low Complexity projects that are independent).
+   - Rank 4: Strategic Deprioritization (High Effort / Low Yield initiatives requiring further justification).
+   
+   PARALLEL EXECUTION: You MAY assign the SAME rank to multiple independent projects if they can execute in parallel. Do not force a linear 1-2-3-4 order if parallel execution is strategically better.
 
 TONE: Use professional, board-ready language. Avoid informal terms. Use precise business terminology.
 
@@ -92,6 +98,16 @@ CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence 
             });
         }
 
+        // 5. Save FULL Strategy to Workshop
+        await prisma.workshop.update({
+            where: { id: workshopId },
+            data: {
+                strategyNarrative: object.strategy.final_narrative,
+                strategyDependencies: object.strategy.dependency_analysis,
+                strategyRisks: object.strategy.risk_analysis
+            }
+        });
+
         revalidatePath(`/workshop/${workshopId}/analysis`);
 
         // 5. Enrich with project names for UI
@@ -108,8 +124,8 @@ CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence 
         // Return the full analysis
         return {
             narrative: object.strategy.final_narrative,
-            dependencyAnalysis: object.strategy.dependency_analysis,
-            riskAnalysis: object.strategy.risk_analysis,
+            dependencies: object.strategy.dependency_analysis,
+            risks: object.strategy.risk_analysis,
             sequence: enrichedSequence
         };
 

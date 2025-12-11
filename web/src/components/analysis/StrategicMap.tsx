@@ -74,11 +74,7 @@ export default function StrategicMap({ nodes }: StrategicMapProps) {
         return resolved.sort((a, b) => (a.rank || 99) - (b.rank || 99));
     }, [nodes]);
 
-    // Generate Path String (1 -> 2 -> 3...)
-    const pathData = processedData
-        .filter(d => d.rank && d.rank < 90)
-        .map((d, i) => (i === 0 ? `M ${d.px} ${d.py}` : `L ${d.px} ${d.py}`))
-        .join(' ');
+
 
     const formatCurrency = (val: number) => {
         if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
@@ -92,29 +88,7 @@ export default function StrategicMap({ nodes }: StrategicMapProps) {
             <header className="relative z-10 p-6 flex justify-between items-start border-b border-slate-200/50">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Strategy Journey Map</h1>
-                    <p className="text-sm text-slate-500 mt-1">Follow the numbered path for recommended execution order</p>
-                </div>
-                <div className="flex gap-4 text-xs items-center">
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow"></span>
-                        <span className="text-slate-600">#1</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow"></span>
-                        <span className="text-slate-600">#2</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-4 h-4 rounded-full bg-violet-500 border-2 border-white shadow"></span>
-                        <span className="text-slate-600">#3</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-4 h-4 rounded-full bg-slate-500 border-2 border-white shadow"></span>
-                        <span className="text-slate-600">#4+</span>
-                    </div>
-                    <div className="flex items-center gap-2 border-l border-slate-300 pl-3">
-                        <div className="w-8 border-t-2 border-dashed border-slate-400"></div>
-                        <span className="text-slate-600">Path</span>
-                    </div>
+                    <p className="text-sm text-slate-500 mt-1">Bubble position = Value vs Complexity. Bubble size = Financial Impact.</p>
                 </div>
             </header>
 
@@ -148,19 +122,7 @@ export default function StrategicMap({ nodes }: StrategicMapProps) {
                         <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="#64748b" strokeWidth="2" strokeDasharray="8 8" />
                     </g>
 
-                    {/* LAYER 2: Journey Path */}
-                    {pathData && (
-                        <motion.path
-                            d={pathData}
-                            fill="none"
-                            stroke="#94a3b8"
-                            strokeWidth="3"
-                            strokeDasharray="10 8"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 1.5, delay: 0.5 }}
-                        />
-                    )}
+
 
                     {/* LAYER 3: Bubbles */}
                     {processedData.map((node, i) => (
