@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { Check, X, ArrowRight, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { VRCCSlider } from '@/components/ui/VRCCSlider';
 import { StrategicProfile } from '@/components/workshop/StrategicProfile';
 import { saveOpportunity } from '@/app/actions/save-opportunity';
@@ -13,6 +17,8 @@ import { TShirtSizeSelector } from '@/components/ui/TShirtSizeSelector';
 import { DFVAssessment, DFVAssessmentInput, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { SmartListTextarea } from '@/components/ui/SmartListTextarea';
+import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
+import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
 import { calculateCompleteness } from '@/utils/completeness';
@@ -69,14 +75,97 @@ const HORIZONS = [
 ] as const;
 
 
-// --- Subcomponent: Phase Card ---
-const AUTONOMY_LABELS = {
-    'L0': 'Autonomy - ASSIST (Human Initiates)',
-    'L1': 'Autonomy - SUGGEST (Human Approves)',
-    'L2': 'Autonomy - EXECUTE (Contextual Autonomy)',
-    'L3': 'Autonomy - ORCHESTRATE (Multi-step Workflow)',
-    'L4': 'Autonomy - OPTIMIZE (Domain Autonomy)',
-    'L5': 'Autonomy - SELF-EVOLVE (Full Strategic Autonomy)'
+// --- HELPER: Sortable Wrapper ---
+const SortablePhaseCard = ({ id, children }: { id: string, children: React.ReactNode }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1, // Fade out the original while dragging
+        zIndex: isDragging ? 50 : 'auto',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="shrink-0 h-full">
+            {children}
+        </div>
+    );
+};
+
+// --- HELPER COMPONENT: Auto-Growing Textarea with Smart Bullets ---
+const SmartTextarea = ({
+    value,
+    onChange,
+    placeholder,
+    label
+}: {
+    value: string;
+    onChange: (val: string) => void;
+    placeholder: string;
+    label: string;
+}) => {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    // 1. Auto-Resize on EVERY value change
+    React.useLayoutEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [value]);
+
+    // 2. Smart Bullet Logic
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const target = e.target as HTMLTextAreaElement;
+            const start = target.selectionStart;
+            const end = target.selectionEnd;
+
+            // Insert newline + bullet
+            const newValue = value.substring(0, start) + "\n• " + value.substring(end);
+
+            onChange(newValue);
+
+            // Restore cursor position after state update
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.selectionStart = start + 3;
+                    textareaRef.current.selectionEnd = start + 3;
+                }
+            }, 0);
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
+            <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">
+                {label}
+            </span>
+            <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={(e) => {
+                    if (!value) onChange('• ');
+                }}
+                className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700 font-medium"
+                placeholder={placeholder}
+                rows={1}
+            />
+        </div>
+    );
+};
+
+// --- Subcomponent: Phase Card (Deprecated/Unused if loop is inline, but kept for safety reference) ---
+const AUTONOMY_LABELS: Record<string, string> = {
+    'L1': 'Human executes, AI has no role.',
+    'L2': 'Human executes, AI proposes drafts.',
+    'L3': 'AI executes, Human reviews/approves.',
+    'L4': 'AI executes, Human audits post-hoc.',
+    'L5': 'AI autonomous, No human loop.',
 };
 
 const PhaseCard = ({ phase, updatePhase, requestDelete }: {
@@ -86,71 +175,91 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
 }) => {
     return (
         <Reorder.Item value={phase} id={phase.id} className="flex items-center cursor-grab active:cursor-grabbing">
-            {/* Card */}
-            <div className={`w-72 bg-white dark:bg-slate-800 border rounded-xl transition-all p-4 relative group flex flex-col gap-3 shrink-0 mx-2 select-none ${['L4', 'L5'].includes(phase.autonomy)
-                ? 'shadow-[0_0_20px_rgba(27,177,231,0.25)] border-brand-cyan/60'
-                : 'border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'
-                }`}>
-
-                {/* Drag Handle & Delete (Top Row) */}
-                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); requestDelete(phase.id); }}
-                        className="text-slate-300 hover:text-red-500 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
-
-                {/* Header Input */}
-                <div>
-                    <label className="text-[10px] uppercase font-bold text-slate-400">Phase Name</label>
+            <div className="bg-[#fff9c4] rounded-sm shadow-md border-t border-yellow-200 p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
+                {/* Header (Phase Name) */}
+                <div className="flex justify-between items-start border-b border-yellow-200/50 pb-2 mb-1">
                     <input
                         type="text"
                         value={phase.name}
                         onChange={(e) => updatePhase(phase.id, 'name', e.target.value)}
-                        className="w-full bg-transparent border-b border-slate-200 dark:border-slate-700 focus:border-brand-blue outline-none py-1 font-bold text-slate-700 dark:text-slate-200 placeholder-slate-300"
-                        placeholder="e.g. Ingestion"
-                        onPointerDown={(e) => e.stopPropagation()} // Prevent drag start from input
+                        className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50"
+                        placeholder="Phase Name..."
+                        onPointerDown={(e) => e.stopPropagation()}
                     />
+                    <button onClick={(e) => { e.stopPropagation(); requestDelete(phase.id); }} className="text-yellow-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X size={16} />
+                    </button>
                 </div>
 
-                {/* Autonomy Selector */}
-                <div>
-                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1 transition-all">
-                        {AUTONOMY_LABELS[phase.autonomy]}
-                    </label>
-                    <div className="flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        {(['L0', 'L1', 'L2', 'L3', 'L4', 'L5'] as const).map(level => (
+                {/* I.P.O. Section - The "Post-it" Content */}
+                <div className="space-y-3">
+
+                    {/* INPUTS: "Triggers" */}
+                    <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
+                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Trigger / Input</span>
+                        <textarea
+                            value={phase.inputs || ''}
+                            onChange={(e) => {
+                                updatePhase(phase.id, 'inputs', e.target.value);
+                                // Auto-grow height logic
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            placeholder="e.g. Email received, End of Month..."
+                            rows={1}
+                        />
+                    </div>
+
+                    {/* ACTIONS: "Doing" */}
+                    <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
+                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Actions Taken</span>
+                        <textarea
+                            value={phase.actions || ''}
+                            onChange={(e) => {
+                                updatePhase(phase.id, 'actions', e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            placeholder="e.g. Validate data, Calculate score..."
+                            rows={1}
+                        />
+                    </div>
+
+                    {/* OUTPUTS: "Results" */}
+                    <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
+                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Artifact / Output</span>
+                        <textarea
+                            value={phase.outputs || ''}
+                            onChange={(e) => {
+                                updatePhase(phase.id, 'outputs', e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            placeholder="e.g. PDF Report, Approval flag..."
+                            rows={1}
+                        />
+                    </div>
+                </div>
+
+                {/* Autonomy Footer (Subtle) */}
+                <div className="pt-3 mt-auto">
+                    <div className="flex gap-1 justify-between bg-white/30 p-1 rounded-full" onPointerDown={(e) => e.stopPropagation()}>
+                        {['L1', 'L2', 'L3', 'L4', 'L5'].map((level) => (
                             <button
                                 key={level}
-                                onClick={() => updatePhase(phase.id, 'autonomy', level)}
-                                className={`flex-1 py-1 text-[9px] font-bold rounded transition-colors ${phase.autonomy === level
-                                    ? (
-                                        level === 'L0' ? 'bg-slate-200 text-slate-700' :
-                                            level === 'L1' ? 'bg-brand-cyan text-white' :
-                                                level === 'L2' ? 'bg-status-safe text-white' :
-                                                    level === 'L3' ? 'bg-purple-500 text-white' :
-                                                        level === 'L4' ? 'bg-orange-500 text-white' :
-                                                            'bg-yellow-500 text-white'
-                                    )
-                                    : 'bg-slate-50 dark:bg-black/20 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                                onClick={() => updatePhase(phase.id, 'autonomy', level as any)}
+                                className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
+                                    ? 'bg-slate-800 text-white shadow-sm scale-110'
+                                    : 'text-yellow-800 hover:bg-yellow-200'
+                                    }`}
                             >
                                 {level}
                             </button>
                         ))}
                     </div>
-                </div>
-
-                {/* Guardrail */}
-                <div className="flex-1" onPointerDown={(e) => e.stopPropagation()}>
-                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Guardrail</label>
-                    <textarea
-                        value={phase.guardrail}
-                        onChange={(e) => updatePhase(phase.id, 'guardrail', e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs resize-none h-20 outline-none focus:ring-1 focus:ring-brand-blue"
-                        placeholder="Constraints..."
-                    />
                 </div>
             </div>
 
@@ -295,6 +404,14 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
     const [isGlobalReady, setIsGlobalReady] = useState(false);
     const [globalCompleteness, setGlobalCompleteness] = useState(0);
+    const [opportunityToDelete, setOpportunityToDelete] = useState<any | null>(null);
+    const [isDeletingOpportunity, setIsDeletingOpportunity] = useState(false);
+
+    // Zoom / View Mode State
+    const [isZoomedOut, setIsZoomedOut] = useState(false);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // Scroll Handling: (Removed Auto-Scroll to allow context retention)
 
     const router = useRouter();
 
@@ -441,18 +558,33 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         setActiveTab('A');
     };
 
-    const handleDeleteOpportunity = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this opportunity?")) return;
+    const handleDeleteOpportunity = (id: string) => {
+        const opp = allOpportunities.find(o => o.id === id);
+        if (opp) {
+            setOpportunityToDelete(opp);
+        }
+    };
 
-        await deleteOpportunity(id, workshopId);
+    const confirmDeleteOpportunity = async () => {
+        if (!opportunityToDelete) return;
+        setIsDeletingOpportunity(true);
+        try {
+            await deleteOpportunity(opportunityToDelete.id, workshopId);
 
-        // Refresh list
-        const updatedList = allOpportunities.filter(o => o.id !== id);
-        setAllOpportunities(updatedList);
+            // Refresh list
+            const updatedList = allOpportunities.filter(o => o.id !== opportunityToDelete.id);
+            setAllOpportunities(updatedList);
 
-        // If currently selected, reset
-        if (opportunityId === id) {
-            handleAddOpportunity();
+            // If currently selected, reset
+            if (opportunityId === opportunityToDelete.id) {
+                handleAddOpportunity();
+            }
+            setOpportunityToDelete(null);
+        } catch (error) {
+            console.error("Delete failed", error);
+            alert("Failed to delete opportunity");
+        } finally {
+            setIsDeletingOpportunity(false);
         }
     };
 
@@ -498,6 +630,39 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         });
     };
 
+    // --- DRAG & DROP SENSORS ---
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require 8px movement before drag starts (allows clicking inputs)
+            },
+        }),
+        // FIX: Configure Keyboard to only start dragging on "Enter", never "Space"
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+            keyboardCodes: {
+                start: ['Enter'],
+                cancel: ['Escape'],
+                end: ['Enter', 'Space'],
+            },
+        })
+    );
+
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event;
+
+        if (active && over && active.id !== over.id) {
+            setData((prev) => {
+                const oldIndex = prev.workflowPhases.findIndex((p) => p.id === active.id);
+                const newIndex = prev.workflowPhases.findIndex((p) => p.id === over.id);
+
+                // Reorder Array
+                const newPhases = arrayMove(prev.workflowPhases, oldIndex, newIndex);
+                return { ...prev, workflowPhases: newPhases };
+            });
+        }
+    };
+
     // --- Workflow Handlers ---
     const addPhase = () => {
         setSaveStatus('idle');
@@ -505,7 +670,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             id: crypto.randomUUID(),
             name: '',
             autonomy: 'L0',
-            guardrail: ''
+            inputs: '',
+            actions: '',
+            outputs: '',
+            guardrail: '' // deprecated
         };
         setData(prev => ({ ...prev, workflowPhases: [...prev.workflowPhases, newPhase] }));
     };
@@ -563,7 +731,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     return (
         <div className="min-h-screen bg-[var(--bg-core)] text-[var(--text-primary)] font-sans flex flex-col relative">
 
-            {/* Confirmation Modal */}
+            {/* Confirmation Modal (Opportunity) */}
+            <DeleteConfirmationModal
+                isOpen={!!opportunityToDelete}
+                title="Delete Opportunity?"
+                description={`Are you sure you want to remove "${opportunityToDelete?.projectName || 'this item'}"? This action cannot be undone.`}
+                onClose={() => setOpportunityToDelete(null)}
+                onConfirm={confirmDeleteOpportunity}
+                isDeleting={isDeletingOpportunity}
+            />
+
+            {/* Confirmation Modal (Phase) */}
             <AnimatePresence>
                 {deleteModalId && (
                     <motion.div
@@ -624,13 +802,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         </div>
 
                         {/* Completeness Ring */}
-                        <div className={`h-8 w-8 rounded-full border-4 flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${isComplete || isGlobalReady ? 'border-status-safe text-status-safe' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`} style={{ borderColor: isComplete || isGlobalReady ? '#10B981' : undefined }}>
-                            {isComplete ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                        {/* Completeness Ring */}
+                        <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
+                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
+                            : 'bg-transparent border-slate-200 dark:border-slate-700 text-emerald-600'
+                            }`}>
+                            {isComplete || isGlobalReady ? (
+                                <Check className="w-5 h-5 text-white" strokeWidth={3} />
                             ) : (
-                                `${Math.round(isGlobalReady ? 100 : completeness)}%`
+                                <span className="text-[10px] font-bold">
+                                    {Math.round(isGlobalReady ? 100 : completeness)}%
+                                </span>
                             )}
                         </div>
                         <button
@@ -728,65 +910,153 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                 <motion.div key="B" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }} className="space-y-8">
                                     {/* Workflow Builder Section */}
                                     <div>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Workflow Definition (Phase Cards)</label>
+                                        {/* --- SECTION HEADER --- */}
+                                        <div className="flex justify-between items-end mb-4 px-1">
+                                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                Workflow Definition (Phase Cards)
+                                            </h3>
+
+                                            {/* VIEW TOGGLE (Replaces old Add Button) */}
                                             <button
-                                                onClick={addPhase}
-                                                className="text-xs font-bold text-brand-blue hover:text-brand-cyan flex items-center gap-1"
+                                                onClick={() => setIsZoomedOut(!isZoomedOut)}
+                                                className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded border border-slate-200"
                                             >
-                                                + Add Phase
+                                                {isZoomedOut ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+                                                {isZoomedOut ? "Zoom In (Detail)" : "Zoom Out (Overview)"}
                                             </button>
                                         </div>
 
-                                        {/* Horizontal Scrollable Canvas */}
-                                        <div className="overflow-x-auto pb-4 items-stretch min-h-[240px] bg-slate-50/50 dark:bg-black/10 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                                            {data.workflowPhases.length === 0 ? (
-                                                <div className="w-full flex flex-col items-center justify-center text-slate-400 italic text-sm border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg min-h-[200px]">
-                                                    Start by adding a phase to your workflow...
-                                                    <button onClick={addPhase} className="mt-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-300">Add Phase</button>
-                                                </div>
-                                            ) : (
-                                                <Reorder.Group
-                                                    axis="x"
-                                                    values={data.workflowPhases}
-                                                    onReorder={handleReorder}
-                                                    className="flex gap-0 items-center h-full"
+                                        {/* --- WORKFLOW SCROLL CONTAINER --- */}
+                                        <div
+                                            ref={scrollContainerRef}
+                                            className={`flex gap-4 overflow-x-auto pb-6 px-1 items-start scroll-smooth transition-all duration-500 custom-scrollbar ${isZoomedOut ? 'min-h-[200px]' : 'min-h-[440px]'}`}
+                                        >
+
+                                            <DndContext
+                                                sensors={sensors}
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={handleDragEnd}
+                                            >
+                                                <SortableContext
+                                                    items={data.workflowPhases.map((p: any) => p.id)}
+                                                    strategy={horizontalListSortingStrategy}
                                                 >
-                                                    {data.workflowPhases.map((phase) => (
-                                                        <PhaseCard
-                                                            key={phase.id}
-                                                            phase={phase}
-                                                            updatePhase={updatePhase}
-                                                            requestDelete={requestDeletePhase}
-                                                        />
+                                                    {data.workflowPhases?.map((phase, index) => (
+                                                        <SortablePhaseCard key={phase.id} id={phase.id}>
+                                                            <div
+                                                                onClick={() => {
+                                                                    if (isZoomedOut) setIsZoomedOut(false);
+                                                                }}
+                                                                className={`bg-[#fff9c4] rounded-sm shadow-md border-t border-yellow-200 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none
+                                                                    ${isZoomedOut
+                                                                        ? 'w-[150px] h-[150px] p-3 justify-center items-center text-center cursor-pointer hover:shadow-lg hover:border-blue-400' // OVERVIEW STYLE
+                                                                        : 'w-[320px] p-4' // DETAIL STYLE
+                                                                    }`}
+                                                            >
+
+                                                                {/* HEADER (Title) */}
+                                                                <div className={`w-full ${isZoomedOut ? 'flex items-center justify-center h-full' : 'border-b border-yellow-200/50 pb-2 mb-1 flex justify-between items-start'}`}>
+                                                                    {isZoomedOut ? (
+                                                                        <div className="font-kalam font-bold text-slate-800 text-sm leading-tight line-clamp-4 select-none">
+                                                                            {phase.name || "Untitled Phase"}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={phase.name}
+                                                                                onChange={(e) => updatePhase(phase.id, 'name', e.target.value)}
+                                                                                className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50"
+                                                                                placeholder="Phase Name..."
+                                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                                            />
+                                                                            <button
+                                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                                                onClick={() => requestDeletePhase(phase.id)}
+                                                                                className="text-yellow-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                            >
+                                                                                <X size={16} />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* DETAILS (Hidden in Zoom Out) */}
+                                                                <div className={`space-y-3 transition-opacity duration-200 ${isZoomedOut ? 'hidden opacity-0' : 'block opacity-100'}`}>
+                                                                    <SmartTextarea
+                                                                        label="Trigger / Input"
+                                                                        value={phase.inputs || ''}
+                                                                        onChange={(val) => updatePhase(phase.id, 'inputs', val)}
+                                                                        placeholder="• List items..."
+                                                                    />
+                                                                    <SmartTextarea
+                                                                        label="Actions Taken"
+                                                                        value={phase.actions || ''}
+                                                                        onChange={(val) => updatePhase(phase.id, 'actions', val)}
+                                                                        placeholder="• List items..."
+                                                                    />
+                                                                    <SmartTextarea
+                                                                        label="Artifact / Output"
+                                                                        value={phase.outputs || ''}
+                                                                        onChange={(val) => updatePhase(phase.id, 'outputs', val)}
+                                                                        placeholder="• List items..."
+                                                                    />
+
+                                                                    {/* Autonomy Footer */}
+                                                                    <div className="pt-3 mt-auto" onPointerDown={(e) => e.stopPropagation()}>
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <div className="flex gap-1 justify-between bg-white/30 p-1 rounded-full">
+                                                                                {['L1', 'L2', 'L3', 'L4', 'L5'].map((level) => (
+                                                                                    <button
+                                                                                        key={level}
+                                                                                        onClick={() => updatePhase(phase.id, 'autonomy', level as any)}
+                                                                                        className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
+                                                                                            ? 'bg-slate-800 text-white shadow-sm scale-110'
+                                                                                            : 'text-yellow-800 hover:bg-yellow-200'
+                                                                                            }`}
+                                                                                    >
+                                                                                        {level}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                            <div className="text-[10px] text-center text-yellow-800/80 font-medium h-4">
+                                                                                {AUTONOMY_LABELS[phase.autonomy] || 'Select autonomy level'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </SortablePhaseCard>
                                                     ))}
-                                                </Reorder.Group>
-                                            )}
+                                                </SortableContext>
+                                            </DndContext>
+
+                                            {/* --- GHOST ADD BUTTON (Resizes dynamically) --- */}
+                                            <button
+                                                onClick={addPhase}
+                                                className={`shrink-0 rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/30 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-blue-500 transition-all group
+                                                    ${isZoomedOut
+                                                        ? 'w-[150px] h-[150px]' // Small Square
+                                                        : 'w-[320px] h-[420px]' // Full Size
+                                                    }`}
+                                            >
+                                                <div className="w-12 h-12 rounded-full bg-white border border-slate-200 group-hover:border-blue-300 flex items-center justify-center shadow-sm">
+                                                    <Plus size={24} />
+                                                </div>
+                                                <span className="font-semibold text-sm">{isZoomedOut ? "Add" : "Add Next Phase"}</span>
+                                            </button>
+
                                         </div>
                                     </div>
 
-                                    {/* Capability Map Section (Side-by-Side) */}
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Existing Capabilities (Safe)</label>
-                                            <TagInput
-                                                tags={data.capabilitiesExisting}
-                                                addTag={(v) => addCapability('existing', v)}
-                                                removeTag={(v) => removeCapability('existing', v)}
-                                                placeholder="Add capability (Enter)..."
-                                                colorClass="bg-status-safe"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Missing Capabilities (Gap)</label>
-                                            <TagInput
-                                                tags={data.capabilitiesMissing}
-                                                addTag={(v) => addCapability('missing', v)}
-                                                removeTag={(v) => removeCapability('missing', v)}
-                                                placeholder="Add dependency (Enter)..."
-                                                colorClass="bg-status-gap"
-                                            />
-                                        </div>
+                                    {/* --- CAPABILITY MANAGER --- */}
+                                    <div className="mt-8 pt-8 border-t border-slate-100">
+                                        <CapabilitiesManager
+                                            existingCaps={data.capabilitiesExisting || []}
+                                            missingCaps={data.capabilitiesMissing || []}
+                                            onUpdate={(field, newVal) => setData(prev => ({ ...prev, [field]: newVal }))}
+                                        />
                                     </div>
                                 </motion.div>
                             )}

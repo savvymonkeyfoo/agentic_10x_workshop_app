@@ -4,7 +4,10 @@ export interface WorkflowPhase {
     id: string; // purely for UI key
     name: string;
     autonomy: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
-    guardrail: string;
+    inputs?: string;
+    actions?: string;
+    outputs?: string;
+    guardrail?: string;
 }
 
 export interface OpportunityState {

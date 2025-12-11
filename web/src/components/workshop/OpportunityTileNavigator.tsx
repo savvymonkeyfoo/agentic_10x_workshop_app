@@ -1,11 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { calculateCompleteness } from '@/utils/completeness';
+import { OpportunityState } from '@/types/workshop';
 
 interface OpportunitySummary {
     id: string;
     projectName: string;
     // We can add completeness score if available, or calculate a rough one
     updatedAt: Date;
+    [key: string]: any;
 }
 
 interface OpportunityTileNavigatorProps {
@@ -90,6 +93,12 @@ export const OpportunityTileNavigator = ({
                         {/* Existing Tiles */}
                         {opportunities.map((opp) => {
                             const isActive = opp.id === activeId;
+
+                            // Eager Calculation
+                            // We cast to any/OpportunityState because the summary actually has all fields from parent
+                            const stats = calculateCompleteness(opp as unknown as OpportunityState);
+                            const isComplete = stats.total === 100;
+
                             return (
                                 <motion.div
                                     key={opp.id}
@@ -114,7 +123,10 @@ export const OpportunityTileNavigator = ({
 
                                     {/* Status Dot */}
                                     <div className="flex justify-between items-start">
-                                        <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-status-safe' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                                        <div className={`w-3 h-3 rounded-full mr-2 transition-colors duration-300 ${isComplete
+                                                ? 'bg-emerald-500 shadow-sm shadow-emerald-200'
+                                                : isActive ? 'bg-status-safe' : 'bg-slate-300 dark:bg-slate-600'
+                                            }`} />
                                     </div>
 
                                     {/* Content */}
