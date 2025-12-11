@@ -77,9 +77,10 @@ model Opportunity {
   capabilitiesProduced CapabilityProduced[]
   
   // Outputs
-  sequenceRank    Int?
-  matrixX         Float?
-  matrixY         Float?
+  sequenceRank        Int?
+  strategicRationale  String?   @db.Text
+  matrixX             Float?
+  matrixY             Float?
 }
 
 // 3. Capabilities
