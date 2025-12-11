@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface SequenceItem {
@@ -48,16 +48,31 @@ export function AIStrategistPanel({
     const displayDependencies = analysis?.dependencies || initialDependencies;
     const displayRisks = analysis?.risks || initialRisks;
 
-    // Build sequence from nodes if no analysis
-    const displaySequence = analysis?.sequence || nodes
-        .filter(n => n.rank)
-        .sort((a, b) => (a.rank || 99) - (b.rank || 99))
-        .map(n => ({
-            id: n.id,
-            projectName: n.name,
-            rank: n.rank!,
-            rationale: n.strategicRationale
-        }));
+    // LOCAL STATE: Manage sequence locally to handle both AI updates and DB refreshes (Drag-and-Drop)
+    const [displaySequence, setDisplaySequence] = useState<SequenceItem[]>([]);
+
+    // 1. Sync when Nodes change (Database Update / Initial Load)
+    useEffect(() => {
+        if (nodes.length > 0) {
+            const derived = nodes
+                .filter(n => n.rank)
+                .sort((a, b) => (a.rank || 99) - (b.rank || 99))
+                .map(n => ({
+                    id: n.id,
+                    projectName: n.name,
+                    rank: n.rank!,
+                    rationale: n.strategicRationale
+                }));
+            setDisplaySequence(derived);
+        }
+    }, [nodes]);
+
+    // 2. Sync when Analysis changes (AI Agent Update)
+    useEffect(() => {
+        if (analysis?.sequence) {
+            setDisplaySequence(analysis.sequence);
+        }
+    }, [analysis]);
 
     const hasData = displayNarrative || displaySequence.length > 0;
 

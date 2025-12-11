@@ -58,6 +58,8 @@ export async function analyzeWorkshop(workshopId: string) {
             }),
             prompt: `You are a Board-Level Strategic Advisor presenting to C-Suite executives. Review these projects and determine the optimal execution sequence using structured risk management principles.
 
+LANGUAGE: Use Australian English spelling (e.g. 'Prioritise', 'Optimise', 'Analyse', 'Program', 'Centred').
+
 PROTOCOL (THINK STEP-BY-STEP):
 1. ARCHITECT (Dependencies): Identify semantic overlaps. Use bullet points (•) for each distinct dependency found.
 2. RISK OFFICER (Staircasing): Identify risk mitigations. Use bullet points (•) for each specific de-risking move.

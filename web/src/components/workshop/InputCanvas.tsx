@@ -293,11 +293,53 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [opportunityId, setOpportunityId] = useState<string | undefined>(undefined);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
+    const [isGlobalReady, setIsGlobalReady] = useState(false);
+    const [globalCompleteness, setGlobalCompleteness] = useState(0);
+
     const router = useRouter();
 
     const completenessStatus = calculateCompleteness(data);
     const completeness = completenessStatus.total;
     const isComplete = completenessStatus.total === 100;
+
+    // --- Global Completeness Check (Auto-Calculate on Load) ---
+    useEffect(() => {
+        if (allOpportunities && allOpportunities.length > 0) {
+            let totalScore = 0;
+
+            allOpportunities.forEach(opp => {
+                // Map partial DB data to state shape for calculator
+                const mockState = {
+                    projectName: opp.projectName,
+                    frictionStatement: opp.frictionStatement,
+                    workflowPhases: Array.isArray(opp.workflowPhases) ? opp.workflowPhases : [],
+                    definitionOfDone: opp.definitionOfDone,
+                    keyDecisions: opp.keyDecisions,
+                    dfvAssessment: opp.dfvAssessment,
+                    benefitRevenue: opp.benefitRevenue,
+                    // Defaults
+                    strategicHorizon: [],
+                    whyDoIt: '',
+                    capabilitiesExisting: [],
+                    capabilitiesMissing: [],
+                    vrcc: {},
+                    tShirtSize: 'M'
+                } as unknown as OpportunityState;
+
+                totalScore += calculateCompleteness(mockState).total;
+            });
+
+            const avgCompleteness = Math.round(totalScore / allOpportunities.length);
+            setGlobalCompleteness(avgCompleteness);
+
+            // Enable if everything is effectively complete (or >90% to be forgiving?)
+            // Following strict user request:
+            if (avgCompleteness === 100) {
+                setIsGlobalReady(true);
+            }
+        }
+    }, [allOpportunities]);
+
 
     // --- Data Fetching ---
     // Kept to allow refreshing list after updates
@@ -416,6 +458,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
     // -- App Handlers --
     const handleAnalyse = async () => {
+        // If current data is NOT complete but we are globally read, just redirect
+        if (!isComplete && isGlobalReady) {
+            router.push(`/workshop/${workshopId}/analysis`);
+            return;
+        }
+
         // Force immediate save then redirect
         setSaveStatus('saving');
         try {
@@ -576,19 +624,19 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         </div>
 
                         {/* Completeness Ring */}
-                        <div className={`h-8 w-8 rounded-full border-4 flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${isComplete ? 'border-status-safe text-status-safe' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`} style={{ borderColor: isComplete ? '#10B981' : undefined }}>
+                        <div className={`h-8 w-8 rounded-full border-4 flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${isComplete || isGlobalReady ? 'border-status-safe text-status-safe' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`} style={{ borderColor: isComplete || isGlobalReady ? '#10B981' : undefined }}>
                             {isComplete ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
                             ) : (
-                                `${Math.round(completeness)}%`
+                                `${Math.round(isGlobalReady ? 100 : completeness)}%`
                             )}
                         </div>
                         <button
-                            disabled={!isComplete}
+                            disabled={!isComplete && !isGlobalReady}
                             onClick={handleAnalyse}
-                            className={`px-6 py-2 rounded-full font-semibold transition-all ${isComplete ? 'bg-brand-blue text-white shadow-lg hover:shadow-xl hover:scale-105' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                            className={`px-6 py-2 rounded-full font-semibold transition-all ${isComplete || isGlobalReady ? 'bg-brand-blue text-white shadow-lg hover:shadow-xl hover:scale-105' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
                         >
                             Analyse
                         </button>

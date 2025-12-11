@@ -1,244 +1,186 @@
 'use client';
-
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
-// --- Types ---
 interface Opportunity {
     id: string;
-    name: string;
-    x: number; // scoreComplexity (0-5)
-    y: number; // scoreValue (0-5)
-    z: number; // financial size
-    risk: number;
-    rank?: number;
-    financialImpact?: number;
+    projectName: string;
+    scoreValue: number;
+    scoreComplexity: number;
+    sequenceRank: number | null;
+    benefitRevenue: number;
+    benefitCostAvoidance: number;
 }
 
-interface StrategicMapProps {
-    nodes: Opportunity[];
-}
-
-// --- Physics Engine: Collision Detection ---
 const resolveCollisions = (nodes: any[], width: number, height: number) => {
-    const padding = 120;
-    const minDistance = 120;
+    // CONFIG:
+    const paddingSide = 80;
+    const paddingBottom = 60;
+    const paddingTop = 160; // Dedicated "Airspace" for cards at the top
 
-    // Map scores to pixel coordinates
-    let solved = nodes.map(node => ({
-        ...node,
-        px: ((node.x || 3) / 5) * (width - padding * 2) + padding,
-        py: (1 - ((node.y || 3) / 5)) * (height - padding * 2) + padding,
-        radius: Math.max(35, Math.min(60, 30 + (node.financialImpact || 0) / 50000))
-    }));
+    const effectiveWidth = width - (paddingSide * 2);
+    const effectiveHeight = height - (paddingTop + paddingBottom);
+    const minDistance = 140;
 
-    // Simple Iterative Nudge (Prevents stacking)
-    for (let iteration = 0; iteration < 10; iteration++) {
-        for (let i = 0; i < solved.length; i++) {
-            for (let j = i + 1; j < solved.length; j++) {
-                const a = solved[i];
-                const b = solved[j];
-                const dx = a.px - b.px;
-                const dy = a.py - b.py;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+    // 1. Map Scores to Pixel Coordinates
+    let solved = nodes.map(node => {
+        const impact = (node.benefitRevenue || 0) + (node.benefitCostAvoidance || 0);
+        // Log Scale for Radius: 30px to 80px
+        const logValue = impact > 0 ? Math.log10(impact) : 0;
+        const radius = impact === 0 ? 30 : Math.max(30, Math.min(80, (logValue * 11)));
 
-                if (dist < minDistance) {
-                    const angle = Math.atan2(dy, dx);
-                    const nudge = (minDistance - dist) / 2;
-                    a.px += Math.cos(angle) * nudge;
-                    a.py += Math.sin(angle) * nudge;
-                    b.px -= Math.cos(angle) * nudge;
-                    b.py -= Math.sin(angle) * nudge;
-                }
+        return {
+            ...node,
+            // X Mapping
+            x: (node.scoreComplexity / 5) * effectiveWidth + paddingSide,
+            // Y Mapping (Inverted + Top Offset)
+            y: (1 - (node.scoreValue / 5)) * effectiveHeight + paddingTop,
+            r: radius,
+            impactLabel: impact > 1000000 ? `$${(impact / 1000000).toFixed(1)}M` : `$${(impact / 1000).toFixed(0)}k`
+        };
+    });
+
+    // 2. Physics Nudge
+    for (let i = 0; i < solved.length; i++) {
+        for (let j = i + 1; j < solved.length; j++) {
+            const a = solved[i];
+            const b = solved[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < minDistance) {
+                const angle = Math.atan2(dy, dx);
+                const nudge = (minDistance - dist) / 2;
+                a.x += Math.cos(angle) * nudge;
+                a.y += Math.sin(angle) * nudge;
+                b.x -= Math.cos(angle) * nudge;
+                b.y -= Math.sin(angle) * nudge;
             }
         }
     }
-
-    // Clamp to bounds
-    solved = solved.map(node => ({
-        ...node,
-        px: Math.max(padding, Math.min(width - padding, node.px)),
-        py: Math.max(padding, Math.min(height - padding, node.py))
-    }));
-
     return solved;
 };
 
-export default function StrategicMap({ nodes }: StrategicMapProps) {
-    const width = 1200;
-    const height = 700;
+export default function StrategicMap({ opportunities }: { opportunities: Opportunity[] }) {
+    const width = 1000;
+    const height = 750; // Increased Height for breathing room
 
-    // Process Data & Solve Collisions
     const processedData = useMemo(() => {
-        const resolved = resolveCollisions(nodes, width, height);
-        return resolved.sort((a, b) => (a.rank || 99) - (b.rank || 99));
-    }, [nodes]);
+        const valid = opportunities.filter(o => o.scoreValue !== null);
+        const resolved = resolveCollisions(valid, width, height);
+        return resolved.sort((a, b) => (a.sequenceRank || 99) - (b.sequenceRank || 99));
+    }, [opportunities]);
 
+    const pathData = processedData
+        .filter(d => d.sequenceRank && d.sequenceRank < 90)
+        .map((d, i) => (i === 0 ? `M ${d.x} ${d.y}` : `L ${d.x} ${d.y}`))
+        .join(' ');
 
-
-    const formatCurrency = (val: number) => {
-        if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
-        if (val >= 1000) return `$${(val / 1000).toFixed(0)}K`;
-        return val > 0 ? `$${val}` : '';
+    const getBubbleColor = (rank: number | null) => {
+        if (rank === 1) return '#10b981';
+        if (rank === 2) return '#3b82f6';
+        if (rank === 3) return '#8b5cf6';
+        return '#64748b';
     };
 
     return (
-        <div className="h-full w-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 relative overflow-hidden">
-            {/* Header */}
-            <header className="relative z-10 p-6 flex justify-between items-start border-b border-slate-200/50">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Strategy Journey Map</h1>
-                    <p className="text-sm text-slate-500 mt-1">Bubble position = Value vs Complexity. Bubble size = Financial Impact.</p>
-                </div>
-            </header>
+        // CONTAINER: overflow-visible allowed, but we rely on internal padding now.
+        <div className="w-full h-full bg-slate-50/50 rounded-xl border border-slate-200 relative shadow-inner overflow-visible">
 
-            {/* SVG Canvas */}
-            <main className="flex-1 relative">
-                <svg
-                    viewBox={`0 0 ${width} ${height}`}
-                    className="w-full h-full"
-                    preserveAspectRatio="xMidYMid meet"
-                >
-                    {/* Definitions */}
-                    <defs>
-                        <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="4" stdDeviation="8" floodOpacity="0.12" />
-                        </filter>
-                        <linearGradient id="bubble-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#3b82f6" />
-                            <stop offset="100%" stopColor="#6366f1" />
-                        </linearGradient>
-                    </defs>
+            {/* --- HTML OVERLAY LAYER --- */}
+            {processedData.map((node, i) => {
+                // Smart Anchoring Logic
+                const isFarLeft = node.x < 200;
+                const isFarRight = node.x > 800;
 
-                    {/* LAYER 0: Quadrant Labels */}
-                    <text x={width * 0.25} y={80} textAnchor="middle" fill="#cbd5e1" fontSize="28" fontWeight="700">QUICK WIN</text>
-                    <text x={width * 0.75} y={80} textAnchor="middle" fill="#cbd5e1" fontSize="28" fontWeight="700">STRATEGIC</text>
-                    <text x={width * 0.25} y={height - 40} textAnchor="middle" fill="#cbd5e1" fontSize="28" fontWeight="700">INCREMENTAL</text>
-                    <text x={width * 0.75} y={height - 40} textAnchor="middle" fill="#fecaca" fontSize="28" fontWeight="700">DEPRIORITIZE</text>
+                // Default: Center (-50%). Left: (0%). Right: (-100%)
+                let xTranslate = '-50%';
+                let textAlign = 'text-center';
+                let beakPos = 'left-1/2 -ml-[6px]'; // Center beak
 
-                    {/* LAYER 1: Grid Lines */}
-                    <g opacity="0.15">
-                        <line x1={width / 2} y1="0" x2={width / 2} y2={height} stroke="#64748b" strokeWidth="2" strokeDasharray="8 8" />
-                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="#64748b" strokeWidth="2" strokeDasharray="8 8" />
+                if (isFarLeft) {
+                    xTranslate = '-10%'; // Slight offset from exact edge
+                    textAlign = 'text-left';
+                    beakPos = 'left-[10%]';
+                } else if (isFarRight) {
+                    xTranslate = '-90%';
+                    textAlign = 'text-right';
+                    beakPos = 'left-[90%]';
+                }
+
+                return (
+                    <motion.div
+                        key={`card-${node.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + (i * 0.1) }}
+                        className="absolute z-50 flex flex-col pointer-events-none"
+                        style={{
+                            left: node.x,
+                            top: node.y - node.r - 20,
+                            transform: `translate(${xTranslate}, -100%)`,
+                            width: '240px',
+                            alignItems: isFarLeft ? 'flex-start' : (isFarRight ? 'flex-end' : 'center')
+                        }}
+                    >
+                        <div className={`bg-white rounded-lg shadow-xl border border-slate-200 p-3 w-full h-auto ${textAlign}`}>
+                            <div className="text-slate-800 font-bold text-xs leading-snug line-clamp-4">
+                                {node.projectName}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-2 font-mono border-t border-slate-100 pt-1">
+                                {node.impactLabel} Impact
+                            </div>
+                        </div>
+
+                        {/* Smart Beak: Position changes based on anchor */}
+                        <div className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white filter drop-shadow-sm -mt-[1px] relative ${beakPos}`}></div>
+                    </motion.div>
+                );
+            })}
+
+            {/* --- SVG LAYER --- */}
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-h-[600px] absolute inset-0 overflow-visible">
+                <defs>
+                    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1" />
+                    </filter>
+                </defs>
+
+                {/* Grid */}
+                <g opacity="0.1">
+                    {[0.5].map(p => <line key={`v-${p}`} x1={width * p} y1="0" x2={width * p} y2={height} stroke="black" strokeWidth="2" strokeDasharray="5 5" />)}
+                    {[0.5].map(p => <line key={`h-${p}`} x1="0" y1={height * p} x2={width} y2={height * p} stroke="black" strokeWidth="2" strokeDasharray="5 5" />)}
+                </g>
+
+                {/* Quadrant Labels */}
+                <text x="30" y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">QUICK WINS</text>
+                <text x={width - 30} y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">MAJOR PROJECTS</text>
+                <text x="30" y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">FILL-INS</text>
+                <text x={width - 30} y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
+
+                {/* Path */}
+                <path d={pathData} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="6 6" />
+
+                {/* Bubbles */}
+                {processedData.map((node, i) => (
+                    <g key={node.id}>
+                        <line x1={node.x} y1={node.y} x2={node.x} y2={node.y - node.r - 20} stroke="#cbd5e1" strokeWidth="2" />
+                        <motion.circle
+                            initial={{ r: 0 }} animate={{ r: node.r }} transition={{ delay: i * 0.1 }}
+                            cx={node.x} cy={node.y}
+                            fill={getBubbleColor(node.sequenceRank)}
+                            stroke="white" strokeWidth="3"
+                            className="cursor-pointer hover:opacity-90"
+                        />
+                        {node.sequenceRank && (
+                            <text x={node.x} y={node.y + 7} textAnchor="middle" fill="white" fontWeight="800" fontSize="20">
+                                {node.sequenceRank}
+                            </text>
+                        )}
                     </g>
-
-
-
-                    {/* LAYER 3: Bubbles */}
-                    {processedData.map((node, i) => (
-                        <motion.g key={node.id}>
-                            <motion.circle
-                                cx={node.px}
-                                cy={node.py}
-                                fill={
-                                    node.rank === 1 ? '#10b981' :
-                                        node.rank === 2 ? '#3b82f6' :
-                                            node.rank === 3 ? '#8b5cf6' :
-                                                node.rank ? '#64748b' :
-                                                    '#cbd5e1'
-                                }
-                                stroke="white"
-                                strokeWidth="4"
-                                initial={{ r: 0 }}
-                                animate={{ r: node.radius }}
-                                transition={{ delay: i * 0.1, type: 'spring', stiffness: 200 }}
-                                className="cursor-pointer"
-                            />
-                            {node.rank && (
-                                <motion.text
-                                    x={node.px}
-                                    y={node.py + 8}
-                                    textAnchor="middle"
-                                    fill="white"
-                                    fontWeight="800"
-                                    fontSize="22"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.3 + i * 0.1 }}
-                                >
-                                    {node.rank}
-                                </motion.text>
-                            )}
-                        </motion.g>
-                    ))}
-
-                    {/* LAYER 4: Callout Cards */}
-                    {processedData.map((node, i) => (
-                        <motion.g
-                            key={`card-${node.id}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 + i * 0.1 }}
-                        >
-                            {/* Stem Line */}
-                            <line
-                                x1={node.px}
-                                y1={node.py - node.radius - 5}
-                                x2={node.px}
-                                y2={node.py - node.radius - 50}
-                                stroke="#94a3b8"
-                                strokeWidth="2"
-                                strokeDasharray="4 3"
-                            />
-                            <circle cx={node.px} cy={node.py - node.radius - 5} r={4} fill="#94a3b8" />
-
-                            {/* Card Body */}
-                            <rect
-                                x={node.px - 110}
-                                y={node.py - node.radius - 110}
-                                width="220"
-                                height="55"
-                                rx="10"
-                                fill="white"
-                                stroke="#e2e8f0"
-                                strokeWidth="1"
-                                filter="url(#card-shadow)"
-                            />
-
-                            {/* Project Name */}
-                            <text
-                                x={node.px}
-                                y={node.py - node.radius - 80}
-                                textAnchor="middle"
-                                fill="#1e293b"
-                                fontWeight="700"
-                                fontSize="13"
-                            >
-                                {node.name.length > 28 ? node.name.substring(0, 26) + '...' : node.name}
-                            </text>
-
-                            {/* Stats Line */}
-                            <text
-                                x={node.px}
-                                y={node.py - node.radius - 62}
-                                textAnchor="middle"
-                                fill="#64748b"
-                                fontWeight="500"
-                                fontSize="11"
-                            >
-                                Value: {node.y}/5 • Complexity: {node.x}/5
-                                {node.financialImpact ? ` • ${formatCurrency(node.financialImpact)}` : ''}
-                            </text>
-                        </motion.g>
-                    ))}
-
-                    {/* Axis Labels */}
-                    <text x={width / 2} y={height - 10} textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="600">
-                        COMPLEXITY / EFFORT →
-                    </text>
-                    <text x={20} y={height / 2} textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="600" transform={`rotate(-90, 20, ${height / 2})`}>
-                        BUSINESS VALUE →
-                    </text>
-                </svg>
-            </main>
-
-            {/* Footer */}
-            <footer className="relative z-20 p-4 bg-white/70 dark:bg-slate-900/70 border-t border-slate-200/50 backdrop-blur-sm">
-                <div className="flex justify-between items-center text-xs text-slate-500">
-                    <span>{nodes.length} opportunities | {processedData.filter(n => n.rank).length} in sequence | Bubble size = Financial Impact</span>
-                    <a href="/" className="font-bold text-blue-600 hover:underline">← Back to Dashboard</a>
-                </div>
-            </footer>
+                ))}
+            </svg>
         </div>
     );
 }

@@ -15,13 +15,14 @@ async function getAnalysisData(workshopId: string) {
     if (!workshop) {
         return {
             nodes: [],
+            opportunities: [],
             strategyNarrative: null,
             strategyDependencies: null,
             strategyRisks: null
         };
     }
 
-    // Map to Nodes for Matrix
+    // Map to Nodes for AI Panel
     const nodes = workshop.opportunities.map((opp: typeof workshop.opportunities[number]) => {
         const financialImpact = (opp.benefitRevenue || 0) + (opp.benefitCostAvoidance || 0);
         const minSize = 400;
@@ -44,8 +45,20 @@ async function getAnalysisData(workshopId: string) {
         };
     });
 
+    // Raw opportunities for StrategicMap
+    const opportunities = workshop.opportunities.map((opp: typeof workshop.opportunities[number]) => ({
+        id: opp.id,
+        projectName: opp.projectName || "Untitled",
+        scoreValue: opp.scoreValue || 0,
+        scoreComplexity: opp.scoreComplexity || 0,
+        sequenceRank: opp.sequenceRank,
+        benefitRevenue: opp.benefitRevenue || 0,
+        benefitCostAvoidance: opp.benefitCostAvoidance || 0
+    }));
+
     return {
         nodes,
+        opportunities,
         strategyNarrative: workshop.strategyNarrative,
         strategyDependencies: workshop.strategyDependencies,
         strategyRisks: workshop.strategyRisks
@@ -61,9 +74,11 @@ export default async function AnalysisPage({ params }: { params: { id: string } 
         <AnalysisDashboard
             workshopId={params.id}
             nodes={data.nodes}
+            opportunities={data.opportunities}
             initialNarrative={data.strategyNarrative || ""}
             initialDependencies={data.strategyDependencies || ""}
             initialRisks={data.strategyRisks || ""}
         />
     );
 }
+

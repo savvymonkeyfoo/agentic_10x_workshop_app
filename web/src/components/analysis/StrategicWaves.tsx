@@ -1,134 +1,124 @@
 'use client';
+import React, { useState } from 'react';
+import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
+import { updateProjectWave } from '@/app/actions/update-wave';
+import { useRouter } from 'next/navigation';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+// --- 1. Draggable Card ---
+const DraggableCard = ({ project }: { project: any }) => {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: project.id, data: { project } });
+    const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
-// --- Types ---
-interface Opportunity {
-    id: string;
-    name: string;
-    projectName?: string;
-    x: number;
-    y: number;
-    tShirtSize?: string;
-    rank?: number;
-    financialImpact?: number;
-    scoreValue?: number;
-    scoreComplexity?: number;
-    benefitRevenue?: number;
-    benefitCostAvoidance?: number;
-}
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="bg-white dark:bg-slate-700 p-3 rounded shadow-sm border border-slate-200 dark:border-slate-600 hover:shadow-md cursor-grab active:cursor-grabbing mb-3 group relative z-10">
+            <div className="flex justify-between items-start mb-2">
+                <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">{project.name || project.projectName}</span>
+                <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-500 dark:text-slate-400 shrink-0 ml-2">{project.tShirtSize || '-'}</span>
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400">Val: {project.scoreValue}/5 • Cplx: {project.scoreComplexity}/5</div>
+        </div>
+    );
+};
 
-interface StrategicWavesProps {
-    nodes: Opportunity[];
-}
+// --- 2. Droppable Column ---
+const DroppableColumn = ({ rank, title, projects, color, bg }: any) => {
+    const { setNodeRef } = useDroppable({ id: rank.toString() });
+    return (
+        <div ref={setNodeRef} className={`flex flex-col h-full rounded-lg border-t-4 ${color} ${bg} p-3 transition-colors`}>
+            <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-4 uppercase">{title}</h3>
+            <div className="flex-1 overflow-y-auto min-h-[100px] scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-600">
+                {projects.map((p: any) => <DraggableCard key={p.id} project={p} />)}
+            </div>
+        </div>
+    );
+};
 
-const waveHeaders = ["WAVE 1: MOBILIZE", "WAVE 2: SCALE", "WAVE 3: OPTIMIZE", "WAVE 4+: DEFER"];
-const waveColors = ["border-emerald-500", "border-blue-500", "border-violet-500", "border-slate-400"];
-const bgColors = ["bg-emerald-50/50", "bg-blue-50/50", "bg-violet-50/50", "bg-slate-50/50"];
-const badgeColors = ["bg-emerald-500", "bg-blue-500", "bg-violet-500", "bg-slate-500"];
+// --- 3. Main Component ---
+export default function StrategicWaves({ nodes, workshopId }: { nodes: any[], workshopId: string }) {
+    const router = useRouter();
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [pendingMove, setPendingMove] = useState<{ id: string, newRank: number } | null>(null);
+    const [reason, setReason] = useState("");
 
-export default function StrategicWaves({ nodes }: StrategicWavesProps) {
-    // Group by Rank (1, 2, 3, 4+)
-    const waves = [1, 2, 3, 4].map(rank => {
-        if (rank === 4) {
-            // Wave 4+ includes rank 4 and above, plus unranked
-            return nodes.filter(o => (o.rank || 99) >= 4);
+    // Headers configuration
+    const columns = [
+        { rank: 1, title: "WAVE 1: MOBILISE", color: "border-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
+        { rank: 2, title: "WAVE 2: SCALE", color: "border-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
+        { rank: 3, title: "WAVE 3: OPTIMISE", color: "border-violet-500", bg: "bg-violet-50 dark:bg-violet-900/10" },
+        { rank: 4, title: "WAVE 4: DEFER", color: "border-slate-300", bg: "bg-slate-50 dark:bg-slate-800/50" },
+    ];
+
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event;
+        setActiveId(null);
+        if (over && active.id !== over.id) {
+            const newRank = parseInt(over.id);
+            // Only trigger if rank actually changed
+            // Support both property names for compatibility
+            const currentProject = nodes.find(o => o.id === active.id);
+            const currentRank = currentProject?.rank || currentProject?.sequenceRank || 4;
+
+            if (currentProject && currentRank !== newRank) {
+                setPendingMove({ id: active.id, newRank });
+                setModalOpen(true); // <--- TRIGGER MODAL
+            }
         }
-        return nodes.filter(o => o.rank === rank);
-    });
+    };
 
-    const formatCurrency = (val: number) => {
-        if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
-        if (val >= 1000) return `$${(val / 1000).toFixed(0)}K`;
-        return val > 0 ? `$${val}` : '$0';
+    const handleSave = async () => {
+        if (!pendingMove) return;
+        await updateProjectWave(pendingMove.id, pendingMove.newRank, reason, workshopId);
+        setModalOpen(false);
+        setReason("");
+        setPendingMove(null);
+        router.refresh(); // Refresh to update Matrix colors and Lists
     };
 
     return (
-        <div className="h-full w-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-            {/* Header */}
-            <header className="p-6 border-b border-slate-200/50">
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Execution Waves</h1>
-                <p className="text-sm text-slate-500 mt-1">Projects grouped by execution priority. Multiple projects in the same wave can run in parallel.</p>
-            </header>
-
-            {/* Waves Grid */}
-            <main className="flex-1 p-6 overflow-hidden">
-                <div className="h-full grid grid-cols-4 gap-4">
-                    {waves.map((projects, i) => (
-                        <div
-                            key={i}
-                            className={`flex flex-col h-full rounded-xl border-t-4 ${waveColors[i]} ${bgColors[i]} border border-slate-200/50 overflow-hidden`}
-                        >
-                            {/* Wave Header */}
-                            <div className="p-4 border-b border-slate-200/30">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-                                        {waveHeaders[i]}
-                                    </h3>
-                                    <span className={`${badgeColors[i]} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}>
-                                        {projects.length}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Wave Cards */}
-                            <div className="flex-1 p-3 space-y-3 overflow-y-auto">
-                                {projects.map((p, idx) => (
-                                    <motion.div
-                                        key={p.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow cursor-default"
-                                    >
-                                        {/* Card Header */}
-                                        <div className="flex justify-between items-start mb-3">
-                                            <span className="font-bold text-slate-800 dark:text-white text-sm leading-tight">
-                                                {p.name || p.projectName}
-                                            </span>
-                                            {p.tShirtSize && (
-                                                <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">
-                                                    {p.tShirtSize}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Card Stats */}
-                                        <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                                            <div className="flex justify-between">
-                                                <span>Value: {p.y || p.scoreValue || 0}/5</span>
-                                                <span>Complexity: {p.x || p.scoreComplexity || 0}/5</span>
-                                            </div>
-                                            {(p.financialImpact || p.benefitRevenue || p.benefitCostAvoidance) && (
-                                                <div className="pt-1 border-t border-slate-100 dark:border-slate-700 mt-1">
-                                                    <span className="text-emerald-600 font-semibold">
-                                                        ROI: {formatCurrency(p.financialImpact || ((p.benefitRevenue || 0) + (p.benefitCostAvoidance || 0)))}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-
-                                {projects.length === 0 && (
-                                    <div className="flex items-center justify-center h-32 text-slate-300 dark:text-slate-600 text-xs italic">
-                                        No projects in this wave
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+        <div className="w-full h-[600px] relative p-4 mt-16">
+            <DndContext onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
+                <div className="grid grid-cols-4 gap-4 h-full">
+                    {columns.map(col => (
+                        <DroppableColumn
+                            key={col.rank}
+                            {...col}
+                            // Filter logic adapted for 'nodes' structure where 'rank' is the property
+                            projects={nodes.filter(o => (o.rank || o.sequenceRank || 4) === col.rank)}
+                        />
                     ))}
                 </div>
-            </main>
 
-            {/* Footer */}
-            <footer className="p-4 bg-white/70 dark:bg-slate-900/70 border-t border-slate-200/50 backdrop-blur-sm">
-                <div className="flex justify-between items-center text-xs text-slate-500">
-                    <span>{nodes.length} opportunities across {waves.filter(w => w.length > 0).length} waves</span>
-                    <a href="/" className="font-bold text-blue-600 hover:underline">← Back to Dashboard</a>
+                {/* Drag Overlay (Visual feedback) */}
+                <DragOverlay>
+                    {activeId ? (
+                        <div className="bg-white dark:bg-slate-700 p-3 rounded shadow-xl border border-blue-500 rotate-3 cursor-grabbing w-[200px]">
+                            <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Moving Project...</span>
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
+
+            {/* --- OVERRIDE MODAL --- */}
+            {modalOpen && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl">
+                    <div className="bg-white dark:bg-slate-800 w-[400px] p-6 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in zoom-in-95">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Recommendation Override</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You are moving a project against the AI recommendation. Please document the reason for the Board.</p>
+                        <textarea
+                            className="w-full h-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4 resize-none"
+                            placeholder="e.g. 'Board mandated immediate start despite risk...'"
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-colors">Save Override</button>
+                        </div>
+                    </div>
                 </div>
-            </footer>
+            )}
         </div>
     );
 }

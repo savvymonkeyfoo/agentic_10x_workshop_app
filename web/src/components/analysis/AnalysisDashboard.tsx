@@ -9,6 +9,7 @@ import StrategicWaves from './StrategicWaves';
 interface AnalysisDashboardProps {
     workshopId: string;
     nodes: any[];
+    opportunities: any[];
     initialNarrative?: string;
     initialDependencies?: string;
     initialRisks?: string;
@@ -19,6 +20,7 @@ type ViewMode = 'MATRIX' | 'WAVES';
 export default function AnalysisDashboard({
     workshopId,
     nodes,
+    opportunities,
     initialNarrative = "",
     initialDependencies = "",
     initialRisks = ""
@@ -41,7 +43,7 @@ export default function AnalysisDashboard({
     };
 
     return (
-        <div className="flex h-screen w-screen bg-[var(--bg-core)] overflow-hidden">
+        <div className="flex h-screen w-screen bg-[var(--bg-core)]">
             {/* LEFT: AI Strategist Panel (F-Pattern: Read first) */}
             <div className="h-full z-20 shrink-0">
                 <AIStrategistPanel
@@ -89,11 +91,12 @@ export default function AnalysisDashboard({
 
                 {/* Conditional View Render */}
                 {viewMode === 'MATRIX' ? (
-                    <StrategicMap nodes={nodes} />
+                    <StrategicMap opportunities={opportunities} />
                 ) : (
-                    <StrategicWaves nodes={nodes} />
+                    <StrategicWaves nodes={nodes} workshopId={workshopId} />
                 )}
             </div>
         </div>
     );
 }
+
