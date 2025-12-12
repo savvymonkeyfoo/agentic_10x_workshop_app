@@ -15,7 +15,12 @@ A guided, interactive canvas ("Input Canvas") for defining AI opportunities in r
 *   **AI Recommender**: Powered by Google Gemini, this feature analyzes the workflow context and automatically suggests relevant enterprise capabilities, deduplicating them against the current list.
 *   **Gap Analysis**: Visually identify missing critical systems or skills needed for execution.
 
-### 3. AI Strategy & Analysis
+### 3. AI Execution Co-Pilot 🤖
+*   **Executive Strategy Generator**: Drafts high-level execution plans (Definition of Done, Key Decisions, Change Management) using the "Chief Strategy Officer" persona.
+*   **Smart Formatting**: Automatically formats lists with clean bullet points and hanging indents for readability.
+*   **Safety Valves**: Includes "Action Confirmation" modals to prevent accidental overwrites of existing notes.
+
+### 4. AI Strategy & Analysis
 *   **Automated Analysis**: Generates comprehensive "Strategy One-Pagers" using the captured data.
 *   **Analysis Dashboard**: View detailed breakdowns including *Strategic Journey Maps*, *Financial Models*, and *Risk Assessments*.
 
@@ -76,4 +81,8 @@ A guided, interactive canvas ("Input Canvas") for defining AI opportunities in r
     *   Open the "Capabilities" tab.
     *   Click **"Recommend"** to get AI suggestions.
     *   Drag items to "Existing" or "Missing".
-5.  **Analyze**: Click "Analyse" to generate the strategic outputs.
+5.  **Draft Execution Plan**:
+    *   Navigate to "Execution" tab.
+    *   Click **"✨ Recommend"** to draft a comprehensive delivery strategy.
+    *   Refine the text using the smart "Bullet List Editor".
+6.  **Analyze**: Click "Analyse" to generate the strategic outputs.

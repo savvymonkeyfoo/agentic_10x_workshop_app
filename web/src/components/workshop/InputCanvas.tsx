@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { Check, X, ArrowRight, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { Check, X, ArrowRight, Plus, Maximize2, Minimize2, Sparkles, Loader2 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -17,7 +17,10 @@ import { TShirtSizeSelector } from '@/components/ui/TShirtSizeSelector';
 import { DFVAssessment, DFVAssessmentInput, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { SmartListTextarea } from '@/components/ui/SmartListTextarea';
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
+import { draftExecutionPlan } from '@/app/actions/draft-execution';
+import { BulletListEditor } from '@/components/ui/BulletListEditor';
 import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
@@ -98,14 +101,17 @@ const SmartTextarea = ({
     value,
     onChange,
     placeholder,
-    label
+    label,
+    className
 }: {
     value: string;
     onChange: (val: string) => void;
     placeholder: string;
     label: string;
+    className?: string;
 }) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const props = { value, onChange, placeholder, label, className }; // Capture props for easier access
 
     // 1. Auto-Resize on EVERY value change
     React.useLayoutEffect(() => {
@@ -151,7 +157,12 @@ const SmartTextarea = ({
                 onFocus={(e) => {
                     if (!value) onChange('• ');
                 }}
-                className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700 font-medium"
+                className={
+                    // Allow override or use default yellow
+                    props.className
+                        ? props.className
+                        : "w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700 font-medium"
+                }
                 placeholder={placeholder}
                 rows={1}
             />
@@ -414,6 +425,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     // Smart Navigator State
     const [isNavOpen, setIsNavOpen] = useState(true); // Default open
     const navTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    // AI Execution Drafter State
+    const [isDraftingExec, setIsDraftingExec] = useState(false);
+    const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
     const handleSmartSelect = (opp: any) => {
         // 1. Perform the normal selection
@@ -743,6 +758,72 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         }));
     };
 
+    // --- AI Execution Handler ---
+    // 1. Trigger
+    const handleRecommendClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const hasContent =
+            data.definitionOfDone || data.keyDecisions ||
+            data.changeManagement || data.trainingRequirements ||
+            data.aiOpsRequirements || data.systemGuardrails;
+
+        if (hasContent) {
+            setShowOverwriteModal(true);
+        } else {
+            executeDraft();
+        }
+    };
+
+    // 2. Execution
+    const executeDraft = async () => {
+        setShowOverwriteModal(false);
+        setIsDraftingExec(true);
+        try {
+            const res = await draftExecutionPlan({
+                name: data.projectName,
+                friction: data.frictionStatement,
+                strategy: data.strategicHorizon.join(', '),
+                size: data.tShirtSize,
+                revenue: data.benefitRevenue,
+                costAvoidance: data.benefitCostAvoidance,
+                phases: data.workflowPhases
+            });
+
+            if (res.success && res.data) {
+                // A. FORMATTING FIX: Ensure bullet points have breathing room
+                const formattedData = Object.entries(res.data).reduce((acc: any, [key, val]) => {
+                    if (typeof val === 'string') {
+                        // Replace "• " with "\n• " to create vertical space, trimming start to avoid huge top gaps
+                        acc[key] = val.replace(/•/g, '\n•').replace(/^\n/, '');
+                    } else {
+                        acc[key] = val;
+                    }
+                    return acc;
+                }, {});
+
+                // B. UPDATE LOCAL STATE (Visual)
+                // We use a functional update to be safe, but we also need the object for saving.
+                // Since 'data' is in closure, we merge it for the save payload.
+                const updatedOpp = { ...data, ...formattedData };
+
+                setData(prev => ({
+                    ...prev,
+                    ...formattedData
+                }));
+
+                // C. PERSISTENCE FIX: Save to Database Immediately
+                await performSave(updatedOpp);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("AI Draft failed. Please try again.");
+        } finally {
+            setIsDraftingExec(false);
+        }
+    };
+
 
 
     return (
@@ -756,6 +837,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 onClose={() => setOpportunityToDelete(null)}
                 onConfirm={confirmDeleteOpportunity}
                 isDeleting={isDeletingOpportunity}
+            />
+
+            <ActionConfirmationModal
+                isOpen={showOverwriteModal}
+                title="Overwrite Execution Plan?"
+                description="You have already entered content in the Execution Strategy fields. Using AI Recommendation will overwrite your current notes with a new draft. This action cannot be undone."
+                confirmLabel="Yes, Overwrite"
+                onClose={() => setShowOverwriteModal(false)}
+                onConfirm={executeDraft}
+                isLoading={isDraftingExec}
             />
 
             {/* Confirmation Modal (Phase) */}
@@ -1096,90 +1187,49 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             {activeTab === 'C' && (
                                 <motion.div key="C" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
-                                        {/* Systems & Capabilities Sync */}
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Impacted Systems (Existing)</label>
-                                                <TagInput
-                                                    tags={data.capabilitiesExisting}
-                                                    addTag={(v) => addCapability('existing', v)}
-                                                    removeTag={(v) => removeCapability('existing', v)}
-                                                    placeholder="Add system..."
-                                                    colorClass="bg-status-safe"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Required Capabilities (Gap)</label>
-                                                <TagInput
-                                                    tags={data.capabilitiesMissing}
-                                                    addTag={(v) => addCapability('missing', v)}
-                                                    removeTag={(v) => removeCapability('missing', v)}
-                                                    placeholder="Add capability..."
-                                                    colorClass="bg-status-gap"
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Systems & Capabilities Sync - REMOVED (Duplicate of Tab B) */}
 
-                                        {/* 3x2 Manual Execution Grid */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {/* Row 1 */}
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Success Metrics / Definition of Done</label>
-                                                <SmartListTextarea
-                                                    value={data.definitionOfDone}
-                                                    onValueChange={(val) => handleInputChange('definitionOfDone', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Success criteria..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Key Decisions</label>
-                                                <SmartListTextarea
-                                                    value={data.keyDecisions}
-                                                    onValueChange={(val) => handleInputChange('keyDecisions', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Architectural or Policy decisions..."
-                                                />
+
+                                        {/* 3x2 Grid with AI Header */}
+                                        <div className="space-y-6">
+
+                                            {/* Header with Recommend Button */}
+                                            <div className="flex justify-between items-end border-b border-slate-100 pb-4">
+                                                <div>
+                                                    <h2 className="text-lg font-bold text-slate-800">Execution Strategy</h2>
+                                                    <p className="text-sm text-slate-400">Define how this solution will be built, governed, and adopted.</p>
+                                                </div>
+
+                                                {/* AI Button */}
+                                                <button
+                                                    onClick={handleRecommendClick}
+                                                    disabled={isDraftingExec}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isDraftingExec ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isDraftingExec ? "Drafting..." : "Recommend"}
+                                                </button>
                                             </div>
 
-                                            {/* Row 2 */}
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Change Management</label>
-                                                <SmartListTextarea
-                                                    value={data.changeManagement}
-                                                    onValueChange={(val) => handleInputChange('changeManagement', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Staff impact, Process changes..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Training Requirements</label>
-                                                <SmartListTextarea
-                                                    value={data.trainingRequirements}
-                                                    onValueChange={(val) => handleInputChange('trainingRequirements', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Upskilling needs..."
-                                                />
-                                            </div>
-
-                                            {/* Row 3 */}
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">AI Ops / Infra</label>
-                                                <SmartListTextarea
-                                                    value={data.aiOpsRequirements}
-                                                    onValueChange={(val) => handleInputChange('aiOpsRequirements', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Compute, Hosting, Latency..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">System Guardrails</label>
-                                                <SmartListTextarea
-                                                    value={data.systemGuardrails}
-                                                    onValueChange={(val) => handleInputChange('systemGuardrails', val)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-32 transition-all resize-none"
-                                                    placeholder="Global AI boundaries..."
-                                                />
+                                            {/* The 6-Box Grid */}
+                                            <div className="grid grid-cols-2 gap-6">
+                                                {[
+                                                    { label: 'Success Metrics / Definition of Done', field: 'definitionOfDone', placeholder: '• 90% Accuracy...' },
+                                                    { label: 'Key Decisions (Build vs Buy)', field: 'keyDecisions', placeholder: '• Use open source model...' },
+                                                    { label: 'Change Management', field: 'changeManagement', placeholder: '• Update SOPs...' },
+                                                    { label: 'Training Requirements', field: 'trainingRequirements', placeholder: '• Workshop for underwriters...' },
+                                                    { label: 'AI Ops / Infrastructure', field: 'aiOpsRequirements', placeholder: '• GPU Instances...' },
+                                                    { label: 'System Guardrails', field: 'systemGuardrails', placeholder: '• Human review for >$1M...' },
+                                                ].map((item) => (
+                                                    <div key={item.field} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-100 h-full min-h-[160px]">
+                                                        <BulletListEditor
+                                                            label={item.label}
+                                                            value={(data as any)[item.field] || ''}
+                                                            onChange={(val) => handleInputChange(item.field as any, val)}
+                                                            placeholder={item.placeholder}
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
