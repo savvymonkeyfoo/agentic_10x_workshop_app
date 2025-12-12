@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agentic 10x Protocol - Workshop Application
 
-## Getting Started
+The **Agentic 10x Workshop Application** is a purpose-built tool for AI Strategy facilitators. It streamlines the process of capturing high-value AI opportunities, mapping enterprise capabilities, and generating actionable implementation plans during live client workshops.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 1. Opportunity Capture Workflow
+A guided, interactive canvas ("Input Canvas") for defining AI opportunities in real-time:
+*   **Smart Navigation**: A "Sun Visor" style navigator that allows facilitators to switch between opportunities quickly with auto-closing logic to keep the workspace clean.
+*   **Strategic Context**: Capture *Friction Statements*, *Strategic Horizons* (Growth, Throughput, Advantage), and *Customer Value Propositions*.
+*   **T-Shirt Sizing**: A visual "Hero Grid" for rapidly estimating effort (XS to XL) with proportional visualization.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Intelligent Capability Management
+*   **Drag-and-Drop Interface**: Easily map capabilities across "Enterprise Bank", "Existing in Project", and "Missing/Gap".
+*   **AI Recommender**: Powered by Google Gemini, this feature analyzes the workflow context and automatically suggests relevant enterprise capabilities, deduplicating them against the current list.
+*   **Gap Analysis**: Visually identify missing critical systems or skills needed for execution.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. AI Strategy & Analysis
+*   **Automated Analysis**: Generates comprehensive "Strategy One-Pagers" using the captured data.
+*   **Analysis Dashboard**: View detailed breakdowns including *Strategic Journey Maps*, *Financial Models*, and *Risk Assessments*.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Tech Stack
 
-## Learn More
+*   **Framework**: Next.js 14 (App Router)
+*   **Styling**: Tailwind CSS
+*   **Database**: Prisma (SQLite/Postgres)
+*   **AI**: Google Generative AI SDK (Gemini 1.5 Pro / 2.5 Flash)
+*   **Interactions**: `@dnd-kit` for drag-and-drop, `framer-motion` for animations.
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
+*   Node.js 18+
+*   npm or yarn
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Installation
 
-## Deploy on Vercel
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/your-org/agentic-10x-workshop.git
+    cd web
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3.  **Environment Setup**
+    Create a `.env` file in the root directory:
+    ```env
+    DATABASE_URL="file:./dev.db"
+    GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key"
+    ```
+
+4.  **Database Setup**
+    Initialize the Price database:
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    ```
+
+5.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000) to view the workshop application.
+
+## 📝 Usage Guide
+
+1.  **Start a Session**: Open the Workshop Input Canvas.
+2.  **Add an Opportunity**: Use the Navigator (+) to create a new card.
+3.  **Define the Problem**: Fill in the *Friction Statement* and *Value Proposition*.
+4.  **Map Capabilities**:
+    *   Open the "Capabilities" tab.
+    *   Click **"Recommend"** to get AI suggestions.
+    *   Drag items to "Existing" or "Missing".
+5.  **Analyze**: Click "Analyse" to generate the strategic outputs.
