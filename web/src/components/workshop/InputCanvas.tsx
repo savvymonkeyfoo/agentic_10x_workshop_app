@@ -923,13 +923,6 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             </span>
                         )}
                     </div>
-                    <button
-                        disabled={!isComplete && !isGlobalReady}
-                        onClick={handleAnalyse}
-                        className={`px-6 py-2 rounded-full font-semibold transition-all ${isComplete || isGlobalReady ? 'bg-brand-blue text-white shadow-lg hover:shadow-xl hover:scale-105' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
-                    >
-                        Analyse
-                    </button>
                 </div>
             </div>
 

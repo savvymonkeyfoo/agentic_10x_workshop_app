@@ -5,6 +5,22 @@
 
 ---
 
+## 0. Navigation & Entry Point
+
+**Goal:** Accessible navigation from the Workshop Header.
+
+### **Update `src/components/workshop/WorkshopHeader.tsx` (or Main Layout)**
+* **Action:** Add a 3rd Primary Navigation Tab/Button.
+* **Label:** "Reporting" or "Canvas".
+* **Icon:** `FileText` or `Presentation` (Lucide React).
+* **Path:** Link to `/workshop/[id]/reporting`.
+* **Visuals:** Ensure it shares the active state styling (e.g. blue underline/text) when on the reporting route.
+
+### **Update `src/app/workshop/[id]/analysis/page.tsx` (Optional)**
+* **Action:** Add a "Next Step" Call-to-Action at the top right.
+* **Button:** "Go to Reporting" (ArrowRight icon).
+* **Logic:** Guides the user naturally from the Analysis Matrix to the Output generation.
+
 ## 1. Architecture & Routing
 
 ### **New Route Structure**

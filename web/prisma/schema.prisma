@@ -31,6 +31,7 @@ model Opportunity {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
+  canvasLastGeneratedAt DateTime? // Tracks when the Strategy One-Pager was last generated
 
   // Tab A: Strategic Context
   projectName       String

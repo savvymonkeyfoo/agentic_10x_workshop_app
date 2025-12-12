@@ -1,7 +1,15 @@
 'use client';
 import React from 'react';
-import { Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Helper: Check if opportunity has sufficient data
+const checkCompletion = (opp: any): boolean => {
+    const hasStrategy = opp.projectName && opp.frictionStatement;
+    const hasWorkflow = opp.workflowPhases && Array.isArray(opp.workflowPhases) && opp.workflowPhases.length > 0;
+    const hasBusiness = opp.benefitRevenue || opp.benefitCostAvoidance || opp.benefitEstCost;
+    return hasStrategy && hasWorkflow && hasBusiness;
+};
 
 export const OpportunityTileNavigator = ({
     opportunities,
@@ -61,7 +69,7 @@ export const OpportunityTileNavigator = ({
                             {/* New Opportunity Button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); onCreate(); }}
-                                className="shrink-0 w-[160px] h-[140px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-white transition-all group"
+                                className="shrink-0 w-[160px] h-[100px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-white transition-all group"
                             >
                                 <div className="w-10 h-10 rounded-full bg-slate-200 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
                                     <Plus size={20} />
@@ -70,34 +78,38 @@ export const OpportunityTileNavigator = ({
                             </button>
 
                             {/* Opportunity Cards */}
-                            {opportunities.map((opp) => (
-                                <div
-                                    key={opp.id}
-                                    onClick={() => onSelect(opp)}
-                                    className={`
-                    relative shrink-0 w-[200px] h-[140px] bg-white rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group
-                    ${selectedId === opp.id ? 'border-blue-500 ring-4 ring-blue-50' : 'border-slate-200 hover:border-blue-300'}
-                  `}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className={`w-3 h-3 rounded-full ${selectedId === opp.id ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); onDelete(opp.id); }}
-                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded transition-all"
-                                        >
-                                            <XIcon size={14} />
-                                        </button>
-                                    </div>
+                            {opportunities.map((opp) => {
+                                const isComplete = checkCompletion(opp);
+                                const isSelected = selectedId === opp.id;
 
-                                    <div className="font-bold text-slate-700 text-sm leading-tight line-clamp-3">
-                                        {opp.projectName || "Untitled Opportunity"}
-                                    </div>
+                                return (
+                                    <div
+                                        key={opp.id}
+                                        onClick={() => onSelect(opp)}
+                                        className={`
+                                            relative shrink-0 w-[200px] h-[100px] bg-white rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group
+                                            ${isSelected ? 'border-blue-500 ring-4 ring-blue-50' : 'border-slate-200 hover:border-blue-300'}
+                                        `}
+                                    >
+                                        {/* Top Row: Status Icon + Delete */}
+                                        <div className="flex justify-between items-start">
+                                            {/* Completion Status (NOT Selection) */}
+                                            <div className={`w-3 h-3 rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onDelete(opp.id); }}
+                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded transition-all"
+                                            >
+                                                <XIcon size={14} />
+                                            </button>
+                                        </div>
 
-                                    <div className="text-[10px] text-slate-400 font-mono">
-                                        {opp.tShirtSize || "-"} • {opp.strategicHorizon || "Draft"}
+                                        {/* Title Only */}
+                                        <div className="font-bold text-slate-700 text-sm leading-tight line-clamp-2">
+                                            {opp.projectName || "Untitled Opportunity"}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </motion.div>
                 )}
