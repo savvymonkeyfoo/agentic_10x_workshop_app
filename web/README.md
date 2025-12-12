@@ -50,7 +50,7 @@ A guided, interactive canvas ("Input Canvas") for defining AI opportunities in r
     Create a `.env` file in the root directory:
     ```env
     DATABASE_URL="file:./dev.db"
-    GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key"
+    GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key" # Get from https://aistudio.google.com/app/apikey
     ```
 
 4.  **Database Setup**
