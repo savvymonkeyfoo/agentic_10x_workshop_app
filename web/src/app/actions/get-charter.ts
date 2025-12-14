@@ -29,14 +29,17 @@ export async function getCharterData() {
         frictionStatement: opp.frictionStatement || '',
         whyDoIt: opp.whyDoIt || '',
         agentDirective: {
-            trigger: opp.agentTrigger || '',
-            action: opp.agentAction || '',
-            guardrail: opp.agentGuardrail || ''
+            // @ts-ignore
+            trigger: opp.agentDirective?.trigger || '',
+            // @ts-ignore
+            action: opp.agentDirective?.action || '',
+            // @ts-ignore
+            guardrail: opp.agentDirective?.guardrail || ''
         },
         financials: {
-            revenue: opp.estRevenueAnn,
-            costReduction: opp.estCostReduction,
-            hoursSaved: opp.estEfficiencyGains
+            revenue: opp.benefitRevenue || 0,
+            costReduction: opp.benefitCostAvoidance || 0,
+            hoursSaved: opp.benefitEfficiency || 0
         },
         vrcc: {
             value: opp.scoreValue,
