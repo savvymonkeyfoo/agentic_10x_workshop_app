@@ -1,13 +1,15 @@
+
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const { password } = await request.json();
+        const { username, password } = await request.json();
 
         // Check against env variable (default to workshop2026 for safety fallback)
+        const validUser = process.env.BASIC_AUTH_USER || 'admin';
         const validPass = process.env.BASIC_AUTH_PASSWORD || 'workshop2026';
 
-        if (password === validPass) {
+        if (username === validUser && password === validPass) {
             const response = NextResponse.json({ success: true });
 
             // Set httpOnly cookie
