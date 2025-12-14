@@ -216,3 +216,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 - Built with the [Agentic 10x Protocol](https://www.10xworkshop.com/)
 - Powered by [Google Gemini](https://ai.google.dev/)
 - UI inspired by modern design systems
+ 
