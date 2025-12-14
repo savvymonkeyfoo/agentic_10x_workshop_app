@@ -1,127 +1,199 @@
 import { PrismaClient } from '@prisma/client';
+
 const prisma = new PrismaClient();
+
 async function main() {
-    console.log("🚑 Starting Lazarus Protocol V6: I.P.O. Workflow...");
+    console.log('🚑 Starting Lazarus Protocol V5: The Golden Record...');
 
-    // Clean up previous run if needed? No, create new workshop is fine.
-    const workshop = await prisma.workshop.create({ data: { clientName: "Zurich Insurance Underwriting", status: "ANALYSIS" } });
+    // 1. Create (or Find) the Zurich Workshop
+    const workshop = await prisma.workshop.create({
+        data: {
+            clientName: 'Zurich Insurance',
+            workshopDate: new Date(),
+            status: 'IN_PROGRESS',
+            clientLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zurich_Insurance_Group_logo.svg/2560px-Zurich_Insurance_Group_logo.svg.png', // Public logo
+            strategyNarrative: 'Zurich is pivoting to an "AI-First" claims processing model to reduce cycle times by 40%.',
+            strategyRisks: 'Data privacy compliance (GDPR) and legacy mainframe integration.',
+            strategyDependencies: 'Availability of Azure OpenAI instances and cleanup of historical claims data.'
+        }
+    });
 
+    console.log(`✅ Workshop Created: ${workshop.id}`);
+
+    // 2. Define the 4 Opportunities
     const opportunities = [
         {
-            projectName: "Commercial Property AI Underwriter",
-            frictionStatement: "Underwriters spend 4 hours per complex submission manually extracting data.",
-            strategicHorizon: "Strategic Advantage",
-            tShirtSize: "XL",
-            scoreValue: 5, scoreComplexity: 5, scoreRiskFinal: 5, scoreCapability: 2,
-            benefitRevenue: 2500000, benefitEstCost: 450000, benefitCostAvoidance: 0, benefitEfficiency: 0,
-            capabilitiesMissing: ["Unstructured PDF Extraction", "Multi-Modal Reasoning"],
-            capabilitiesExisting: ["Policy Admin System (Guidewire)", "Outlook Integration"],
-            definitionOfDone: "• Extract 50 key data points with >95% accuracy.\n• Reduce quote turnaround to 4 hours.",
-            keyDecisions: "• Build vs Buy for OCR engine?",
-            changeManagement: "• High impact on underwriting workflows.",
-            trainingRequirements: "• Train underwriters on AI confidence scores.",
-            aiOpsRequirements: "• High inference compute (LLM).",
-            systemGuardrails: "• No auto-declines on protected characteristics.",
+            projectName: 'Smart Claims Triage Bot',
+            frictionStatement: 'Claims adjusters spend 40% of their day categorizing inbound emails and PDFs instead of adjusting.',
+            strategicHorizon: 'Operational Throughput',
+            whyDoIt: 'Reduce "First Notice of Loss" (FNOL) processing time from 3 days to 30 minutes.',
+
+            // Business Case
+            tShirtSize: 'M',
+            benefitRevenue: 0,
+            benefitCostAvoidance: 1200000, // $1.2M saved
+            benefitEfficiency: 8000, // Hours saved
+            benefitEstCost: 150000,
+            benefitTimeframe: 'Annually',
+
+            // VRCC Scores (1-5)
+            scoreValue: 5,      // High Impact
+            scoreComplexity: 3, // Medium Complexity
+            scoreCapability: 4, // Good existing data
+            scoreRiskFinal: 2,  // Low Risk (Human in loop)
+
+            // Deep Dive
             workflowPhases: [
-                {
-                    id: "p1-1", name: "Ingest Broker Email", autonomy: "L2",
-                    inputs: "Raw Email (Outlook)",
-                    actions: "Scan Attachments, Virus Check, Parse Body",
-                    outputs: "Cleaned PDF, Metadata JSON"
-                },
-                {
-                    id: "p1-2", name: "Extract Risk Data", autonomy: "L3",
-                    inputs: "Cleaned PDF",
-                    actions: "OCR Scan, LLM Entity Extraction, Confidence Scoring",
-                    outputs: "Risk Data Object (JSON)"
-                },
-                {
-                    id: "p1-3", name: "Validate Appetite", autonomy: "L4",
-                    inputs: "Risk Data Object, Sanctions API",
-                    actions: "Compare against Risk Rules Engine",
-                    outputs: "Validation Flag (Pass/Refer)"
-                },
-                {
-                    id: "p1-4", name: "Draft Quote", autonomy: "L2",
-                    inputs: "Validation Flag, Rating Engine",
-                    actions: "Generate Quote Letter, Calculate Premium",
-                    outputs: "Draft Quote (Word)"
-                }
+                { name: 'Ingest', description: 'Monitor inbox for new claims' },
+                { name: 'Classify', description: 'LLM extracts Policy ID and Loss Type' },
+                { name: 'Route', description: 'Assign to correct adjuster queue' }
             ],
-            dfvAssessment: {
-                desirability: { score: 5, justification: "High broker demand." },
-                feasibility: { score: 3, justification: "Complex data." },
-                viability: { score: 5, justification: "High GWP." }
-            }
+            capabilitiesExisting: ['Outlook API', 'Policy Database'],
+            capabilitiesMissing: ['OCR for Handwriting', 'Sentiment Analysis'],
+
+            // Governance
+            keyDecisions: 'Buy vs Build: Use Azure Document Intelligence.',
+            definitionOfDone: 'Fully automated classification and routing of email claims with 90% accuracy.',
+            impactedSystems: ['Exchange Server', 'Claims Management System'],
+            aiOpsRequirements: 'Standard GPU instance.',
+            systemGuardrails: 'Confidence score < 90% must go to human.',
+
+            dfvAssessment: { desirability: 5, feasibility: 5, viability: 5 }
         },
         {
-            projectName: "Internal Claims Mailbox Triager",
-            frictionStatement: "Claims team is drowning in generic inbox emails.",
-            strategicHorizon: "Operational Throughput",
-            tShirtSize: "M",
-            scoreValue: 3, scoreComplexity: 2, scoreRiskFinal: 1, scoreCapability: 3,
-            benefitRevenue: 0, benefitEstCost: 75000, benefitCostAvoidance: 150000,
-            definitionOfDone: "• Auto-categorize 90% of incoming emails.\n• Route to correct shared folders.",
-            keyDecisions: "• Archive retention policy?",
-            capabilitiesExisting: ["Exchange Server"],
-            capabilitiesMissing: ["NLP Classification Service"],
+            projectName: 'Underwriter Co-Pilot',
+            frictionStatement: 'Underwriters drown in 50+ page PDFs for every commercial property application.',
+            strategicHorizon: 'Strategic Advantage',
+            whyDoIt: 'Allow underwriters to quote 2x more policies per week by summarizing risk factors instantly.',
+
+            // Business Case
+            tShirtSize: 'L',
+            benefitRevenue: 5000000, // $5M new business
+            benefitCostAvoidance: 0,
+            benefitEfficiency: 15000, // Hours saved
+            benefitEstCost: 250000,
+            benefitTimeframe: 'Annually',
+
+            // VRCC Scores
+            scoreValue: 5,
+            scoreComplexity: 4, // Hard (Unstructured data)
+            scoreCapability: 2, // Low (No existing vector DB)
+            scoreRiskFinal: 3,
+
+            // Deep Dive
             workflowPhases: [
-                { id: "p2-1", name: "Monitor Mailbox", autonomy: "L3", inputs: "Inbox Stream", actions: "Listen for new events", outputs: "Email Event" },
-                { id: "p2-2", name: "Classify Intent", autonomy: "L3", inputs: "Email Body", actions: "NLP Classification", outputs: "Category Tag" },
-                { id: "p2-3", name: "Route Email", autonomy: "L3", inputs: "Category Tag", actions: "Move to Folder", outputs: "Routing Log" }
-            ]
+                { name: 'Upload', description: 'User uploads risk report' },
+                { name: 'Analyze', description: 'Agent identifies fire/flood risks' },
+                { name: 'Suggest', description: 'Drafts coverage exclusions' }
+            ],
+            capabilitiesExisting: ['SharePoint'],
+            capabilitiesMissing: ['Vector Database', 'RAG Pipeline'],
+
+            // Governance
+            keyDecisions: 'Model Selection: GPT-4 vs Claude 3.5 Sonnet.',
+            definitionOfDone: 'Underwriters can generate risk summaries and exclusion drafts from raw PDFs in under 1 minute.',
+            impactedSystems: ['Policy Admin System', 'SharePoint'],
+            aiOpsRequirements: 'Vector Store (Pinecone)',
+            systemGuardrails: 'Never auto-deny coverage. Only suggest.',
+
+            dfvAssessment: { desirability: 5, feasibility: 4, viability: 5 }
         },
         {
-            projectName: "Renewals Churn Predictor",
-            frictionStatement: "Blind renewal notices sent to high-risk churn customers.",
-            strategicHorizon: "Growth & Scalability",
-            tShirtSize: "L",
-            scoreValue: 4, scoreComplexity: 1, scoreRiskFinal: 2, scoreCapability: 3,
-            benefitRevenue: 800000, benefitEstCost: 40000, benefitCostAvoidance: 0,
-            definitionOfDone: "• Predict churn probability for 100% of renewals.\n• Dashboard for Retention Team.",
-            keyDecisions: "• Model selection (XGBoost vs Random Forest)?",
-            capabilitiesExisting: ["Data Lake (Snowflake)"],
-            capabilitiesMissing: ["Predictive Model Hosting"],
+            projectName: 'Fraud Pattern Sentinel',
+            frictionStatement: 'Fraud rings are evolving faster than our static rules engines can catch up.',
+            strategicHorizon: 'Growth & Scalability',
+            whyDoIt: 'Reduce leakage by identifying subtle cross-claim patterns.',
+
+            // Business Case
+            tShirtSize: 'XL',
+            benefitRevenue: 0,
+            benefitCostAvoidance: 8000000, // $8M fraud stopped
+            benefitEfficiency: 0,
+            benefitEstCost: 500000,
+            benefitTimeframe: 'Annually',
+
+            // VRCC Scores
+            scoreValue: 5,
+            scoreComplexity: 5, // Very Complex
+            scoreCapability: 3,
+            scoreRiskFinal: 4,  // High Risk (False positives)
+
+            // Deep Dive
             workflowPhases: [
-                { id: "p3-1", name: "Fetch History", autonomy: "L4", inputs: "Policy ID", actions: "Query Data Lake", outputs: "Customer Profile" },
-                { id: "p3-2", name: "Predict Churn", autonomy: "L3", inputs: "Customer Profile", actions: "Run XGBoost Model", outputs: "Risk Score (0-100)" }
-            ]
+                { name: 'Scan', description: 'Ingest daily transaction logs' },
+                { name: 'Cluster', description: 'Identify linked entities (same IP, device)' },
+                { name: 'Alert', description: 'Flag high-probability rings' }
+            ],
+            capabilitiesExisting: ['Data Lake', 'Transaction Logs'],
+            capabilitiesMissing: ['Graph Database', 'Real-time Inference'],
+
+            // Governance
+            keyDecisions: 'Graph DB: Neo4j vs Amazon Neptune.',
+            definitionOfDone: 'Graph-based detection of fraud rings identifying >$1M in recoverable leakage.',
+            impactedSystems: ['Data Lake', 'Claims DB'],
+            aiOpsRequirements: 'High Memory Nodes.',
+            systemGuardrails: 'Human Review Board for all fraud flags.',
+
+            dfvAssessment: { desirability: 4, feasibility: 3, viability: 5 }
         },
         {
-            projectName: "Legacy Mainframe Code Converter",
-            frictionStatement: "40-year-old COBOL code is a black box and hard to maintain.",
-            strategicHorizon: "Operational Throughput",
-            tShirtSize: "XL",
-            scoreValue: 2, scoreComplexity: 5, scoreRiskFinal: 5, scoreCapability: 1,
-            benefitRevenue: 0, benefitEstCost: 1200000, benefitCostAvoidance: 200000,
-            definitionOfDone: "• Convert Core Billing Module to Java.\n• Pass regression tests.",
-            keyDecisions: "• Target architecture (Microservices vs Monolith)?",
-            capabilitiesExisting: ["Mainframe Source Access"],
-            capabilitiesMissing: ["GenAI Code Translator"],
+            projectName: 'Policy Renewal Agent',
+            frictionStatement: 'Small business policies churn because we fail to engage them before expiry.',
+            strategicHorizon: 'Growth & Scalability',
+            whyDoIt: 'Increase retention by 15% through personalized, proactive outreach.',
+
+            // Business Case
+            tShirtSize: 'S',
+            benefitRevenue: 2500000,
+            benefitCostAvoidance: 0,
+            benefitEfficiency: 2000,
+            benefitEstCost: 50000,
+            benefitTimeframe: 'Annually',
+
+            // VRCC Scores
+            scoreValue: 4,
+            scoreComplexity: 2, // Easy
+            scoreCapability: 5, // Data exists
+            scoreRiskFinal: 2,
+
+            // Deep Dive
             workflowPhases: [
-                { id: "p4-1", name: "Ingest Code", autonomy: "L1", inputs: "COBOL Source", actions: "Static Analysis", outputs: "AST Tree" },
-                { id: "p4-2", name: "Transpile", autonomy: "L1", inputs: "AST Tree", actions: "LLM Conversion", outputs: "Java Class" }
-            ]
+                { name: 'Trigger', description: 'Identifies expiry - 60 days' },
+                { name: 'Draft', description: 'Generates personalized renewal offer' },
+                { name: 'Send', description: 'E-mails broker or customer' }
+            ],
+            capabilitiesExisting: ['CRM (Salesforce)', 'Email Gateway'],
+            capabilitiesMissing: ['None'],
+
+            // Governance
+            keyDecisions: 'Integration method: Salesforce API.',
+            definitionOfDone: 'Automated renewal outreach deployed to 100% of SME customers 60 days prior to expiry.',
+            impactedSystems: ['Salesforce', 'SendGrid'],
+            aiOpsRequirements: 'Serverless Functions.',
+            systemGuardrails: 'Rate limit emails to avoid spam filters.',
+
+            dfvAssessment: { desirability: 3, feasibility: 5, viability: 5 }
         }
     ];
 
-    // WhyDoIt is required by schema, added here
-    for (const opp of opportunities) {
+    // 3. Insert them into the DB
+    for (const op of opportunities) {
         await prisma.opportunity.create({
             data: {
-                ...opp,
-                workshopId: workshop.id,
-                whyDoIt: "Restored via Lazarus V6",
-                agentDirective: {},
-                // Fallbacks for any potentially missing optional arrays if typescript complains
-                impactedSystems: [],
-                systemGuardrails: "",
-                aiOpsRequirements: "",
-                changeManagement: "",
-                trainingRequirements: ""
+                ...op,
+                workshopId: workshop.id
             }
         });
     }
-    console.log("✅ All 4 I.P.O. Opportunities Restored.");
+
+    console.log(`✅ All 4 Opportunities Fully Restored.`);
 }
-main().catch(e => console.error(e)).finally(async () => await prisma.$disconnect());
+
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
