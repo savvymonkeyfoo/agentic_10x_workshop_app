@@ -48,7 +48,7 @@ async function main() {
 
                 // Benefits
                 benefitRevenue: opp.quantitative_benefits.annual_revenue,
-                benefitCost: opp.quantitative_benefits.cost_reduction,
+                benefitEstCost: opp.quantitative_benefits.cost_reduction,
                 benefitEfficiency: opp.quantitative_benefits.efficiency_hours_week,
 
                 // DFV
