@@ -52,9 +52,11 @@ async function main() {
                 benefitEfficiency: opp.quantitative_benefits.efficiency_hours_week,
 
                 // DFV
-                dfvDesirability: opp.dfv_assessment.desirability,
-                dfvFeasibility: opp.dfv_assessment.feasibility,
-                dfvViability: opp.dfv_assessment.viability,
+                dfvAssessment: {
+                    desirability: { score: opp.dfv_assessment.desirability },
+                    feasibility: { score: opp.dfv_assessment.feasibility },
+                    viability: { score: opp.dfv_assessment.viability }
+                },
 
                 // Execution
                 definitionOfDone: opp.execution_details.definition_of_done,
