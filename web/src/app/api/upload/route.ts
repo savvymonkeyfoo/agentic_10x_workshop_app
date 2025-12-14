@@ -2,22 +2,18 @@ import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request): Promise<NextResponse> {
-    const { searchParams } = new URL(request.url);
-    const filename = searchParams.get('filename');
+    // 1. Parse the FormData directly (Standard Web API)
+    const form = await request.formData();
+    const file = form.get('file') as File;
 
-    // 1. Handle missing filename
-    if (!filename) {
-        return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
+    if (!file) {
+        return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    if (!request.body) {
-        return NextResponse.json({ error: 'File body is required' }, { status: 400 });
-    }
-
-    // 2. Upload with explicit token
-    const blob = await put(filename, request.body, {
+    // 2. Upload using the file's own name
+    const blob = await put(file.name, file, {
         access: 'public',
-        token: process.env.BLOB_READ_WRITE_TOKEN, // Explicitly use the var we created
+        token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return NextResponse.json(blob);
