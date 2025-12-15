@@ -20,11 +20,19 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <nav className="fixed top-0 left-0 right-0 z-50 px-8 py-4 flex justify-between items-center bg-white/50 dark:bg-brand-navy/50 backdrop-blur-md border-b border-white/20 dark:border-white/10">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-cyan to-brand-blue flex items-center justify-center text-white font-bold text-lg">
-              10x
-            </div>
-            <span className="font-bold text-brand-navy dark:text-white tracking-tight">Agentic Protocol</span>
+          <Link href="/" className="flex items-center">
+            {/* Light mode logo */}
+            <img
+              src="/logo_transparent.png"
+              alt="Agentic 10x Workshop"
+              className="h-8 w-auto object-contain dark:hidden"
+            />
+            {/* Dark mode logo */}
+            <img
+              src="/logo_dark_transparent.png"
+              alt="Agentic 10x Workshop"
+              className="h-8 w-auto object-contain hidden dark:block"
+            />
           </Link>
           <div className="flex items-center gap-4">
             <div id="workshop-header-portal"></div>
