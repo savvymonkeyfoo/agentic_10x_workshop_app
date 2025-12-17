@@ -1,9 +1,33 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
+import { DndContext, useDraggable, useDroppable, DragOverlay, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { X, GripVertical, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { recommendCapabilities } from '@/app/actions/recommend-capabilities';
+import { WorkflowPhase } from '@/types/workshop';
+
+// Type definitions
+interface AddCapModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: (val: string) => void;
+    title: string;
+}
+
+interface DropZoneProps {
+    id: string;
+    title: string;
+    items: string[];
+    colorClass: string;
+    placeholder: string;
+    onDelete?: (item: string) => void;
+    onAdd?: () => void;
+}
+
+interface DragData {
+    label: string;
+    origin: string;
+}
 
 // --- 1. THE STANDARD BANK (30 Enterprise Items) ---
 const STANDARD_CAPABILITIES = [
@@ -18,7 +42,7 @@ const STANDARD_CAPABILITIES = [
 // --- 2. SUB-COMPONENTS ---
 
 // Simple Add Modal
-const AddCapModal = ({ isOpen, onClose, onConfirm, title }: any) => {
+const AddCapModal = ({ isOpen, onClose, onConfirm, title }: AddCapModalProps) => {
     const [val, setVal] = useState("");
     if (!isOpen) return null;
 
@@ -83,7 +107,7 @@ const CapChip = ({ id, label, color, onDelete }: { id: string, label: string, co
 };
 
 // The Drop Zone
-const DropZone = ({ id, title, items, colorClass, bgClass, placeholder, onDelete, onAdd }: any) => {
+const DropZone = ({ id, title, items, colorClass, placeholder, onDelete, onAdd }: DropZoneProps) => {
     const { setNodeRef, isOver } = useDroppable({ id });
 
     return (
@@ -133,6 +157,14 @@ const DropZone = ({ id, title, items, colorClass, bgClass, placeholder, onDelete
 };
 
 // --- 3. MAIN MANAGER ---
+// Union type to support both direct phases array or full context object
+type WorkflowContextOrItems = WorkflowPhase[] | {
+    name?: string;
+    friction?: string;
+    phases?: WorkflowPhase[];
+    [key: string]: unknown;
+};
+
 export default function CapabilitiesManager({
     existingCaps,
     missingCaps,
@@ -142,13 +174,13 @@ export default function CapabilitiesManager({
     existingCaps: string[],
     missingCaps: string[],
     onUpdate: (field: 'capabilitiesExisting' | 'capabilitiesMissing', newVal: string[]) => void,
-    workflowContext?: any
+    workflowContext?: WorkflowContextOrItems
 }) {
 
     // Local state for the "Bank" (Filter out items already used)
     const usedCaps = new Set([...existingCaps, ...missingCaps]);
     const [bank, setBank] = useState(STANDARD_CAPABILITIES.filter(c => !usedCaps.has(c)));
-    const [activeDrag, setActiveDrag] = useState<any>(null);
+    const [activeDrag, setActiveDrag] = useState<DragData | null>(null);
     const [mounted, setMounted] = useState(false);
     const [addingZone, setAddingZone] = useState<'existing' | 'missing' | null>(null);
     const [isRecommending, setIsRecommending] = useState(false);
@@ -157,20 +189,20 @@ export default function CapabilitiesManager({
         setMounted(true);
     }, []);
 
-    const handleDragStart = (event: any) => {
-        setActiveDrag(event.active.data.current);
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveDrag(event.active.data.current as DragData);
     };
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveDrag(null);
 
         if (!over) return;
 
         // 1. Identify Players
-        const sourceZone = active.id.split('-')[0]; // "bank", "existing", "missing"
-        const itemLabel = active.data.current.label;
-        const targetZone = over.id; // "bank", "existing", "missing"
+        const sourceZone = (active.id as string).split('-')[0]; // "bank", "existing", "missing"
+        const itemLabel = (active.data.current as DragData).label;
+        const targetZone = over.id as string; // "bank", "existing", "missing"
 
         // 2. If dropping in the SAME zone, do nothing
         if (sourceZone === targetZone) return;

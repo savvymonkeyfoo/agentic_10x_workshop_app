@@ -14,6 +14,7 @@ export async function updateWorkshop(formData: FormData) {
     }
 
     // Only update date if provided
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dataToUpdate: any = {
         clientName,
         clientLogoUrl

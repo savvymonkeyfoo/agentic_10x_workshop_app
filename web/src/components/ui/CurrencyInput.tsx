@@ -4,31 +4,27 @@ interface CurrencyInputProps {
     value: number | undefined;
     onChange: (value: number | undefined) => void;
     placeholder?: string;
-    suffix?: string; // e.g. "hrs"
-    prefix?: string; // e.g. "$"
+    suffix?: string;
+    prefix?: string;
     className?: string;
+    id?: string;
+    name?: string;
 }
 
-export function CurrencyInput({ value, onChange, placeholder, suffix = '', prefix = '$', className = '' }: CurrencyInputProps) {
+export function CurrencyInput({ value, onChange, placeholder, suffix = '', prefix = '$', className = '', id, name }: CurrencyInputProps) {
     const [displayValue, setDisplayValue] = useState('');
 
     useEffect(() => {
         if (value === undefined || value === null) {
             setDisplayValue('');
         } else {
-            // Format existing value on mount/update if we are not editing (actually typically we might, but let's just format it simple)
-            // But if user is typing, we don't want to re-format. 
-            // However, this useEffect runs when 'value' prop changes.
-            // If parent updates 'value', we should update display.
-            // But we need to distinguish internal edits vs external updates.
-            // For now, let's just format it.
-            // setDisplayValue(formatNumber(value)); // This might conflict if we are typing.
-            // Better strategy: Only update display value if it's drastically different or we are not focused?
-            // Actually, for a simple implementation: 
-            // On Focus: Show raw number.
-            // On Blur: Show formatted.
-            // This is easier.
-            setDisplayValue(document.activeElement !== document.getElementById(`currency-input-${placeholder}`) ? formatDisplay(value) : value.toString());
+            const activeId = document.activeElement?.id;
+            // Only update if not strictly focused on this input (by ID check if available)
+            if (activeId && id && activeId === id) {
+                // Do nothing, user is typing
+            } else {
+                setDisplayValue(formatDisplay(value));
+            }
         }
     }, [value, suffix, prefix]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -39,8 +35,7 @@ export function CurrencyInput({ value, onChange, placeholder, suffix = '', prefi
 
     const handleBlur = () => {
         if (displayValue) {
-            // Parse the number from current display value (user might have typed "150000")
-            const clean = displayValue.replace(/[^0-9.]/g, ''); // Simple parse
+            const clean = displayValue.replace(/[^0-9.]/g, '');
             const num = parseFloat(clean);
             if (!isNaN(num)) {
                 onChange(num);
@@ -67,6 +62,8 @@ export function CurrencyInput({ value, onChange, placeholder, suffix = '', prefi
 
     return (
         <input
+            id={id}
+            name={name}
             type="text"
             value={displayValue}
             onChange={handleChange}

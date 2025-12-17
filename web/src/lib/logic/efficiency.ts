@@ -10,7 +10,7 @@
  * 4 -> 7.0x
  * 5 -> 10.0x (The Goal)
  */
-export const calculateEfficiencyRatio = (value: number, complexity?: number): number => {
+export const calculateEfficiencyRatio = (value: number, _complexity?: number): number => {
     // Ensure input is valid, default to 3
     const v = value || 3;
 

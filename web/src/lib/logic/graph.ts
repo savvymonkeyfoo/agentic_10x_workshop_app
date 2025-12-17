@@ -118,7 +118,7 @@ export function sortOpportunities(opportunities: LogicOpportunity[]): LogicOppor
     const inDegree = new Map<string, number>()
     opportunities.forEach(opp => inDegree.set(opp.id, 0))
 
-    for (const [producer, consumers] of adjList.entries()) {
+    for (const [_producer, consumers] of adjList.entries()) {
         for (const consumerId of consumers) {
             inDegree.set(consumerId, (inDegree.get(consumerId) || 0) + 1)
         }

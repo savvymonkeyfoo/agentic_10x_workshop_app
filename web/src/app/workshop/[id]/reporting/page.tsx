@@ -49,7 +49,7 @@ async function getOpportunity(id: string) {
 }
 
 export default async function ReportingPage({
-    params,
+    params: _params,
     searchParams
 }: {
     params: { id: string };
@@ -60,7 +60,7 @@ export default async function ReportingPage({
         : null;
 
     if (opportunity) {
-        // @ts-ignore - Prisma Partial types might mismatch full Opportunity type but fields align
+        // @ts-expect-error - Prisma Partial types might mismatch full Opportunity type but fields align
         return <CanvasWorkspace data={opportunity} />;
     }
 

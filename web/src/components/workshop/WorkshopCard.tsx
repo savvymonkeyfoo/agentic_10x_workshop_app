@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { WorkshopModal } from './WorkshopModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
@@ -63,8 +64,8 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
                         <div className="flex-1 flex gap-3 items-center">
                             {/* Logo or Default Icon */}
                             {workshop.clientLogoUrl ? (
-                                <div className="w-10 h-10 rounded-lg border border-slate-100 dark:border-slate-600 bg-white p-1 overflow-hidden">
-                                    <img src={workshop.clientLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                <div className="w-10 h-10 rounded-lg border border-slate-100 dark:border-slate-600 bg-white p-1 overflow-hidden relative">
+                                    <Image src={workshop.clientLogoUrl} alt={`${workshop.clientName} logo`} fill className="object-contain" sizes="40px" />
                                 </div>
                             ) : (
                                 <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400">

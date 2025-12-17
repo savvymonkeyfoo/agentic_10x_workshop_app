@@ -1,4 +1,20 @@
-export function calculateCompleteness(opportunity: any) {
+interface OpportunityForCompleteness {
+    projectName?: string;
+    frictionStatement?: string;
+    workflowPhases?: unknown[];
+    definitionOfDone?: string;
+    keyDecisions?: string;
+    benefitRevenue?: number | null;
+    benefitCostAvoidance?: number | null;
+    benefitEfficiency?: number | null;
+    dfvAssessment?: {
+        desirability?: { score?: number };
+        feasibility?: { score?: number };
+        viability?: { score?: number };
+    } | null;
+}
+
+export function calculateCompleteness(opportunity: OpportunityForCompleteness | null | undefined) {
     // 1. Safety Check: Handle null/undefined gracefully
     if (!opportunity) return { total: 0, tabs: { opportunity: false, workflow: false, execution: false, businessCase: false } };
 

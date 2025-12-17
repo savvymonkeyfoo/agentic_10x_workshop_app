@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { Check, X, ArrowRight, Plus, Maximize2, Minimize2, Sparkles, Loader2 } from 'lucide-react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, X, Plus, Maximize2, Minimize2, Sparkles, Loader2 } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { VRCCSlider } from '@/components/ui/VRCCSlider';
@@ -13,10 +12,8 @@ import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
 import { deleteOpportunity } from '@/app/actions/delete-opportunity';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
-import { TShirtSizeSelector } from '@/components/ui/TShirtSizeSelector';
-import { DFVAssessment, DFVAssessmentInput, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
+import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { SmartListTextarea } from '@/components/ui/SmartListTextarea';
 import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
@@ -72,9 +69,9 @@ const TABS = [
 
 // --- Config: Strategic Horizons ---
 const HORIZONS = [
-    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-brand-cyan text-white', border: 'border-brand-cyan' },
-    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-status-gap text-white', border: 'border-status-gap' }, // Amber
-    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-status-risk text-white', border: 'border-status-risk' } // Red
+    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-blue-500 text-white', border: 'border-blue-500' },
+    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-amber-500 text-white', border: 'border-amber-500' },
+    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-purple-500 text-white', border: 'border-purple-500' }
 ] as const;
 
 
@@ -102,13 +99,17 @@ const SmartTextarea = ({
     onChange,
     placeholder,
     label,
-    className
+    className,
+    id,
+    name
 }: {
     value: string;
     onChange: (val: string) => void;
     placeholder: string;
     label: string;
     className?: string;
+    id?: string;
+    name?: string;
 }) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const props = { value, onChange, placeholder, label, className }; // Capture props for easier access
@@ -146,15 +147,17 @@ const SmartTextarea = ({
 
     return (
         <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">
+            <label htmlFor={id} className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider block mb-1">
                 {label}
-            </span>
+            </label>
             <textarea
+                id={id}
+                name={name}
                 ref={textareaRef}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onFocus={(e) => {
+                onFocus={() => {
                     if (!value) onChange('• ');
                 }}
                 className={
@@ -179,6 +182,7 @@ const AUTONOMY_LABELS: Record<string, string> = {
     'L5': 'AI autonomous, No human loop.',
 };
 
+/*
 const PhaseCard = ({ phase, updatePhase, requestDelete }: {
     phase: WorkflowPhase,
     updatePhase: (id: string, field: keyof WorkflowPhase, val: any) => void,
@@ -187,7 +191,6 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
     return (
         <Reorder.Item value={phase} id={phase.id} className="flex items-center cursor-grab active:cursor-grabbing">
             <div className="bg-[#fff9c4] rounded-sm shadow-md border-t border-yellow-200 p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
-                {/* Header (Phase Name) */}
                 <div className="flex justify-between items-start border-b border-yellow-200/50 pb-2 mb-1">
                     <input
                         type="text"
@@ -202,10 +205,8 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </button>
                 </div>
 
-                {/* I.P.O. Section - The "Post-it" Content */}
                 <div className="space-y-3">
 
-                    {/* INPUTS: "Triggers" */}
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
                         <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Trigger / Input</span>
                         <textarea
@@ -222,7 +223,6 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                         />
                     </div>
 
-                    {/* ACTIONS: "Doing" */}
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
                         <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Actions Taken</span>
                         <textarea
@@ -238,7 +238,6 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                         />
                     </div>
 
-                    {/* OUTPUTS: "Results" */}
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
                         <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Artifact / Output</span>
                         <textarea
@@ -255,7 +254,6 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </div>
                 </div>
 
-                {/* Autonomy Footer (Subtle) */}
                 <div className="pt-3 mt-auto">
                     <div className="flex gap-1 justify-between bg-white/30 p-1 rounded-full" onPointerDown={(e) => e.stopPropagation()}>
                         {['L1', 'L2', 'L3', 'L4', 'L5'].map((level) => (
@@ -274,7 +272,6 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                 </div>
             </div>
 
-            {/* Visual Link Arrow */}
             <div className="text-slate-300 dark:text-slate-600">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -283,41 +280,10 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
         </Reorder.Item>
     );
 };
+*/
 
 // --- Subcomponent: Tag Input for Capabilities ---
-const TagInput = ({ tags, addTag, removeTag, placeholder, colorClass }: {
-    tags: string[],
-    addTag: (val: string) => void,
-    removeTag: (val: string) => void,
-    placeholder: string,
-    colorClass: string
-}) => {
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-            addTag(e.currentTarget.value.trim());
-            e.currentTarget.value = '';
-        }
-    };
 
-    return (
-        <div className="space-y-2">
-            <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg">
-                {tags.map(tag => (
-                    <span key={tag} className={`px-2 py-1 rounded text-xs font-bold text-white flex items-center gap-1 ${colorClass}`}>
-                        {tag}
-                        <button onClick={() => removeTag(tag)} className="hover:text-black/50">×</button>
-                    </span>
-                ))}
-                <input
-                    type="text"
-                    onKeyDown={handleKeyDown}
-                    className="bg-transparent outline-none text-xs min-w-[100px] flex-1"
-                    placeholder={placeholder}
-                />
-            </div>
-        </div>
-    );
-};
 
 // --- Component: Value Prop Builder ---
 const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
@@ -332,7 +298,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
     useEffect(() => {
         if (!value) return;
         // Logic to pre-fill parts if needed, omitted for now to keep it simple
-    }, []);
+    }, [value]);
 
     const updatePart = (key: keyof typeof parts, val: string) => {
         const newParts = { ...parts, [key]: val };
@@ -356,13 +322,15 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
         <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
             {/* Live Preview (Moved to Top) */}
             <div className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-black/20 p-4 rounded border border-slate-200 dark:border-slate-700 leading-relaxed shadow-sm">
-                "{value || <span className="text-slate-400 italic font-normal">Start typing below to build your value proposition...</span>}"
+                &quot;{value || <span className="text-slate-400 italic font-normal">Start typing below to build your value proposition...</span>}&quot;
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">As a [Role]...</label>
+                    <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">As a [Role]...</label>
                     <textarea
+                        id="vp_role"
+                        name="vp_role"
                         rows={1}
                         value={parts.role}
                         onChange={(e) => handleInput(e, 'role')}
@@ -371,8 +339,10 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">I want to [Outcome]...</label>
+                    <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">I want to [Outcome]...</label>
                     <textarea
+                        id="vp_outcome"
+                        name="vp_outcome"
                         rows={1}
                         value={parts.outcome}
                         onChange={(e) => handleInput(e, 'outcome')}
@@ -381,8 +351,10 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">With [Solution]...</label>
+                    <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">With [Solution]...</label>
                     <textarea
+                        id="vp_solution"
+                        name="vp_solution"
                         rows={1}
                         value={parts.solution}
                         onChange={(e) => handleInput(e, 'solution')}
@@ -391,8 +363,10 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">So that [Need]...</label>
+                    <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">So that [Need]...</label>
                     <textarea
+                        id="vp_need"
+                        name="vp_need"
                         rows={1}
                         value={parts.need}
                         onChange={(e) => handleInput(e, 'need')}
@@ -405,16 +379,18 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
     );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function InputCanvas({ initialOpportunities, workshopId }: { initialOpportunities: any[], workshopId: string }) {
     const [activeTab, setActiveTab] = useState<'A' | 'B' | 'C' | 'D'>('A');
     const [data, setData] = useState<OpportunityState>(INITIAL_STATE);
     // Phase 29: Opportunity List State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allOpportunities, setAllOpportunities] = useState<any[]>(initialOpportunities);
     const [opportunityId, setOpportunityId] = useState<string | undefined>(undefined);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
     const [isGlobalReady, setIsGlobalReady] = useState(false);
-    const [globalCompleteness, setGlobalCompleteness] = useState(0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [opportunityToDelete, setOpportunityToDelete] = useState<any | null>(null);
     const [isDeletingOpportunity, setIsDeletingOpportunity] = useState(false);
 
@@ -430,7 +406,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [isDraftingExec, setIsDraftingExec] = useState(false);
     const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
-    const handleSmartSelect = (opp: any) => {
+    const handleSmartSelect = (opp: { id: string }) => {
         // 1. Perform the normal selection
         handleSelectOpportunity(opp.id);
 
@@ -445,7 +421,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
     // Scroll Handling: (Removed Auto-Scroll to allow context retention)
 
-    const router = useRouter();
+
 
     const completenessStatus = calculateCompleteness(data);
     const completeness = completenessStatus.total;
@@ -479,7 +455,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             });
 
             const avgCompleteness = Math.round(totalScore / allOpportunities.length);
-            setGlobalCompleteness(avgCompleteness);
+            // setGlobalCompleteness(avgCompleteness); // Unused
 
             // Enable if everything is effectively complete (or >90% to be forgiving?)
             // Following strict user request:
@@ -511,6 +487,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         }, 1500);
 
         return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data]);
 
     const performSave = async (currentData: OpportunityState) => {
@@ -551,9 +528,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             setData({
                 projectName: selected.projectName || '',
                 frictionStatement: selected.frictionStatement || '',
-                strategicHorizon: selected.strategicHorizon ? selected.strategicHorizon.split(',') : [],
+                strategicHorizon: selected.strategicHorizon ? selected.strategicHorizon.split(',').map((s: string) => s.trim()) : [],
                 whyDoIt: selected.whyDoIt || '',
-                // @ts-ignore
                 workflowPhases: Array.isArray(selected.workflowPhases) ? selected.workflowPhases : [],
                 capabilitiesExisting: selected.capabilitiesExisting || [],
                 capabilitiesMissing: selected.capabilitiesMissing || [],
@@ -621,31 +597,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     };
 
     // -- App Handlers --
-    const handleAnalyse = async () => {
-        // If current data is NOT complete but we are globally read, just redirect
-        if (!isComplete && isGlobalReady) {
-            router.push(`/workshop/${workshopId}/analysis`);
-            return;
-        }
 
-        // Force immediate save then redirect
-        setSaveStatus('saving');
-        try {
-            const payload = { ...data, strategicHorizon: data.strategicHorizon.join(',') };
 
-            const result = await saveOpportunity(workshopId, payload, opportunityId);
-
-            if (result.success) {
-                // Redirect to analysis
-                router.push(`/workshop/${workshopId}/analysis`);
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Failed to save opportunity.");
-        }
-    };
-
-    const handleInputChange = (field: keyof OpportunityState, value: any) => {
+    const handleInputChange = (field: keyof OpportunityState, value: unknown) => {
         setSaveStatus('idle'); // Reset status on type
         setData(prev => ({ ...prev, [field]: value }));
     };
@@ -680,7 +634,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         })
     );
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (active && over && active.id !== over.id) {
@@ -710,7 +664,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         setData(prev => ({ ...prev, workflowPhases: [...prev.workflowPhases, newPhase] }));
     };
 
-    const updatePhase = (id: string, field: keyof WorkflowPhase, val: any) => {
+    const updatePhase = (id: string, field: keyof WorkflowPhase, val: unknown) => {
         setSaveStatus('idle');
         setData(prev => ({
             ...prev,
@@ -718,10 +672,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         }));
     };
 
-    const handleReorder = (newOrder: WorkflowPhase[]) => {
-        setSaveStatus('idle');
-        setData(prev => ({ ...prev, workflowPhases: newOrder }));
-    };
+
 
     const requestDeletePhase = (id: string) => {
         setDeleteModalId(id);
@@ -738,25 +689,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     };
 
     // --- Capability Handlers ---
-    const addCapability = (type: 'existing' | 'missing', val: string) => {
-        setSaveStatus('idle');
-        setData(prev => ({
-            ...prev,
-            [type === 'existing' ? 'capabilitiesExisting' : 'capabilitiesMissing']: [
-                ...(type === 'existing' ? prev.capabilitiesExisting : prev.capabilitiesMissing),
-                val
-            ]
-        }));
-    };
 
-    const removeCapability = (type: 'existing' | 'missing', val: string) => {
-        setSaveStatus('idle');
-        setData(prev => ({
-            ...prev,
-            [type === 'existing' ? 'capabilitiesExisting' : 'capabilitiesMissing']:
-                (type === 'existing' ? prev.capabilitiesExisting : prev.capabilitiesMissing).filter(t => t !== val)
-        }));
-    };
 
     // --- AI Execution Handler ---
     // 1. Trigger
@@ -793,11 +726,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
             if (res.success && res.data) {
                 // A. FORMATTING FIX: Ensure bullet points have breathing room
-                const formattedData = Object.entries(res.data).reduce((acc: any, [key, val]) => {
+                const formattedData = Object.entries(res.data).reduce((acc: Partial<OpportunityState>, [key, val]) => {
                     if (typeof val === 'string') {
                         // Replace "• " with "\n• " to create vertical space, trimming start to avoid huge top gaps
+                        // @ts-expect-error - Dynamic key assignment
                         acc[key] = val.replace(/•/g, '\n•').replace(/^\n/, '');
                     } else {
+                        // @ts-expect-error - Dynamic key assignment
                         acc[key] = val;
                     }
                     return acc;
@@ -891,15 +826,18 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             {/* --- HEADER SECTION --- */}
             <div className="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center sticky top-0 z-30">
                 <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-                        Opportunity Capture
-                    </h1>
                     {/* DYNAMIC TITLE */}
-                    {data.projectName && (
-                        <span className="text-xl font-medium text-slate-400 border-l border-slate-300 pl-3 animate-in fade-in">
-                            {data.projectName}
-                        </span>
-                    )}
+                    <h1 className="flex items-baseline gap-3">
+                        {data.projectName ? (
+                            <span className="text-2xl font-black text-slate-800 tracking-tight animate-in fade-in">
+                                {data.projectName}
+                            </span>
+                        ) : (
+                            <span className="text-2xl font-black text-slate-300 tracking-tight italic">
+                                New Opportunity
+                            </span>
+                        )}
+                    </h1>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -972,8 +910,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                 <motion.div key="A" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Opportunity Name</label>
+                                            <label htmlFor="projectName" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Opportunity Name</label>
                                             <input
+                                                id="projectName"
+                                                name="projectName"
                                                 type="text"
                                                 value={data.projectName}
                                                 onChange={(e) => handleInputChange('projectName', e.target.value)}
@@ -982,8 +922,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction Statement</label>
+                                            <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction Statement</label>
                                             <textarea
+                                                id="frictionStatement"
+                                                name="frictionStatement"
                                                 value={data.frictionStatement}
                                                 onChange={(e) => handleInputChange('frictionStatement', e.target.value)}
                                                 className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-24 transition-all resize-none"
@@ -991,9 +933,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             />
                                         </div>
                                         <div className="mb-6">
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</label>
-                                            <div className="flex gap-2 flex-wrap">
-                                                {HORIZONS.map(h => (
+                                            <h3 id="strategic-horizon-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</h3>
+                                            <div role="group" aria-labelledby="strategic-horizon-label" className="flex gap-2 flex-wrap">
+                                                {HORIZONS.map((h) => (
                                                     <button
                                                         key={h.id}
                                                         onClick={() => toggleHorizon(h.id)}
@@ -1007,11 +949,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Customer Value Proposition</label>
-                                            <ValuePropBuilder
-                                                value={data.whyDoIt}
-                                                onChange={(val) => handleInputChange('whyDoIt', val)}
-                                            />
+                                            <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Customer Value Proposition</h3>
+                                            <div role="group" aria-labelledby="cvp-label">
+                                                <ValuePropBuilder
+                                                    value={data.whyDoIt}
+                                                    onChange={(val) => handleInputChange('whyDoIt', val)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -1049,10 +993,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 onDragEnd={handleDragEnd}
                                             >
                                                 <SortableContext
-                                                    items={data.workflowPhases.map((p: any) => p.id)}
+                                                    items={data.workflowPhases.map((p) => p.id)}
                                                     strategy={horizontalListSortingStrategy}
                                                 >
-                                                    {data.workflowPhases?.map((phase, index) => (
+                                                    {data.workflowPhases.map((phase) => (
                                                         <SortablePhaseCard key={phase.id} id={phase.id}>
                                                             <div
                                                                 onClick={() => {
@@ -1096,18 +1040,24 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                 <div className={`space-y-3 transition-opacity duration-200 ${isZoomedOut ? 'hidden opacity-0' : 'block opacity-100'}`}>
                                                                     <SmartTextarea
                                                                         label="Trigger / Input"
+                                                                        id={`phase-inputs-${phase.id}`}
+                                                                        name={`phase-inputs-${phase.id}`}
                                                                         value={phase.inputs || ''}
                                                                         onChange={(val) => updatePhase(phase.id, 'inputs', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
                                                                         label="Actions Taken"
+                                                                        id={`phase-actions-${phase.id}`}
+                                                                        name={`phase-actions-${phase.id}`}
                                                                         value={phase.actions || ''}
                                                                         onChange={(val) => updatePhase(phase.id, 'actions', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
                                                                         label="Artifact / Output"
+                                                                        id={`phase-outputs-${phase.id}`}
+                                                                        name={`phase-outputs-${phase.id}`}
                                                                         value={phase.outputs || ''}
                                                                         onChange={(val) => updatePhase(phase.id, 'outputs', val)}
                                                                         placeholder="• List items..."
@@ -1120,7 +1070,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map((level) => (
                                                                                     <button
                                                                                         key={level}
-                                                                                        onClick={() => updatePhase(phase.id, 'autonomy', level as any)}
+                                                                                        onClick={() => updatePhase(phase.id, 'autonomy', level as WorkflowPhase['autonomy'])}
                                                                                         className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
                                                                                             ? 'bg-slate-800 text-white shadow-sm scale-110'
                                                                                             : 'text-yellow-800 hover:bg-yellow-200'
@@ -1217,11 +1167,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     <div key={item.field} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-100 h-full min-h-[160px]">
                                                         <BulletListEditor
                                                             label={item.label}
-                                                            value={(data as any)[item.field] || ''}
-                                                            onChange={(val) => handleInputChange(item.field as any, val)}
+                                                            id={item.field}
+                                                            name={item.field}
+                                                            value={data[item.field as keyof OpportunityState] as string || ''}
+                                                            onChange={(val) => handleInputChange(item.field as keyof OpportunityState, val)}
                                                             placeholder={item.placeholder}
-                                                        />
-                                                    </div>
+                                                        />                       </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -1294,7 +1245,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                             {/* Right Column: Estimated Benefit */}
                                             <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Estimated Benefit</label>
+                                                <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Estimated Benefit</h3>
 
                                                 {/* Timeframe Toggle */}
                                                 <div className="flex gap-1 mb-4 bg-slate-100 dark:bg-slate-800 rounded-full p-1 w-fit">
@@ -1315,8 +1266,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 {/* Stacked Benefit Inputs */}
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rev. Uplift ($)</label>
+                                                        <label htmlFor="benefitRevenue" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rev. Uplift ($)</label>
                                                         <CurrencyInput
+                                                            id="benefitRevenue"
+                                                            name="benefitRevenue"
                                                             value={data.benefitRevenue}
                                                             onChange={(val) => handleInputChange('benefitRevenue', val)}
                                                             className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
@@ -1324,8 +1277,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Cost Avoid. ($)</label>
+                                                        <label htmlFor="benefitCostAvoidance" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Cost Avoid. ($)</label>
                                                         <CurrencyInput
+                                                            id="benefitCostAvoidance"
+                                                            name="benefitCostAvoidance"
                                                             value={data.benefitCostAvoidance}
                                                             onChange={(val) => handleInputChange('benefitCostAvoidance', val)}
                                                             className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
@@ -1333,8 +1288,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Hrs Saved</label>
+                                                        <label htmlFor="benefitEfficiency" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Hrs Saved</label>
                                                         <CurrencyInput
+                                                            id="benefitEfficiency"
+                                                            name="benefitEfficiency"
                                                             value={data.benefitEfficiency}
                                                             onChange={(val) => handleInputChange('benefitEfficiency', val)}
                                                             prefix=""
@@ -1344,8 +1301,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 mt-2">
-                                                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Est. Implementation Cost ($)</label>
+                                                        <label htmlFor="benefitEstCost" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Est. Implementation Cost ($)</label>
                                                         <CurrencyInput
+                                                            id="benefitEstCost"
+                                                            name="benefitEstCost"
                                                             value={data.benefitEstCost}
                                                             onChange={(val) => handleInputChange('benefitEstCost', val)}
                                                             className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
@@ -1358,7 +1317,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         {/* VRCC Sliders - UNCHANGED */}
                                         <div className="space-y-2">
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">VRCC Scores</label>
+                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">VRCC Scores</h3>
                                             <VRCCSlider label="Value" value={data.vrcc.value} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, value: val } }))} />
                                             <div>
                                                 <VRCCSlider

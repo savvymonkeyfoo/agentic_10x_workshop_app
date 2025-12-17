@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { createWorkshop } from '@/app/actions/create-workshop';
 import { updateWorkshop } from '@/app/actions/update-workshop';
 
@@ -101,14 +102,16 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                 await createWorkshop(formData);
             }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             // Ignore redirect errors
-            if (err.message && (err.message.includes('NEXT_REDIRECT') || err.digest?.includes('NEXT_REDIRECT'))) {
+            const errorObj = err as { message?: string; digest?: string };
+            if (errorObj.message && (errorObj.message.includes('NEXT_REDIRECT') || errorObj.digest?.includes('NEXT_REDIRECT'))) {
                 return;
             }
 
             console.error("Submission Error:", err);
-            alert(`Failed to ${isEditMode ? 'update' : 'create'} workshop: ${err.message}`);
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            alert(`Failed to ${isEditMode ? 'update' : 'create'} workshop: ${message}`);
             setSubmitting(false);
         }
     };
@@ -153,11 +156,11 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                         <div className="flex items-center gap-4">
                             {logoUrl ? (
                                 <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden relative">
-                                    <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
+                                    <Image src={logoUrl} alt="Logo Preview" fill className="object-contain" sizes="64px" />
                                     <button
                                         type="button"
                                         onClick={() => setLogoUrl(null)}
-                                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-lg text-xs"
+                                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-lg text-xs z-10"
                                     >
                                         ✕
                                     </button>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { LayoutDashboard, BarChart3, FileText } from 'lucide-react';
 
 interface WorkshopHeaderProps {
@@ -45,8 +46,8 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
             {/* Workshop Badge */}
             <div className="flex items-center gap-2 pl-4 border-l border-slate-200 dark:border-slate-700">
                 {clientLogoUrl ? (
-                    <div className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 bg-white overflow-hidden flex items-center justify-center">
-                        <img src={clientLogoUrl} alt={clientName} className="w-full h-full object-contain" />
+                    <div className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 bg-white overflow-hidden flex items-center justify-center relative">
+                        <Image src={clientLogoUrl} alt={`${clientName} logo`} fill className="object-contain" sizes="28px" />
                     </div>
                 ) : (
                     <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold">

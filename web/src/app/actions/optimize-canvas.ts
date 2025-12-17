@@ -7,6 +7,7 @@ const google = createGoogleGenerativeAI({
 });
 import { z } from 'zod';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function optimizeCanvasContent(data: any) {
     try {
         const result = await generateObject({

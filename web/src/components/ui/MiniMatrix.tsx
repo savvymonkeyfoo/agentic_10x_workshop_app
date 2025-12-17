@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, ReferenceLine, Cell, Tooltip } from 'recharts';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, ReferenceLine, Cell } from 'recharts';
 
 interface MiniMatrixProps {
     complexity: number; // 0-5

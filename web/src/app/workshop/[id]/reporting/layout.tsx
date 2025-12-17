@@ -9,7 +9,9 @@ async function getOpportunities(workshopId: string) {
             id: true,
             projectName: true,
             updatedAt: true,
-            canvasLastGeneratedAt: true
+            canvasLastGeneratedAt: true,
+            scoreValue: true,
+            frictionStatement: true
         },
         orderBy: { updatedAt: 'desc' }
     });

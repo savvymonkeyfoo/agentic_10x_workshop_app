@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { createWorkshop } from './actions/create-workshop';
 
 // Prevent caching so new workshops appear immediately
 export const dynamic = 'force-dynamic';
@@ -37,7 +36,7 @@ export default async function Dashboard() {
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {workshops.map((workshop: any) => (
+        {workshops.map((workshop) => (
           <WorkshopCard key={workshop.id} workshop={workshop} />
         ))}
 

@@ -1,6 +1,11 @@
 import React from 'react';
 
-export function StaticWorkflow({ phases }: { phases: any[] }) {
+interface WorkflowPhase {
+    name?: string;
+    [key: string]: unknown;
+}
+
+export function StaticWorkflow({ phases }: { phases: WorkflowPhase[] }) {
     const list = Array.isArray(phases) ? phases : [];
     if (list.length === 0) return null;
 

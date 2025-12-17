@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 
 // Register a standard font (optional, using Helvetica by default is fine for MVP)

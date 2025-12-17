@@ -1,0 +1,83 @@
+# 4. Master Technology Stack & Architecture
+
+**Project:** Agentic 10x Workshop App (Core + Phase 1 Extension)
+**Status:** Build-Ready
+**Updated:** December 2025
+
+---
+
+## 1. Core Framework & Application Layer
+*The backbone of the "Single View" architecture.*
+
+* **Framework:** **Next.js 14** (App Router).
+    * *Rationale:* Server Actions provide the seamless "backend-for-frontend" logic required for the RAG pipeline without needing a separate API server.
+* **Language:** **TypeScript** (Strict Mode).
+* **Styling System:** **Tailwind CSS** + **Shadcn/UI** (Radix Primitives).
+    * *Usage:* Rapid UI development for the "Ideation Board" (Masonry layouts) and "Workshop Dashboard".
+* **State Management:** **React Context** + **Server Actions**.
+    * *Constraint:* No Redux/Zustand. State is managed locally for interactions (drag-and-drop) and persisted via Server Actions.
+
+---
+
+## 2. Data Persistence & Storage Strategy
+*Hybrid architecture supporting structured relational data and unstructured vector data.*
+
+### **A. Relational Database (The Ledger)**
+* **Database:** **PostgreSQL**.
+* **ORM:** **Prisma** (v6.19+).
+* **Schema Sync:** `npx prisma db push` (for rapid iteration).
+* **Key Models:** `Workshop`, `Opportunity`, `IdeaCard` (New), `IdeaVersion` (New).
+
+### **B. Vector Database (The Brain)**
+* **Technology:** **`pgvector`** (PostgreSQL Extension).
+* **Purpose:** The "Context Engine." Stores embeddings for Client Dossiers and Market Research files to enable RAG (Retrieval-Augmented Generation).
+* **Why:** Eliminates the need for external vector services (e.g., Pinecone), keeping the stack monolithic and cost-effective on Vercel.
+
+### **C. File Storage (The Archive)**
+* **Service:** **Vercel Blob**.
+* **Purpose:** Stores the raw source files (PDFs, Markdown, Text) uploaded during "Context Injection" (Screen 1.5).
+* **Flow:** Upload $\rightarrow$ Vercel Blob $\rightarrow$ URL stored in DB $\rightarrow$ Text extracted for Vectorization.
+
+---
+
+## 3. AI & RAG Pipeline (The "Strategist")
+*The Neuro-Symbolic logic engine powering the "Agentic Merge" and "Risk Analysis".*
+
+* **SDK:** **Vercel AI SDK** (`ai`, `@ai-sdk/google`).
+* **LLM Provider:** **Google Gemini Pro 1.5**.
+    * *Role:* Handling "Merge Synthesis," "Lens Expansion," and "Strategic Reasoning."
+* **Embedding Model:** **Google `text-embedding-004`**.
+    * *Role:* converting raw text chunks into vectors for semantic search.
+* **Ingestion Parser:** **`pdf-parse`**.
+    * *Role:* Extracting raw text from uploaded Client Dossiers (PDFs) to feed the embedding engine.
+
+---
+
+## 4. Visualisation & Interaction Engines
+*Handling the complex "Sandbox" and "Matrix" interfaces.*
+
+### **A. The Ideation Board (Screen 1.6)**
+* **Library:** **`@dnd-kit/core`** (plus `@dnd-kit/sortable`).
+* **Usage:** Powering the Masonry Grid of "Idea Cards." Handles the Drag-and-Drop for "Portfolio Triage" (sorting into Tiers) and "Merge" interactions.
+* **Performance:** Optimized for "optimistic UI" updates (instant visual feedback before server confirmation).
+
+### **B. The Analysis Dashboard (Screen 3)**
+* **Charts:** **Recharts**.
+    * *Usage:* Standard bar/line charts for financial impact.
+* **Custom Graphics:**
+    * **Input Canvas:** Custom SVG implementation (React State driven).
+    * **Spider Chart:** Custom SVG with polar coordinate math (The "Kite" Logic).
+    * **Matrix:** Custom SVG scatter plot.
+
+---
+
+## 5. Output Generation
+* **Library:** **`@react-pdf/renderer`**.
+* **Method:** Server-side generation.
+* **Output:** High-fidelity PDF "Charter" containing the sequence, logic narrative, and visual matrices.
+
+---
+
+## 6. Testing & Quality Assurance
+* **Unit/Integration:** **Jest** + **React Testing Library**.
+* **Logic Verification:** Custom Gherkin-style feature files (e.g., `logic_tests.feature`) to validate Graph Theory rules (Circular Dependency checks).

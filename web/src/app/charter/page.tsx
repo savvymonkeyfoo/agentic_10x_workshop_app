@@ -11,6 +11,7 @@ import { getCharterData } from '@/app/actions/get-charter';
 // I'll implement it as a Client Component that fetches via action to keep PDF logic clean.
 
 export default function CharterPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -41,10 +42,10 @@ export default function CharterPage() {
                 </div>
 
                 <PDFDownloadLink document={<CharterPDF data={data} />} fileName={`Charter-${data.id}.pdf`}>
-                    {({ blob, url, loading, error }) => (
+                    {({ loading: pdfLoading }) => (
                         <button className="px-6 py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-                            {loading ? 'Preparing PDF...' : 'Export PDF'}
-                            {!loading && (
+                            {pdfLoading ? 'Preparing PDF...' : 'Export PDF'}
+                            {!pdfLoading && (
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>

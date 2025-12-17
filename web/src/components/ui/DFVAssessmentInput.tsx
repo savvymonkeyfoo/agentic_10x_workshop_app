@@ -100,7 +100,7 @@ interface DFVAssessmentInputProps {
 export function DFVAssessmentInput({ value, onChange }: DFVAssessmentInputProps) {
     return (
         <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">DFV Assessment</label>
+            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">DFV Assessment</h3>
             <div className="space-y-4 bg-white/30 dark:bg-black/10 rounded-xl p-4 border border-slate-200/50 dark:border-slate-700/50">
                 <StarRatingInput
                     label="Desirability"

@@ -2,7 +2,9 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@prisma/client';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function saveOpportunity(workshopId: string, data: any, opportunityId?: string) {
     if (!workshopId) throw new Error("Workshop ID required");
 
@@ -11,19 +13,19 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
         workshopId,
         projectName: data.projectName || "Untitled Opportunity",
         frictionStatement: data.frictionStatement || "",
-        strategicHorizon: data.strategicHorizon || "OPS",
+        strategicHorizon: data.strategicHorizon || "",
         whyDoIt: data.whyDoIt || "",
 
-        // New Workflow Data
-        workflowPhases: data.workflowPhases || [],
+        // New Workflow Data - cast to Prisma.InputJsonValue for proper JSON handling
+        workflowPhases: (data.workflowPhases || []) as Prisma.InputJsonValue,
         // Removed agentDirective
 
-        scoreValue: Number(data.vrcc.value),
-        scoreCapability: Number(data.vrcc.capability),
-        scoreComplexity: Number(data.vrcc.complexity),
-        scoreRiskFinal: Number(data.vrcc.riskFinal),
-        scoreRiskAI: Number(data.vrcc.riskAI),
-        riskOverrideLog: data.vrcc.riskOverrideLog || "",
+        scoreValue: Number(data.vrcc?.value ?? 3),
+        scoreCapability: Number(data.vrcc?.capability ?? 3),
+        scoreComplexity: Number(data.vrcc?.complexity ?? 3),
+        scoreRiskFinal: Number(data.vrcc?.riskFinal ?? 3),
+        scoreRiskAI: Number(data.vrcc?.riskAI ?? 0),
+        riskOverrideLog: data.vrcc?.riskOverrideLog || "",
 
         tShirtSize: data.tShirtSize || "M",
 
@@ -35,7 +37,7 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
         benefitTimeframe: data.benefitTimeframe || 'Monthly',
 
         // DFV Assessment (JSON)
-        dfvAssessment: data.dfvAssessment || null,
+        dfvAssessment: data.dfvAssessment ?? Prisma.DbNull,
 
         definitionOfDone: data.definitionOfDone || "",
         keyDecisions: data.keyDecisions || "",

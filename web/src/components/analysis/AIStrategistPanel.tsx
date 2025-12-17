@@ -164,7 +164,7 @@ export function AIStrategistPanel({
                             <div className="mb-6">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Executive Summary</h3>
                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-xl border border-indigo-100 dark:border-slate-700">
-                                    "{displayNarrative}"
+                                    &ldquo;{displayNarrative}&rdquo;
                                 </p>
                             </div>
                         )}
@@ -209,8 +209,8 @@ export function AIStrategistPanel({
                             {/* Group items by rank */}
                             {[1, 2, 3, 4].map(waveNum => {
                                 const waveItems = displaySequence
-                                    .filter((item: any) => waveNum === 4 ? item.rank >= 4 : item.rank === waveNum)
-                                    .sort((a: any, b: any) => a.rank - b.rank);
+                                    .filter((item: SequenceItem) => waveNum === 4 ? item.rank >= 4 : item.rank === waveNum)
+                                    .sort((a: SequenceItem, b: SequenceItem) => a.rank - b.rank);
 
                                 if (waveItems.length === 0) return null;
 
@@ -236,7 +236,7 @@ export function AIStrategistPanel({
 
                                         {/* Wave Items */}
                                         <div className="space-y-2 pl-2 border-l-2 border-slate-100 dark:border-slate-700 ml-3">
-                                            {waveItems.map((item: any, index: number) => (
+                                            {waveItems.map((item: SequenceItem, index: number) => (
                                                 <motion.details
                                                     key={item.id}
                                                     initial={{ opacity: 0, x: -10 }}

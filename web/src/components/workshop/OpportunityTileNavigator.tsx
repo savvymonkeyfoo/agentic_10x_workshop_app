@@ -3,12 +3,23 @@ import React from 'react';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Type definition for opportunity
+interface Opportunity {
+    id: string;
+    projectName?: string | null;
+    frictionStatement?: string | null;
+    workflowPhases?: unknown[];
+    benefitRevenue?: number | null;
+    benefitCostAvoidance?: number | null;
+    benefitEstCost?: number | null;
+}
+
 // Helper: Check if opportunity has sufficient data
-const checkCompletion = (opp: any): boolean => {
+const checkCompletion = (opp: Opportunity): boolean => {
     const hasStrategy = opp.projectName && opp.frictionStatement;
     const hasWorkflow = opp.workflowPhases && Array.isArray(opp.workflowPhases) && opp.workflowPhases.length > 0;
     const hasBusiness = opp.benefitRevenue || opp.benefitCostAvoidance || opp.benefitEstCost;
-    return hasStrategy && hasWorkflow && hasBusiness;
+    return !!(hasStrategy && hasWorkflow && hasBusiness);
 };
 
 export const OpportunityTileNavigator = ({
@@ -20,9 +31,9 @@ export const OpportunityTileNavigator = ({
     isOpen,        // <--- New Prop
     onToggle       // <--- New Prop
 }: {
-    opportunities: any[],
+    opportunities: Opportunity[],
     selectedId: string | null,
-    onSelect: (opp: any) => void,
+    onSelect: (opp: Opportunity) => void,
     onCreate: () => void,
     onDelete: (id: string) => void,
     isOpen: boolean,

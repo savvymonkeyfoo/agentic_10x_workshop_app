@@ -25,15 +25,15 @@ export async function getCharterData() {
         id: opp.id,
         projectName: opp.projectName,
         tShirtSize: opp.tShirtSize || 'M',
-        strategicHorizon: opp.strategicHorizon || 'OPS',
+        strategicHorizon: opp.strategicHorizon || '',
         frictionStatement: opp.frictionStatement || '',
         whyDoIt: opp.whyDoIt || '',
         agentDirective: {
-            // @ts-ignore
+            // @ts-expect-error - dynamic JSON field
             trigger: opp.agentDirective?.trigger || '',
-            // @ts-ignore
+            // @ts-expect-error - dynamic JSON field
             action: opp.agentDirective?.action || '',
-            // @ts-ignore
+            // @ts-expect-error - dynamic JSON field
             guardrail: opp.agentDirective?.guardrail || ''
         },
         financials: {

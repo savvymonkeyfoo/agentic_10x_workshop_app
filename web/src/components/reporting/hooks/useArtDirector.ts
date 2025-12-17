@@ -1,4 +1,12 @@
-export function useArtDirector(data: any) {
+interface ArtDirectorData {
+    projectName?: string | null;
+    systemGuardrails?: string | null;
+    frictionStatement?: string | null;
+    strategicRationale?: string | null;
+    whyDoIt?: string | null;
+}
+
+export function useArtDirector(data: ArtDirectorData) {
     const titleLen = data.projectName?.length || 0;
     const riskLen = data.systemGuardrails?.length || 0;
     const frictionLen = data.frictionStatement?.length || 0;

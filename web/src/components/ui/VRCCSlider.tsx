@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import React, { useRef } from 'react';
 
 interface VRCCSliderProps {
     label: string;
@@ -43,16 +42,6 @@ const RUBRICS: Record<string, Record<number, string>> = {
 
 export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSliderProps) {
     const constraintsRef = useRef<HTMLDivElement>(null);
-    const [width, setWidth] = useState(0);
-
-    // Map 1-5 value to pixel position
-    // We'll calculate this dynamically based on container width
-
-    useEffect(() => {
-        if (constraintsRef.current) {
-            setWidth(constraintsRef.current.offsetWidth);
-        }
-    }, []);
 
     // Helper: Percentage for value (1..5) -> 0..100%
     const getPercent = (val: number) => ((val - 1) / 4) * 100;

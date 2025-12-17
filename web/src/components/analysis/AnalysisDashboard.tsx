@@ -6,10 +6,46 @@ import { AIStrategistPanel } from './AIStrategistPanel';
 import StrategicMap from './StrategicMap';
 import StrategicWaves from './StrategicWaves';
 
+// Types for node and opportunity data
+interface NodeData {
+    id: string;
+    name: string;
+    rank?: number;
+    sequenceRank?: number;
+    strategicRationale?: string;
+    tShirtSize?: string;
+    scoreValue?: number;
+    scoreComplexity?: number;
+}
+
+interface OpportunityData {
+    id: string;
+    projectName: string;
+    scoreValue: number;
+    scoreComplexity: number;
+    sequenceRank: number | null;
+    benefitRevenue: number;
+    benefitCostAvoidance: number;
+}
+
+interface SequenceItem {
+    id: string;
+    projectName: string;
+    rank: number;
+    rationale?: string;
+}
+
+interface AnalysisResult {
+    narrative: string;
+    dependencies?: string;
+    risks?: string;
+    sequence: SequenceItem[];
+}
+
 interface AnalysisDashboardProps {
     workshopId: string;
-    nodes: any[];
-    opportunities: any[];
+    nodes: NodeData[];
+    opportunities: OpportunityData[];
     initialNarrative?: string;
     initialDependencies?: string;
     initialRisks?: string;
@@ -25,7 +61,7 @@ export default function AnalysisDashboard({
     initialDependencies = "",
     initialRisks = ""
 }: AnalysisDashboardProps) {
-    const [analysis, setAnalysis] = useState<any>(null);
+    const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('MATRIX');
 

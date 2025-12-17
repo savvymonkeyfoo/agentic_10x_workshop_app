@@ -12,7 +12,7 @@ interface Opportunity {
     benefitCostAvoidance: number;
 }
 
-const resolveCollisions = (nodes: any[], width: number, height: number) => {
+const resolveCollisions = (nodes: Opportunity[], width: number, height: number) => {
     // CONFIG:
     const paddingSide = 80;
     const paddingBottom = 60;
@@ -23,7 +23,7 @@ const resolveCollisions = (nodes: any[], width: number, height: number) => {
     const minDistance = 140;
 
     // 1. Map Scores to Pixel Coordinates
-    let solved = nodes.map(node => {
+    const solved = nodes.map(node => {
         const impact = (node.benefitRevenue || 0) + (node.benefitCostAvoidance || 0);
         // Log Scale for Radius: 30px to 80px
         const logValue = impact > 0 ? Math.log10(impact) : 0;

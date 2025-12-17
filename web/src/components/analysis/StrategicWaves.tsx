@@ -1,11 +1,31 @@
 'use client';
 import React, { useState } from 'react';
-import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
+import { DndContext, useDraggable, useDroppable, DragOverlay, DragEndEvent } from '@dnd-kit/core';
 import { updateProjectWave } from '@/app/actions/update-wave';
 import { useRouter } from 'next/navigation';
 
+// Type definitions
+interface ProjectNode {
+    id: string;
+    name?: string;
+    projectName?: string;
+    tShirtSize?: string;
+    scoreValue?: number;
+    scoreComplexity?: number;
+    rank?: number;
+    sequenceRank?: number;
+}
+
+interface DroppableColumnProps {
+    rank: number;
+    title: string;
+    projects: ProjectNode[];
+    color: string;
+    bg: string;
+}
+
 // --- 1. Draggable Card ---
-const DraggableCard = ({ project }: { project: any }) => {
+const DraggableCard = ({ project }: { project: ProjectNode }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: project.id, data: { project } });
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
@@ -21,20 +41,20 @@ const DraggableCard = ({ project }: { project: any }) => {
 };
 
 // --- 2. Droppable Column ---
-const DroppableColumn = ({ rank, title, projects, color, bg }: any) => {
+const DroppableColumn = ({ rank, title, projects, color, bg }: DroppableColumnProps) => {
     const { setNodeRef } = useDroppable({ id: rank.toString() });
     return (
         <div ref={setNodeRef} className={`flex flex-col h-full rounded-lg border-t-4 ${color} ${bg} p-3 transition-colors`}>
             <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-4 uppercase">{title}</h3>
             <div className="flex-1 overflow-y-auto min-h-[100px] scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-600">
-                {projects.map((p: any) => <DraggableCard key={p.id} project={p} />)}
+                {projects.map((p: ProjectNode) => <DraggableCard key={p.id} project={p} />)}
             </div>
         </div>
     );
 };
 
 // --- 3. Main Component ---
-export default function StrategicWaves({ nodes, workshopId }: { nodes: any[], workshopId: string }) {
+export default function StrategicWaves({ nodes, workshopId }: { nodes: ProjectNode[], workshopId: string }) {
     const router = useRouter();
     const [activeId, setActiveId] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -49,18 +69,18 @@ export default function StrategicWaves({ nodes, workshopId }: { nodes: any[], wo
         { rank: 4, title: "WAVE 4: DEFER", color: "border-slate-300", bg: "bg-slate-50 dark:bg-slate-800/50" },
     ];
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveId(null);
         if (over && active.id !== over.id) {
-            const newRank = parseInt(over.id);
+            const newRank = parseInt(over.id as string);
             // Only trigger if rank actually changed
             // Support both property names for compatibility
             const currentProject = nodes.find(o => o.id === active.id);
             const currentRank = currentProject?.rank || currentProject?.sequenceRank || 4;
 
             if (currentProject && currentRank !== newRank) {
-                setPendingMove({ id: active.id, newRank });
+                setPendingMove({ id: active.id as string, newRank });
                 setModalOpen(true); // <--- TRIGGER MODAL
             }
         }

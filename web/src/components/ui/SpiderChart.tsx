@@ -64,6 +64,7 @@ export function SpiderChart({ data }: SpiderChartProps) {
         return '';
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const data = payload[0];
@@ -101,12 +102,13 @@ export function SpiderChart({ data }: SpiderChartProps) {
     ];
 
     // Helper for custom tick
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderTick = (props: any) => {
-        const { payload, x, y, textAnchor, stroke, radius } = props;
+        const { payload, x, y, textAnchor } = props;
 
         // Split label logic
         // We want to add context. 
-        let label = payload.value;
+        const label = payload.value;
         let subLabel = "(Outer: High)";
 
         if (label === 'Complexity' || label === 'Risk') {

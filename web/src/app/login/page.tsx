@@ -28,7 +28,7 @@ export default function LoginPage() {
             } else {
                 setError('Incorrect credentials');
             }
-        } catch (err) {
+        } catch {
             setError('Login failed');
         } finally {
             setLoading(false);

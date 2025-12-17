@@ -18,9 +18,21 @@ interface SpiderChartProps {
     showTooltip?: boolean;
 }
 
-export function SpiderChart({ data, className = '', width, height, showTooltip = true }: SpiderChartProps) {
+export function SpiderChart({ data, className = '', width: _width, height: _height, showTooltip = true }: SpiderChartProps) {
+    const getScore = (val: unknown): number => {
+        if (typeof val === 'object' && val !== null && 'score' in val) return Number((val as { score: unknown }).score) || 0;
+        return Number(val) || 0;
+    };
+
+    const safeData = {
+        value: getScore(data.value),
+        capability: getScore(data.capability),
+        complexity: getScore(data.complexity),
+        risk: getScore(data.risk)
+    };
+
     // Check for "Virgin State" (All zeros or nulls)
-    const isEmpty = !data.value && !data.capability && !data.complexity && !data.risk;
+    const isEmpty = !safeData.value && !safeData.capability && !safeData.complexity && !safeData.risk;
 
     // If empty, show a "Ghost" shape (e.g. all 3s) to hint at structure
     const displayData = isEmpty ? {
@@ -28,7 +40,7 @@ export function SpiderChart({ data, className = '', width, height, showTooltip =
         capability: 3,
         complexity: 3,
         risk: 3
-    } : data;
+    } : safeData;
 
     // QUALITATIVE HELPERS
     const getQualitative = (subject: string, val: number) => {
@@ -39,7 +51,7 @@ export function SpiderChart({ data, className = '', width, height, showTooltip =
         return '';
     };
 
-    const CustomTooltip = ({ active, payload }: any) => {
+    const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: { subject: string }; value: number }[] }) => {
         if (active && payload && payload.length) {
             const d = payload[0];
             const subject = d.payload.subject;
@@ -73,19 +85,20 @@ export function SpiderChart({ data, className = '', width, height, showTooltip =
         { subject: 'Complexity', A: 6 - displayData.complexity, fullMark: 5 },
     ];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderTick = (props: any) => {
         const { payload, x, y, textAnchor } = props;
-        let label = payload.value;
+        const label = payload.value;
         let subLabel = "(Outer: High)";
         if (label === 'Complexity' || label === 'Risk') {
             subLabel = "(Outer: Safe/Easy)";
         }
         return (
             <g transform={`translate(${x},${y})`}>
-                <text x={0} y={0} dy={0} textAnchor={textAnchor} className="fill-slate-900 dark:fill-white" fontSize={10} fontWeight={600}>
+                <text x={0} y={0} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="fill-slate-900 dark:fill-white" fontSize={10} fontWeight={600}>
                     {label}
                 </text>
-                <text x={0} y={12} dy={0} textAnchor={textAnchor} className="fill-slate-500 dark:fill-slate-400" fontSize={8}>
+                <text x={0} y={12} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="fill-slate-500 dark:fill-slate-400" fontSize={8}>
                     {subLabel}
                 </text>
             </g>
