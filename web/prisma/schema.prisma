@@ -20,7 +20,12 @@ model Workshop {
   strategyNarrative    String? @db.Text // Executive Summary
   strategyDependencies String? @db.Text // The Architect's Analysis
   strategyRisks        String? @db.Text // The Risk Officer's Analysis
-  opportunities Opportunity[]
+  opportunities        Opportunity[]
+  
+  // Divergent Extension Relations
+  context              WorkshopContext?
+  ideaCards            IdeaCard[]
+  documents            WorkshopDocument[]
 }
 
 // 2. The Opportunity Asset
@@ -101,4 +106,88 @@ model CapabilityProduced {
   opportunityId String
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
   name          String
+}
+
+// 4. Divergent Thinking Module (New)
+
+model WorkshopContext {
+  id              String   @id @default(uuid())
+  workshopId      String   @unique
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  
+  // Context Sources
+  clientDossierUrl  String?
+  clientBacklogUrl  String?
+  marketResearchUrl String?
+  
+  // Data Blobs
+  rawBacklog      Json?
+  researchBrief   String?  @db.Text
+  extractedConstraints Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model IdeaCard {
+  id              String   @id @default(uuid())
+  workshopId      String
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String   @db.Text
+  tier            String   // Enum: STRATEGIC_BET, TABLE_STAKES, AGENTIC_AUTO
+  source          String   // Enum: CLIENT_BACKLOG, MARKET_SIGNAL, WORKSHOP_GENERATED
+  status          String   @default("ACTIVE") // ACTIVE, ARCHIVED, PROMOTED
+  
+  // Canvas Position (Whiteboard X/Y)
+  xPosition       Float    @default(0)
+  yPosition       Float    @default(0)
+  
+  // Metadata
+  simulationResult  Json?
+  genealogyMetadata Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  versions        IdeaVersion[]
+}
+
+model IdeaVersion {
+  id              String   @id @default(uuid())
+  ideaCardId      String
+  ideaCard        IdeaCard @relation(fields: [ideaCardId], references: [id], onDelete: Cascade)
+  
+  timestamp       DateTime @default(now())
+  descriptionSnapshot String @db.Text
+  changeReason    String?
+}
+
+// 5. RAG Engine (New)
+
+model WorkshopDocument {
+  id          String   @id @default(uuid())
+  workshopId  String
+  workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  
+  name        String
+  blobUrl     String
+  category    String   // CLIENT_INTERNAL, MARKET_EXTERNAL
+  
+  createdAt   DateTime @default(now())
+  
+  chunks      DocumentChunk[]
+}
+
+model DocumentChunk {
+  id          String   @id @default(uuid())
+  documentId  String
+  document    WorkshopDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  content     String   @db.Text
+  chunkIndex  Int
+  
+  // Fallback: Float[] (Postgres Array) because pgvector extension is missing locally
+  embedding   Float[]
 }

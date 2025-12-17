@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LayoutDashboard, BarChart3, FileText } from 'lucide-react';
+import { LayoutDashboard, BarChart3, FileText, Lightbulb, BookOpen } from 'lucide-react';
 
 interface WorkshopHeaderProps {
     clientName: string;
@@ -36,7 +36,9 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
     };
 
     const NAV_ITEMS = [
-        { id: 'input', label: 'Capture', icon: LayoutDashboard, href: `/workshop/${workshopId}` },
+        { id: 'research', label: 'Context', icon: BookOpen, href: `/workshop/${workshopId}/research` },
+        { id: 'ideation', label: 'Ideation', icon: Lightbulb, href: `/workshop/${workshopId}/ideation` },
+        { id: 'input', label: 'Capture', icon: LayoutDashboard, href: `/workshop/${workshopId}/input` },
         { id: 'analysis', label: 'Prioritise', icon: BarChart3, href: `/workshop/${workshopId}/analysis` },
         { id: 'reporting', label: 'Canvas', icon: FileText, href: `/workshop/${workshopId}/reporting` },
     ];

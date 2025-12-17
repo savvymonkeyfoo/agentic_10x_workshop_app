@@ -23,6 +23,6 @@ export async function createWorkshop(formData: FormData) {
         }
     });
 
-    // Redirect to the Input Canvas for this new workshop
-    redirect(`/workshop/${workshop.id}/input`);
+    // Redirect to the new Research Interface
+    redirect(`/workshop/${workshop.id}/research`);
 }
