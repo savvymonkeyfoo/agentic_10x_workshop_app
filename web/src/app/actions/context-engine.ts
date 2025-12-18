@@ -110,10 +110,40 @@ function formatContext(chunks: RetrievedChunk[]): {
 }
 
 /**
+ * Few-Shot Exemplars for Query Calibration.
+ * Demonstrates the difference between generic and 10x scouting queries.
+ */
+const FEW_SHOT_EXEMPLARS = `
+══════════════════════════════════════════════════════════════
+📚 FEW-SHOT CALIBRATION: What "10x" Research Looks Like
+══════════════════════════════════════════════════════════════
+
+EXAMPLE 1:
+- INPUT_CONTEXT: Client uses AWS/Java but backlog mentions 3-week deployment cycles.
+- ❌ POOR_QUERY: "How to improve AWS deployment?"
+- ✅ 10X_QUERY: "Analyze open-source Terraform modules for AWS serverless that reduce cold-start latency in Java-based financial microservices."
+- WHY_BETTER: Specific tech stack, specific metric, specific domain.
+
+EXAMPLE 2:
+- INPUT_CONTEXT: Operates in Australia/NZ, no mention of APAC expansion or regional competitors.
+- ❌ POOR_QUERY: "APAC fintech trends 2025"
+- ✅ 10X_QUERY: "Compare regulatory sandbox requirements for PSD2-equivalent APIs in Singapore vs Australia for cross-border B2B payment corridors."
+- WHY_BETTER: Geographic specificity, regulatory angle, business model focus.
+
+EXAMPLE 3:
+- INPUT_CONTEXT: Dossier mentions SOC2 compliance but no recent security audit or threat modeling.
+- ❌ POOR_QUERY: "Cloud security best practices"
+- ✅ 10X_QUERY: "Identify CVEs disclosed in the last 6 months affecting Java Spring Boot microservices on AWS EKS with emphasis on supply chain attacks."
+- WHY_BETTER: CVE-specific, time-bound, architecture-matched.
+`;
+
+/**
  * The Strategic Scout Master Prompt for Gap Analysis & Research Scoping.
  * 
- * This prompt analyzes "Inside-Out" knowledge to identify "Outside-In" research gaps.
- * Focus: What we DON'T know, not what we already know.
+ * Enhanced with:
+ * 1. Structural Anchor (TECH_STACK, GEOGRAPHY, SECURITY categorization)
+ * 2. Few-Shot Exemplars (Poor vs 10x query calibration)
+ * 3. JSON-Ready Output (Search API Payloads for agentic handoff)
  */
 function buildScopingPrompt(
     dossierContext: string,
@@ -121,9 +151,10 @@ function buildScopingPrompt(
     sources: string[]
 ): string {
     return `### ROLE
-You are the "Strategic Scout." Your task is to analyze internal enterprise data and identify the "Knowledge Gaps" that must be filled with external market research.
+You are the "Strategic Scout" — an elite research scoping agent for the 10x Innovation Protocol.
+Your task: Analyze internal enterprise data and generate a RESEARCH MANDATE for an external agentic research team.
 
-You are NOT summarizing what we know. You are identifying what is MISSING — the blind spots that could blindside this organization.
+You are NOT summarizing what we know. You are identifying KNOWLEDGE GAPS that require external market intelligence.
 
 ══════════════════════════════════════════════════════════════
 📁 ENTERPRISE DOSSIER (Architecture, Tech Stack, Geography, Strengths)
@@ -140,75 +171,128 @@ ${backlogContext}
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-══════════════════════════════════════════════════════════════
-🔍 ANALYSIS FRAMEWORK: The "Inside-Out" Lens
-══════════════════════════════════════════════════════════════
-
-Apply each lens to identify gaps:
-
-1. **Architecture & Tech Stack**: Based on their current technology choices, what emerging technology shifts (e.g., edge computing, specific AI breakthroughs, new frameworks) are they currently ignoring?
-
-2. **Geography & Market**: Given their operating geography, what "Outside-In" signals from nearby regions, emerging markets, or global competitors would threaten their business strategy?
-
-3. **Security & Regulatory**: What hidden security risks or regulatory shifts in their industry are NOT mentioned in their internal documents?
-
-4. **Innovation Counter-Signals**: For each strength they claim, find the "Counter-Signal"—a competitor or startup doing the exact opposite successfully.
+${FEW_SHOT_EXEMPLARS}
 
 ══════════════════════════════════════════════════════════════
-🎯 YOUR TASK: Generate a Targeted Research Mandate
+🔍 STEP 1: CATEGORIZE THE INSIDE (Extract Before You Scope)
 ══════════════════════════════════════════════════════════════
 
-Produce a structured "Research Roadmap" with the following sections:
+Before generating research queries, you MUST first extract and list these elements from the context:
 
-## 🎯 The Blind Spot Hypothesis
-A 2-3 sentence summary of what is likely MISSING from their current perspective. What are they not seeing?
+- **[TECH_STACK]**: Primary languages, cloud providers, frameworks, and legacy constraints mentioned.
+- **[GEOGRAPHY]**: Primary and secondary operating regions/markets.
+- **[SECURITY_POSTURE]**: Any mentioned compliance (SOC2, GDPR, PCI-DSS) or security concerns.
+- **[STRATEGIC_PILLARS]**: Top 3 strategic priorities from the Dossier.
+- **[OPERATIONAL_FRICTION]**: Key blockers or pain points from the Backlog.
 
-## 🔍 Priority Research Queries
-Generate 5 highly specific, actionable search queries for an external research team:
-1. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
-2. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
-3. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
-4. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
-5. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+══════════════════════════════════════════════════════════════
+🎯 STEP 2: GENERATE THE RESEARCH MANDATE
+══════════════════════════════════════════════════════════════
 
-## 🏢 Competitor Watchlist
-Identify 3 specific companies they should be monitoring based on their current roadmap:
-1. **[Company Name]**: [Why they matter to this client's strategy]
-2. **[Company Name]**: [Why they matter to this client's strategy]
-3. **[Company Name]**: [Why they matter to this client's strategy]
-
-## ⚠️ Strategic Risk Signals
-2 external forces that could disrupt their current trajectory:
-1. **[Risk Category]**: [Specific threat and leading indicators to watch]
-2. **[Risk Category]**: [Specific threat and leading indicators to watch]
-
-## 📊 Recommended Market Signals
-Suggest 2 specific data sources or publications to monitor:
-1. **[Source/Publication]**: [What to look for]
-2. **[Source/Publication]**: [What to look for]
+Using the extracted categories, produce this structured output:
 
 ---
+
+## 📊 INSIDE-OUT CATEGORIZATION
+
+### Tech Stack
+\`\`\`
+[List extracted technologies, languages, cloud providers, frameworks]
+\`\`\`
+
+### Geography
+\`\`\`
+[List operating regions and markets]
+\`\`\`
+
+### Security Posture
+\`\`\`
+[List compliance standards and security concerns]
+\`\`\`
+
+### Strategic Pillars
+\`\`\`
+[List top 3 priorities]
+\`\`\`
+
+### Operational Friction
+\`\`\`
+[List key blockers from backlog]
+\`\`\`
+
+---
+
+## 🎯 THE BLIND SPOT HYPOTHESIS
+
+Write 2-3 sentences describing the friction between their current architecture/posture and market velocity. What are they NOT seeing?
+
+---
+
+## 🔍 SEARCH API PAYLOADS
+
+Generate exactly 5 high-intent research queries. For each:
+
+### Query 1: [Topic Name]
+- **query_string**: "[Exact text for search engine]"
+- **intent**: [Why we are searching - e.g., "Architecture Validation", "Competitive Intelligence", "Regulatory Scan"]
+- **expected_signal**: [What specific evidence would change our strategy]
+- **grounded_in**: [Which [TECH_STACK], [GEOGRAPHY], or [SECURITY] element this targets]
+
+### Query 2: [Topic Name]
+[Same structure...]
+
+### Query 3: [Topic Name]
+[Same structure...]
+
+### Query 4: [Topic Name]
+[Same structure...]
+
+### Query 5: [Topic Name]
+[Same structure...]
+
+---
+
+## 🏢 COMPETITOR WATCHLIST
+
+Identify 3 specific companies to monitor:
+
+| Company | Why Monitor | Threat Vector |
+|---------|-------------|---------------|
+| [Name] | [Rationale tied to client's [TECH_STACK] or [GEOGRAPHY]] | [Specific threat: e.g., "Alternative API", "Pricing pressure"] |
+| [Name] | [...] | [...] |
+| [Name] | [...] | [...] |
+
+---
+
+## ⚠️ PROVOCATION TARGETS
+
+2 "Inside-Out" threats that directly challenge their tech stack or security posture:
+
+1. **[Threat Name]**: [How this specifically threatens their [TECH_STACK] or [SECURITY_POSTURE]]
+2. **[Threat Name]**: [How this specifically threatens their [GEOGRAPHY] or [STRATEGIC_PILLARS]]
+
+---
+
 **CRITICAL CONSTRAINTS:**
-- Do NOT summarize what we already know from the dossier/backlog.
-- Focus EXCLUSIVELY on what is NOT in the documents.
-- Be highly specific (e.g., "Analyze [Competitor X]'s latest patent in [Technology Y]").
-- Every query must be tied to a specific gap in their current knowledge.
-- Ground your gap analysis in evidence from the context—explain WHY something is missing.
+- Every query MUST reference a specific [TECH_STACK], [GEOGRAPHY], or [SECURITY] element.
+- Do NOT produce generic queries. Use the few-shot examples as your quality bar.
+- The output must be actionable for an agentic research team.
+- Ground every insight in evidence from the source documents.
 `;
 }
 
 /**
  * Generate Research Brief (Gap Analysis) using Pinecone RAG.
  * 
- * This function analyzes Inside-Out knowledge to scope Outside-In research.
- * Output: A Research Mandate with specific queries and competitor watchlist.
+ * Enhanced with few-shot prompting and tech-stack grounding.
+ * Output: A Research Mandate with Search API Payloads for agentic handoff.
  */
 export async function generateBrief(workshopId: string) {
     console.log(`[ContextEngine] ========== Generating Research Scope for ${workshopId} ==========`);
 
     try {
         // 1. Query Pinecone for relevant chunks - focus on architecture, strategy, geography
-        const query = "Analyze the enterprise architecture, technology stack, geographic operations, strategic priorities, operational friction, and innovation capabilities";
+        const query = "Analyze the enterprise architecture, technology stack, cloud providers, programming languages, geographic operations, compliance requirements, strategic priorities, operational friction, and innovation capabilities";
         const retrieval = await queryPinecone(workshopId, query, {
             topK: 25, // More chunks for comprehensive gap analysis
             filterType: ['DOSSIER', 'BACKLOG'],
@@ -225,7 +309,7 @@ export async function generateBrief(workshopId: string) {
         // 2. Format context for prompt
         const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
 
-        // 3. Build the Strategic Scout Scoping Prompt
+        // 3. Build the Strategic Scout Scoping Prompt (with few-shot exemplars)
         const prompt = buildScopingPrompt(dossierContext, backlogContext, sources);
 
         console.log(`[ContextEngine] Generating research scope from ${retrieval.documentCount} documents...`);
