@@ -41,7 +41,7 @@ async function getAnalysisData(workshopId: string) {
             rank: opp.sequenceRank || undefined,
             financialImpact: financialImpact,
             tShirtSize: opp.tShirtSize,
-            strategicRationale: opp.strategicRationale
+            strategicRationale: opp.strategicRationale ?? undefined
         };
     });
 
