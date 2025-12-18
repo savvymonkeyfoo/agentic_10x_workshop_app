@@ -1,6 +1,7 @@
 import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { indexAsset } from '@/lib/indexing';
 
 // Route Segment Config
 export const dynamic = 'force-dynamic';
@@ -19,9 +20,9 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
 
         // 1. Upload to Vercel Blob
-        console.log("Starting Blob Put...");
+        console.log("[Upload] Starting Blob Put...");
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            console.error("BLOB_READ_WRITE_TOKEN is missing!");
+            console.error("[Upload] BLOB_READ_WRITE_TOKEN is missing!");
             throw new Error("Missing Blob Token");
         }
 
@@ -29,7 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             access: 'public',
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
-        console.log("Blob Put Success:", blob.url);
+        console.log("[Upload] Blob Put Success:", blob.url);
 
         // 2. Create Asset Record (Status: INDEXING)
         const asset = await prisma.asset.create({
@@ -41,31 +42,23 @@ export async function POST(request: Request): Promise<NextResponse> {
                 status: 'INDEXING'
             }
         });
-        console.log("Asset created:", asset.id);
+        console.log("[Upload] Asset created:", asset.id);
 
-        // 3. Trigger RAG Indexing via HTTP (Fire-and-Forget with Dispatch Guard)
-        // Use dynamic origin from request.url - works on localhost AND Vercel
-        const baseUrl = new URL(request.url).origin;
-        console.log("Triggering indexing at:", `${baseUrl}/api/index-rag`);
+        // 3. Index Synchronously (No background worker!)
+        // For small files (<100KB), this completes well within the 60s timeout
+        console.log("[Upload] Starting synchronous indexing...");
+        const result = await indexAsset(asset.id);
+        console.log("[Upload] Indexing result:", result);
 
-        // Dispatch guard: Wait briefly to ensure fetch request is initiated
-        // before the serverless function returns and potentially terminates
-        const indexPromise = fetch(`${baseUrl}/api/index-rag`, {
-            method: 'POST',
-            body: JSON.stringify({ assetId: asset.id }),
-            headers: { 'Content-Type': 'application/json' }
+        // 4. Fetch updated asset with final status
+        const updatedAsset = await prisma.asset.findUnique({
+            where: { id: asset.id }
         });
 
-        await Promise.race([
-            indexPromise.then(() => console.log("Indexing request dispatched")).catch(err => console.error("Trigger Indexing Failed:", err)),
-            new Promise(resolve => setTimeout(resolve, 100)) // Wait max 100ms for dispatch
-        ]);
-
-        // Return immediately - indexing continues async
-        return NextResponse.json(asset);
+        return NextResponse.json(updatedAsset);
 
     } catch (error) {
-        console.error("Upload Error:", error);
+        console.error("[Upload] Error:", error);
         return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
 }
