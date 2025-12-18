@@ -5,24 +5,47 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Upload, FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check } from 'lucide-react';
+import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { MOCK_RESEARCH_BRIEF, MOCK_BLIND_SPOTS, MOCK_CLUSTERS, MOCK_FEASIBILITY } from '@/mocks/research-data';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 
-export function ResearchInterface({ workshopId }: { workshopId: string }) {
+import { Asset } from '@prisma/client';
+import { AssetRegistry } from '@/components/workshop/AssetRegistry';
+import { ResearchBriefButton } from './ResearchBriefButton';
+import { generateBrief } from '@/app/actions/context-engine';
+import { toast } from 'sonner';
+
+interface ResearchInterfaceProps {
+    workshopId: string;
+    assets: Asset[];
+}
+
+export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const [files, setFiles] = useState<{ dossier: boolean; backlog: boolean; market: boolean }>({
-        dossier: false,
-        backlog: false,
-        market: false
-    });
+    const dossierAssets = assets.filter(a => a.type === 'DOSSIER');
+    const backlogAssets = assets.filter(a => a.type === 'BACKLOG');
+    const marketAssets = assets.filter(a => a.type === 'MARKET_SIGNAL');
+
+    // Count READY assets for the guardrail
+    const dossierReadyCount = dossierAssets.filter(a => a.status === 'READY').length;
+    const backlogReadyCount = backlogAssets.filter(a => a.status === 'READY').length;
+
+    // Guardrail: Must have >= 1 READY asset in each category
+    const isReadyForResearch = dossierReadyCount > 0 && backlogReadyCount > 0;
+
+    // Derived state from real assets
+    const hasDossier = dossierAssets.length > 0;
+    const hasBacklog = backlogAssets.length > 0;
+    const hasMarket = marketAssets.some(a => a.status === 'READY');
+
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [briefCopied, setBriefCopied] = useState(false);
+    const [generatedBrief, setGeneratedBrief] = useState<string | null>(null);
 
     // Use URL param or default to "context"
     const stageParam = searchParams.get('stage');
@@ -33,12 +56,23 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
         if (stageParam === '3') setActiveTab('intelligence');
     }, [stageParam]);
 
-    const handleGenerateBrief = () => {
+    const handleGenerateBrief = async () => {
         setIsAnalyzing(true);
-        setTimeout(() => {
+        try {
+            const result = await generateBrief(workshopId);
+            if (result.success && result.brief) {
+                setGeneratedBrief(result.brief);
+                setActiveTab('research');
+                toast.success('Research Brief Generated');
+            } else {
+                toast.error(result.error || 'Failed to generate brief');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('An unexpected error occurred');
+        } finally {
             setIsAnalyzing(false);
-            setActiveTab('research');
-        }, 2000);
+        }
     };
 
     const handleSynthesize = () => {
@@ -50,7 +84,7 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
     };
 
     const handleCopyBrief = () => {
-        navigator.clipboard.writeText(MOCK_RESEARCH_BRIEF);
+        navigator.clipboard.writeText(generatedBrief || MOCK_RESEARCH_BRIEF);
         setBriefCopied(true);
         setTimeout(() => setBriefCopied(false), 2000);
     };
@@ -58,8 +92,8 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
     // Tab definitions
     const tabs = [
         { id: 'context', label: 'CONTEXT', disabled: false },
-        { id: 'research', label: 'RESEARCH', disabled: !files.dossier || !files.backlog },
-        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !files.market }
+        { id: 'research', label: 'RESEARCH', disabled: !generatedBrief && !isReadyForResearch },
+        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasMarket }
     ];
 
     // Header Component
@@ -86,10 +120,10 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
                         onClick={() => !tab.disabled && setActiveTab(tab.id)}
                         disabled={tab.disabled}
                         className={`pb-2 text-xs font-bold tracking-widest transition-colors relative ${activeTab === tab.id
-                                ? 'text-brand-blue'
-                                : tab.disabled
-                                    ? 'text-slate-300 cursor-not-allowed'
-                                    : 'text-slate-400 hover:text-slate-600'
+                            ? 'text-brand-blue'
+                            : tab.disabled
+                                ? 'text-slate-300 cursor-not-allowed'
+                                : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         {tab.label}
@@ -104,30 +138,28 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
             <div className="flex-1">
                 {/* TAB 1: Context Ingestion */}
                 {activeTab === 'context' && (
-                    <div className="grid grid-cols-2 gap-6">
-                        <UploadZone
-                            label="Enterprise Dossier"
-                            sub="Upload Strategy PDFs, Tech Stack, or Architecture docs."
-                            icon={<FileText className="h-8 w-8 text-brand-blue" />}
-                            isUploaded={files.dossier}
-                            onUpload={() => setFiles(prev => ({ ...prev, dossier: true }))}
+                    <div className="grid grid-cols-2 gap-6 h-[600px]">
+                        <AssetRegistry
+                            workshopId={workshopId}
+                            type="DOSSIER"
+                            title="Enterprise Dossier"
+                            assets={dossierAssets}
                         />
-                        <UploadZone
-                            label="Client Backlog"
-                            sub="Upload CSV export of current Jira/Azure backlog."
-                            icon={<Upload className="h-8 w-8 text-emerald-500" />}
-                            isUploaded={files.backlog}
-                            onUpload={() => setFiles(prev => ({ ...prev, backlog: true }))}
+                        <AssetRegistry
+                            workshopId={workshopId}
+                            type="BACKLOG"
+                            title="Client Backlog"
+                            assets={backlogAssets}
                         />
-                        <div className="col-span-2 flex justify-center mt-8">
-                            <Button
-                                size="lg"
-                                className="w-64"
-                                disabled={!files.dossier || !files.backlog || isAnalyzing}
+
+                        <div className="col-span-2 flex justify-center mt-4">
+                            <ResearchBriefButton
                                 onClick={handleGenerateBrief}
-                            >
-                                {isAnalyzing ? "Analyzing Ecosystem..." : "Generate Research Brief"}
-                            </Button>
+                                isDisabled={!isReadyForResearch}
+                                isLoading={isAnalyzing}
+                                dossierCount={dossierReadyCount}
+                                backlogCount={backlogReadyCount}
+                            />
                         </div>
                     </div>
                 )}
@@ -146,37 +178,33 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
                             </CardHeader>
                             <CardContent className="overflow-y-auto flex-1 font-mono text-sm leading-relaxed">
                                 <div className="prose prose-invert max-w-none">
-                                    <ReactMarkdown>{MOCK_RESEARCH_BRIEF}</ReactMarkdown>
+                                    <ReactMarkdown>{generatedBrief || MOCK_RESEARCH_BRIEF}</ReactMarkdown>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="flex flex-col h-full">
-                            <CardHeader>
-                                <CardTitle className="text-lg">Upload Market Signals</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-1 flex flex-col items-center justify-center text-center">
-                                <p className="text-sm text-muted-foreground max-w-xs mb-4">
-                                    Upload competitor reports or trend analysis articles based on the brief.
-                                </p>
-                                <Button
-                                    variant={files.market ? "secondary" : "default"}
-                                    onClick={() => setFiles(prev => ({ ...prev, market: true }))}
-                                >
-                                    {files.market ? <span className="flex items-center gap-2"><CheckCircle size={16} /> Signals Uploaded</span> : "Upload Evidence"}
-                                </Button>
-                            </CardContent>
-                            <div className="p-6 pt-0">
-                                <Button
-                                    size="lg"
-                                    className="w-full h-14 text-lg"
-                                    disabled={!files.market || isAnalyzing}
-                                    onClick={handleSynthesize}
-                                >
-                                    {isAnalyzing ? "Synthesizing Vectors..." : "Enter Intelligence Hub"} <ArrowRight className="ml-2" />
-                                </Button>
-                            </div>
-                        </Card>
+                        {/* Right Column: Market Signals Registry + Action */}
+                        <div className="flex flex-col h-full gap-6">
+                            <AssetRegistry
+                                workshopId={workshopId}
+                                type="MARKET_SIGNAL"
+                                title="Market Signals"
+                                assets={marketAssets}
+                            />
+
+                            <Card className="flex-shrink-0">
+                                <CardContent className="p-6">
+                                    <Button
+                                        size="lg"
+                                        className="w-full h-14 text-lg"
+                                        disabled={!hasMarket || isAnalyzing}
+                                        onClick={handleSynthesize}
+                                    >
+                                        {isAnalyzing ? "Synthesizing Vectors..." : "Enter Intelligence Hub"} <ArrowRight className="ml-2" />
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 )}
 
@@ -286,21 +314,4 @@ export function ResearchInterface({ workshopId }: { workshopId: string }) {
     );
 }
 
-// Sub-component: UploadZone (uses Card primitive)
-function UploadZone({ label, sub, icon, isUploaded, onUpload }: { label: string, sub: string, icon: React.ReactNode, isUploaded: boolean, onUpload: () => void }) {
-    return (
-        <Card
-            onClick={onUpload}
-            className={cn(
-                "h-64 flex flex-col items-center justify-center cursor-pointer transition-all border-2 border-dashed",
-                isUploaded
-                    ? "border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-100"
-                    : "border-border hover:border-brand-blue hover:bg-accent"
-            )}
-        >
-            {isUploaded ? <CheckCircle className="h-12 w-12 text-emerald-500 mb-4" /> : <div className="mb-4">{icon}</div>}
-            <h3 className="text-lg font-semibold text-foreground">{label}</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-xs mt-2 px-4">{sub}</p>
-        </Card>
-    )
-}
+

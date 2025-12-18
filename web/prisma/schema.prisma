@@ -25,7 +25,7 @@ model Workshop {
   // Divergent Extension Relations
   context              WorkshopContext?
   ideaCards            IdeaCard[]
-  documents            WorkshopDocument[]
+  assets               Asset[]
 }
 
 // 2. The Opportunity Asset
@@ -166,14 +166,15 @@ model IdeaVersion {
 
 // 5. RAG Engine (New)
 
-model WorkshopDocument {
+model Asset {
   id          String   @id @default(uuid())
   workshopId  String
   workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
   
   name        String
-  blobUrl     String
-  category    String   // CLIENT_INTERNAL, MARKET_EXTERNAL
+  url         String   // Vercel Blob URL (renamed from blobUrl)
+  type        String   // Enum: "DOSSIER" or "BACKLOG"
+  status      String   @default("READY") // READY, INDEXING, ERROR
   
   createdAt   DateTime @default(now())
   
@@ -182,8 +183,8 @@ model WorkshopDocument {
 
 model DocumentChunk {
   id          String   @id @default(uuid())
-  documentId  String
-  document    WorkshopDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   
   content     String   @db.Text
   chunkIndex  Int

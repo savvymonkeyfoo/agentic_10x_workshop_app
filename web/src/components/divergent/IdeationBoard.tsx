@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     DndContext,
     DragEndEvent,
@@ -170,30 +170,50 @@ function CanvasBoard({ items, activeLens, selectedIds, recommendedMap, onSelect,
 }
 
 // --- MAIN COMPONENT ---
-export function IdeationBoard({ workshopId }: { workshopId: string }) {
+import { IdeaCard as IdeaCardType } from '@prisma/client';
+
+// --- TYPES ---
+export type BoardItem = IdeaCardType & {
+    x: number;
+    y: number;
+    rotation: number;
+    lenses: string[];
+};
+
+import { updateIdeaCard, createIdeaCard, deleteIdeaCard } from '@/app/actions/ideation';
+
+// Custom Hook for Debounced Updates
+function useDebouncedUpdate(callback: (id: string, updates: any) => void, delay: number) {
+    // Basic implementation or use library if available. implementing simple one.
+    const timeouts = useRef<Record<string, NodeJS.Timeout>>({});
+
+    const scheduleUpdate = (id: string, updates: any) => {
+        if (timeouts.current[id]) clearTimeout(timeouts.current[id]);
+        timeouts.current[id] = setTimeout(() => callback(id, updates), delay);
+    };
+
+    return scheduleUpdate;
+}
+
+// --- MAIN COMPONENT ---
+export function IdeationBoard({ workshopId, initialIdeaCards }: { workshopId: string, initialIdeaCards: IdeaCardType[] }) {
     const router = useRouter();
-    const [items, setItems] = useState(() =>
-        MOCK_IDEA_CARDS.map(card => ({
+
+    // Map Prisma IdeaCards to Board Items
+    const [items, setItems] = useState<BoardItem[]>(() =>
+        initialIdeaCards.map(card => ({
             ...card,
-            x: card.xPosition || 100,
-            y: card.yPosition || 100,
-            rotation: 0
+            x: card.xPosition || 400,
+            y: card.yPosition || 300,
+            rotation: 0,
+            lenses: [] // Default empty lenses
         }))
     );
 
-    useEffect(() => {
-        setItems(prevItems => prevItems.map(item => ({
-            ...item,
-            x: item.xPosition || Math.random() * 800 + 100,
-            y: item.yPosition || Math.random() * 400 + 100,
-            rotation: (Math.random() - 0.5) * 4
-        })));
-    }, []);
-
     const [portfolio, setPortfolio] = useState<{
-        strategic: any[];
-        tableStakes: any[];
-        agenticAuto: any[];
+        strategic: BoardItem[];
+        tableStakes: BoardItem[];
+        agenticAuto: BoardItem[];
     }>({
         strategic: [],
         tableStakes: [],
@@ -204,9 +224,19 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeLens, setActiveLens] = useState<string>('VIEW_ALL');
     const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
-
-    // --- FOCUS STATE ---
     const [activeFocusId, setActiveFocusId] = useState<string | null>(null);
+
+    // --- AUTO-SAVE LOGIC ---
+    const saveToDb = async (id: string, updates: any) => {
+        // If it's a temp card, we wait? Or we should have created it already?
+        // Let's assume handleAddNew creates it on server.
+        // If id starts with "card-", checking if it's the creating one.
+        // Actually, handleAddNew below will now create on server.
+        if (!id.startsWith('temp-')) { // Changed from 'card-' to 'temp-' to match new tempId prefix
+            await updateIdeaCard(id, { ...updates, workshopId });
+        }
+    };
+    const scheduleSave = useDebouncedUpdate(saveToDb, 800);
 
     const focusedItem = useMemo(() => {
         if (!activeFocusId) return null;
@@ -222,19 +252,21 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
         // 1. Update Canvas Items
         setItems(prev => prev.map(i => safeId(i.id) === id ? { ...i, ...updates } : i));
 
-        // 2. Update Portfolio Items across all categories
+        // 2. Update Portfolio Items
         setPortfolio(prev => {
             const newPortfolio = { ...prev };
             Object.keys(newPortfolio).forEach(key => {
-                newPortfolio[key as keyof typeof portfolio] = newPortfolio[key as keyof typeof portfolio].map(
+                const k = key as keyof typeof portfolio;
+                newPortfolio[k] = newPortfolio[k].map(
                     i => safeId(i.id) === id ? { ...i, ...updates } : i
                 );
             });
             return newPortfolio;
         });
+
+        // 3. Schedule Server Save
+        scheduleSave(id, updates);
     };
-
-
 
     // --- DELETE WORKFLOW ---
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -243,30 +275,38 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
         setItemToDelete(id);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!itemToDelete) return;
 
-        // 1. Remove from Items
+        // Optimistic UI Update
         setItems(prev => prev.filter(item => item.id !== itemToDelete));
-
-        // 2. Remove from Portfolio
         setPortfolio(prev => {
             const next = { ...prev };
             Object.keys(next).forEach(key => {
-                next[key as keyof typeof portfolio] = next[key as keyof typeof portfolio].filter(i => safeId(i.id) !== itemToDelete);
+                const k = key as keyof typeof portfolio;
+                next[k] = next[k].filter(i => safeId(i.id) !== itemToDelete);
             });
             return next;
         });
 
-        // 3. Close & Toast
+        const idToDelete = itemToDelete;
         setItemToDelete(null);
-        toast.success("Idea permanently deleted");
+        toast.success("Idea deleting...");
+
+        // Server Action
+        const result = await deleteIdeaCard(idToDelete);
+        if (!result.success) {
+            toast.error("Failed to delete idea");
+            router.refresh(); // Revert
+        } else {
+            toast.dismiss();
+            toast.success("Idea permanently deleted");
+        }
     };
 
     // --- MERGE WORKFLOW ---
     const [isMergeMode, setIsMergeMode] = useState(false);
     const [mergeSelection, setMergeSelection] = useState<string[]>([]);
-
     // --- BLUEPRINT INTELLIGENCE ---
     const [recommendedMap, setRecommendedMap] = useState<Record<string, string>>({});
 
@@ -367,24 +407,29 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
     // --- NEW IDEA GENERATOR ---
     const handleAddNew = () => {
         const newId = `card-${Date.now()}`;
-        const newItem = {
+        // Create a temporary local item. In real app, might want to create on server first or properly optimistically add.
+        const newItem: BoardItem = {
             id: newId,
+            workshopId, // Added
             title: '',
             description: '',
             source: 'WORKSHOP_GENERATED',
             tier: 'UNSCORED',
-            x: 400, // Default central placement
+            status: 'ACTIVE',
+            x: 400,
             y: 300,
             rotation: 0,
             lenses: [],
-            // Required props to satisfy type definition from MOCK_IDEA_CARDS
+            // Prisma fields defaults
             xPosition: 400,
             yPosition: 300,
-            strategicCluster: 'Uncategorized',
-            status: 'ACTIVE'
+            simulationResult: null,
+            genealogyMetadata: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         };
         setItems(prev => [...prev, newItem]);
-        setActiveFocusId(newId); // Trigger Focus View immediately
+        setActiveFocusId(newId);
     };
 
     const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 5 } }));
@@ -403,7 +448,7 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
         const canvasItem = items.find(i => safeId(i.id) === activeIdStr);
 
         let sourceCategory: keyof typeof portfolio | null = null;
-        let sidebarCard: any = null;
+        let sidebarCard: BoardItem | undefined = undefined;
 
         if (!canvasItem) {
             (Object.keys(portfolio) as Array<keyof typeof portfolio>).forEach(key => {
@@ -415,52 +460,95 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
             });
         }
 
+        // 1. DROP INTO PORTFOLIO ZONES
         if (overIdStr && ['zone-strategic', 'zone-table-stakes', 'zone-agentic'].includes(overIdStr)) {
             const targetCategory = overIdStr === 'zone-strategic' ? 'strategic' :
                 overIdStr === 'zone-table-stakes' ? 'tableStakes' : 'agenticAuto';
 
+            const newTier = overIdStr === 'zone-strategic' ? 'STRATEGIC_BET' :
+                overIdStr === 'zone-table-stakes' ? 'TABLE_STAKES' : 'AGENTIC_AUTO';
+
             if (canvasItem) {
+                // Remove from Canvas, Add to Portfolio
                 setPortfolio(prev => ({
                     ...prev,
-                    [targetCategory]: [...prev[targetCategory], canvasItem]
+                    [targetCategory]: [...prev[targetCategory], { ...canvasItem, tier: newTier }]
                 }));
                 setItems(prev => prev.filter(i => safeId(i.id) !== activeIdStr));
+
+                // DB UPDATE
+                updateIdeaCard(activeIdStr, { tier: newTier, workshopId });
+
                 if (!isPortfolioOpen) setIsPortfolioOpen(true);
                 toast.success("Added to Portfolio");
             } else if (sourceCategory && sidebarCard) {
+                // Move within Portfolio
                 setPortfolio(prev => {
                     const newSourceList = prev[sourceCategory!].filter(i => safeId(i.id) !== activeIdStr);
                     const newTargetList = sourceCategory === targetCategory
-                        ? [...newSourceList, sidebarCard]
-                        : [...prev[targetCategory], sidebarCard];
+                        ? [...newSourceList, sidebarCard!]
+                        : [...prev[targetCategory], { ...sidebarCard!, tier: newTier }];
                     return { ...prev, [sourceCategory!]: newSourceList, [targetCategory]: newTargetList };
                 });
+
+                // DB UPDATE
+                if (sourceCategory !== targetCategory) {
+                    updateIdeaCard(activeIdStr, { tier: newTier, workshopId });
+                }
             }
             return;
         }
 
         const isDroppedOnCanvas = overIdStr === 'canvas-droppable' || (!overIdStr && sourceCategory);
 
+        // 2. RESTORE FROM PORTFOLIO TO CANVAS
         if (!canvasItem && sourceCategory && sidebarCard && isDroppedOnCanvas) {
-            const newX = Math.max(100, 400 + delta.x);
-            const newY = Math.max(100, 300 + delta.y);
+            const dropX = 400 + delta.x;
+            const dropY = 300 + delta.y;
 
-            setItems(prev => [...prev, { ...sidebarCard, x: newX, y: newY, rotation: 0 }]);
-            setPortfolio(prev => ({
-                ...prev,
-                [sourceCategory!]: prev[sourceCategory!].filter(i => safeId(i.id) !== activeIdStr)
-            }));
-            toast.info("Restored to Board");
+            if (sidebarCard) {
+                const restoredItem: BoardItem = {
+                    ...(sidebarCard as BoardItem),
+                    x: dropX,
+                    y: dropY,
+                    rotation: 0,
+                    tier: 'UNSCORED'
+                };
+
+                setItems(prev => [...prev, restoredItem]);
+                setPortfolio(prev => ({
+                    ...prev,
+                    [sourceCategory!]: prev[sourceCategory!].filter(i => safeId(i.id) !== activeIdStr)
+                }));
+
+                // DB UPDATE
+                updateIdeaCard(activeIdStr, {
+                    tier: 'UNSCORED',
+                    xPosition: dropX,
+                    yPosition: dropY,
+                    workshopId
+                });
+
+                toast.info("Restored to Board");
+            }
             return;
         }
 
+        // 3. MOVE ON CANVAS
         if (canvasItem) {
+            const newX = canvasItem.x + delta.x;
+            const newY = canvasItem.y + delta.y;
+
             setItems(prev => prev.map(item => {
                 if (safeId(item.id) === activeIdStr) {
-                    return { ...item, x: item.x + delta.x, y: item.y + delta.y };
+                    return { ...item, x: newX, y: newY };
                 }
                 return item;
             }));
+
+            // DB UPDATE - DEBOUNCED? 
+            // Drag end is final, so we can save immediately (no debounce needed for single drag end)
+            updateIdeaCard(activeIdStr, { xPosition: newX, yPosition: newY, workshopId });
         }
     };
 

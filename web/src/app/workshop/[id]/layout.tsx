@@ -13,6 +13,8 @@ async function getWorkshop(id: string) {
     return workshop;
 }
 
+import { notFound } from 'next/navigation';
+
 export default async function WorkshopLayout({
     children,
     params
@@ -22,14 +24,16 @@ export default async function WorkshopLayout({
 }) {
     const workshop = await getWorkshop(params.id);
 
+    if (!workshop) {
+        notFound();
+    }
+
     return (
         <>
-            {workshop && (
-                <WorkshopHeader
-                    clientName={workshop.clientName}
-                    clientLogoUrl={workshop.clientLogoUrl}
-                />
-            )}
+            <WorkshopHeader
+                clientName={workshop.clientName}
+                clientLogoUrl={workshop.clientLogoUrl}
+            />
             {children}
         </>
     );

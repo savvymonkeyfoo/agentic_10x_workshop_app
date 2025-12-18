@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: 'v6qw9wirvrirowaa.public.blob.vercel-storage.com',
         port: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        port: '',
+      },
     ],
   },
 };
