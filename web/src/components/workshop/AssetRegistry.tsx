@@ -29,7 +29,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
 
     // Polling Logic: Targeted Status Checks
     useEffect(() => {
-        const indexingItems = items.filter(a => a.status === 'INDEXING');
+        const indexingItems = items.filter(a => a.status === 'PROCESSING');
         if (indexingItems.length === 0) return;
 
         let attempts = 0;
@@ -40,7 +40,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
             if (attempts > maxAttempts) {
                 // Timeout logic: Mark hanging items as ERROR locally to stop spinning
                 setItems(prev => prev.map(a =>
-                    a.status === 'INDEXING' ? { ...a, status: 'ERROR' } : a
+                    a.status === 'PROCESSING' ? { ...a, status: 'ERROR' } : a
                 ));
                 toast.error("Indexing timed out. Please try again.");
                 clearInterval(interval);
@@ -53,7 +53,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                     const res = await fetch(`/api/assets/${item.id}/status`);
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.status !== 'INDEXING') {
+                        if (data.status !== 'PROCESSING') {
                             // Update local state if status changed
                             setItems(prev => prev.map(a =>
                                 a.id === item.id ? { ...a, status: data.status } : a
@@ -212,10 +212,10 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                                     <span className="text-xs font-medium">Ready</span>
                                                 </div>
-                                            ) : asset.status === 'INDEXING' ? (
+                                            ) : asset.status === 'PROCESSING' ? (
                                                 <div className="flex items-center space-x-2 text-indigo-600">
                                                     <Loader2 className="w-3 h-3 animate-spin" />
-                                                    <span className="text-xs font-medium">Indexing...</span>
+                                                    <span className="text-xs font-medium">Processing...</span>
                                                 </div>
                                             ) : (
                                                 <span className="text-xs font-medium text-red-500">Error</span>
