@@ -67,6 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const blob = await put(file.name, file, {
             access: 'public',
             token: process.env.BLOB_READ_WRITE_TOKEN,
+            addRandomSuffix: true, // Prevent duplicate filename errors
         });
         console.log('[Upload] Blob URL:', blob.url);
 
