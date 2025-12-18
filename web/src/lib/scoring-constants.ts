@@ -1,3 +1,10 @@
+// Strategic Lenses for filtering and insights
+export const LENS_DEFINITIONS = [
+    { id: 'infinite_capacity', label: 'Infinite Capacity', color: 'indigo', icon: 'Infinity' },
+    { id: 'constraints', label: 'Theory of Constraints', color: 'amber', icon: 'AlertTriangle' },
+    { id: 'ooda_loop', label: 'OODA Loop', color: 'cyan', icon: 'RefreshCw' }
+];
+
 export const SCORING_DIMENSIONS = [
     {
         category: "System Type",

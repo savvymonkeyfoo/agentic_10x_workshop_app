@@ -22,22 +22,24 @@ export const MOCK_IDEA_CARDS = [
         id: 'card-1',
         title: 'GenAI Customer Support Bot',
         description: 'Implement a RAG-based chatbot to handle 80% of Tier 1 inquiries, reducing support costs.',
-        tier: 'STRATEGIC_BET', // Tier 1 (Gold)
+        tier: 'STRATEGIC_BET',
         source: 'MARKET_SIGNAL',
-        status: 'ACTIVE',
         strategicCluster: 'Customer Experience',
+        lenses: ['infinite_capacity', 'ooda_loop'], // Tagged for Scale and Speed
         xPosition: 100,
         yPosition: 80,
-        rotation: -1.2
+        rotation: -1.2,
+        frictionPoint: 'Current wait times are 45mins+',
+        techStack: 'Python, OpenAI API'
     },
     {
         id: 'card-2',
         title: 'Migrate to Cloud ERP',
         description: 'Move core ledgers to AWS to enable real-time analytics.',
-        tier: 'TABLE_STAKES', // Tier 2 (Blue)
+        tier: 'TABLE_STAKES',
         source: 'CLIENT_BACKLOG',
-        status: 'ACTIVE',
         strategicCluster: 'Operational Efficiency',
+        lenses: ['constraints'], // Tagged for Operational Bottlenecks
         xPosition: 450,
         yPosition: 120,
         rotation: 0.8
@@ -46,10 +48,10 @@ export const MOCK_IDEA_CARDS = [
         id: 'card-3',
         title: 'Automate Invoice Processing',
         description: 'Use OCR to auto-ingest PDF invoices from vendors.',
-        tier: 'AGENTIC_AUTO', // Tier 3 (Grey)
+        tier: 'AGENTIC_AUTO',
         source: 'WORKSHOP_GENERATED',
-        status: 'ACTIVE',
         strategicCluster: 'Logistics Optimization',
+        lenses: ['infinite_capacity'], // Tagged for Scale
         xPosition: 800,
         yPosition: 60,
         rotation: -0.5
@@ -60,8 +62,8 @@ export const MOCK_IDEA_CARDS = [
         description: 'IoT sensors on all delivery trucks to optimize routing.',
         tier: 'STRATEGIC_BET',
         source: 'CLIENT_BACKLOG',
-        status: 'ACTIVE',
         strategicCluster: 'Logistics Optimization',
+        lenses: ['ooda_loop', 'constraints'], // Tagged for Speed and Bottlenecks
         xPosition: 200,
         yPosition: 350,
         rotation: 1.5
@@ -76,7 +78,8 @@ export const MOCK_IDEA_CARDS = [
         strategicCluster: 'Operational Efficiency',
         xPosition: 600,
         yPosition: 380,
-        rotation: -0.3
+        rotation: -0.3,
+        lenses: ['constraints']
     }
 ];
 
