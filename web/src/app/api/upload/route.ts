@@ -6,23 +6,26 @@ import { processAssetForRAG } from '@/lib/rag-service';
 // Route Segment Config
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 60; // Allow up to 60 seconds for upload + indexing
 
 /**
  * POST /api/upload
  * 
  * Multi-asset upload endpoint supporting the Hybrid RAG Pipeline.
  * 
+ * ARCHITECTURE NOTE: Synchronous Indexing Pattern
+ * ------------------------------------------------
+ * Vercel serverless functions terminate immediately after returning a response,
+ * killing any background processes. To ensure Pinecone indexing completes,
+ * we await the full RAG pipeline before responding.
+ * 
+ * Trade-off: Upload takes ~5-15 seconds (includes embedding + Pinecone upsert)
+ * Benefit: Asset is READY immediately upon response, no polling required.
+ * 
  * Form Data:
  * - file: File - The file to upload
  * - workshopId: string - The workshop to attach the asset to
  * - assetType: string - "DOSSIER" or "BACKLOG"
- * 
- * Flow:
- * 1. Upload file to Vercel Blob
- * 2. Create Asset record with status: PROCESSING
- * 3. Return asset immediately (async indexing)
- * 4. Trigger RAG processing in background
  */
 export async function POST(request: Request): Promise<NextResponse> {
     console.log(`[Upload] ========== New Upload Request ==========`);
@@ -39,8 +42,8 @@ export async function POST(request: Request): Promise<NextResponse> {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        if (!['DOSSIER', 'BACKLOG'].includes(assetType)) {
-            return NextResponse.json({ error: 'Invalid asset type. Must be DOSSIER or BACKLOG' }, { status: 400 });
+        if (!['DOSSIER', 'BACKLOG', 'MARKET_SIGNAL'].includes(assetType)) {
+            return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
         }
 
         console.log(`[Upload] File: ${file.name}, Size: ${file.size}, Type: ${assetType}`);
@@ -79,30 +82,32 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
         console.log('[Upload] Asset created:', asset.id);
 
-        // 4. Return asset immediately - don't wait for indexing
-        const response = NextResponse.json({
-            id: asset.id,
-            name: asset.name,
-            url: asset.url,
-            type: asset.type,
-            status: asset.status,
-            createdAt: asset.createdAt
+        // 4. SYNCHRONOUS RAG Processing (Critical for Vercel)
+        // We MUST await this before returning, otherwise Vercel kills the process
+        console.log('[Upload] Starting synchronous RAG processing...');
+        const ragResult = await processAssetForRAG(asset.id);
+
+        if (ragResult.success) {
+            console.log('[Upload] RAG processing complete - asset is READY');
+        } else {
+            console.error('[Upload] RAG processing failed:', ragResult.error);
+        }
+
+        // 5. Fetch updated asset with final status
+        const updatedAsset = await prisma.asset.findUnique({
+            where: { id: asset.id }
         });
 
-        // 5. Trigger RAG processing asynchronously
-        // Using setImmediate to ensure response is sent before processing starts
-        setImmediate(async () => {
-            console.log('[Upload] Starting async RAG processing...');
-            const result = await processAssetForRAG(asset.id);
-            if (result.success) {
-                console.log('[Upload] RAG processing complete');
-            } else {
-                console.error('[Upload] RAG processing failed:', result.error);
-            }
-        });
+        console.log(`[Upload] Returning asset with status: ${updatedAsset?.status}`);
 
-        console.log('[Upload] Returning response (processing continues in background)');
-        return response;
+        return NextResponse.json({
+            id: updatedAsset?.id,
+            name: updatedAsset?.name,
+            url: updatedAsset?.url,
+            type: updatedAsset?.type,
+            status: updatedAsset?.status, // Will be READY or ERROR
+            createdAt: updatedAsset?.createdAt
+        });
 
     } catch (error) {
         console.error('[Upload] Error:', error);
