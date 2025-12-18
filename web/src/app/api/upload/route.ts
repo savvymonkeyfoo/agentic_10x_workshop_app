@@ -1,6 +1,7 @@
 import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { indexAsset } from '@/lib/indexing';
 
 // 1. Force the route to be rendered at request time (Dynamic Rendering)
 export const dynamic = 'force-dynamic';
@@ -46,26 +47,24 @@ export async function POST(request: Request): Promise<NextResponse> {
                 status: 'INDEXING'
             }
         });
+        console.log("Asset created:", asset.id);
 
-        // 3. Trigger RAG Indexing (Fire-and-Forget with Dispatch Guard)
-        // Use request.url to dynamically determine the origin (works on localhost AND Vercel)
-        const origin = new URL(request.url).origin;
-        console.log("Triggering indexing at:", `${origin}/api/index-rag`);
+        // 3. Trigger RAG Indexing (Direct Function Call - No HTTP self-call!)
+        // This runs synchronously within the same serverless function,
+        // avoiding the ECONNREFUSED issue on Vercel.
+        console.log("Starting indexing directly...");
 
-        // Fire-and-forget with dispatch guard: Wait briefly to ensure request is dispatched
-        // before the serverless function terminates
-        const indexingPromise = fetch(`${origin}/api/index-rag`, {
-            method: 'POST',
-            body: JSON.stringify({ assetId: asset.id }),
-            headers: { 'Content-Type': 'application/json' }
-        });
+        // Fire-and-forget: Start indexing but don't await completion
+        // The indexing function handles its own error states and updates asset.status
+        indexAsset(asset.id)
+            .then(result => {
+                console.log(`Indexing complete for ${asset.id}:`, result);
+            })
+            .catch(err => {
+                console.error(`Indexing failed for ${asset.id}:`, err);
+            });
 
-        // Wait up to 500ms for the request to be dispatched (not completed)
-        await Promise.race([
-            indexingPromise.then(() => console.log("Indexing triggered successfully")).catch(err => console.error("Trigger Indexing Failed:", err)),
-            new Promise(resolve => setTimeout(resolve, 500))
-        ]);
-
+        // Return immediately - indexing continues in background
         return NextResponse.json(asset);
 
     } catch (error) {
@@ -73,3 +72,4 @@ export async function POST(request: Request): Promise<NextResponse> {
         return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
 }
+
