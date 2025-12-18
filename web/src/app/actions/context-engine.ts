@@ -6,7 +6,10 @@ import { google } from '@ai-sdk/google';
 import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 
-// Types
+// =============================================================================
+// TYPES
+// =============================================================================
+
 type AssetType = 'DOSSIER' | 'BACKLOG' | 'MARKET_SIGNAL';
 
 interface RetrievedChunk {
@@ -23,40 +26,46 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
-/**
- * Query Pinecone for semantically relevant chunks.
- * Supports filtering by asset type for surgical retrieval.
- */
+interface AuditResult {
+    techDNA: string;
+    geoFence: string;
+    securityAnalysis: string;
+    strategicIntent: string;
+    rawOutput: string;
+}
+
+interface GapAnalysisResult {
+    architectureCollision: string;
+    missingSignal: string;
+    provocationPoints: string[];
+    rawOutput: string;
+}
+
+// =============================================================================
+// PINECONE RETRIEVAL
+// =============================================================================
+
 async function queryPinecone(
     workshopId: string,
     query: string,
-    options: {
-        topK?: number;
-        filterType?: AssetType | AssetType[];
-    } = {}
+    options: { topK?: number; filterType?: AssetType | AssetType[] } = {}
 ): Promise<RetrievalResult> {
     const { topK = 15, filterType } = options;
 
     console.log(`[ContextEngine] Querying Pinecone for workshop: ${workshopId}`);
-    console.log(`[ContextEngine] Query: "${query.slice(0, 100)}..."`);
 
-    // Generate embedding for the query
     const { embedding } = await embed({
         model: google.textEmbeddingModel('text-embedding-004'),
         value: query,
     });
 
-    // Build filter
     let filter: Record<string, unknown> | undefined;
     if (filterType) {
-        if (Array.isArray(filterType)) {
-            filter = { type: { "$in": filterType } };
-        } else {
-            filter = { type: { "$eq": filterType } };
-        }
+        filter = Array.isArray(filterType)
+            ? { type: { "$in": filterType } }
+            : { type: { "$eq": filterType } };
     }
 
-    // Query Pinecone namespace
     const namespace = getWorkshopNamespace(workshopId);
     const results = await namespace.query({
         vector: embedding,
@@ -65,7 +74,6 @@ async function queryPinecone(
         includeMetadata: true,
     });
 
-    // Transform results
     const chunks: RetrievedChunk[] = results.matches.map(match => ({
         id: match.id,
         content: (match.metadata?.content as string) || '',
@@ -74,227 +82,339 @@ async function queryPinecone(
         score: match.score || 0,
     }));
 
-    // Count unique documents
     const uniqueFiles = new Set(chunks.map(c => c.filename));
-
     console.log(`[ContextEngine] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
 
-    return {
-        chunks,
-        documentCount: uniqueFiles.size,
-        chunkCount: chunks.length,
-    };
+    return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
 
-/**
- * Format retrieved chunks into context sections for the prompt.
- */
-function formatContext(chunks: RetrievedChunk[]): {
-    dossierContext: string;
-    backlogContext: string;
-    sources: string[];
-} {
+function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; backlogContext: string; sources: string[] } {
     const dossierChunks = chunks.filter(c => c.type === 'DOSSIER');
     const backlogChunks = chunks.filter(c => c.type === 'BACKLOG');
-
     const formatChunks = (arr: RetrievedChunk[]) =>
         arr.map(c => `[Source: ${c.filename}]\n${c.content}`).join('\n\n---\n\n');
-
-    const sources = [...new Set(chunks.map(c => c.filename))];
-
     return {
         dossierContext: formatChunks(dossierChunks) || 'No enterprise context available.',
         backlogContext: formatChunks(backlogChunks) || 'No backlog items available.',
-        sources,
+        sources: [...new Set(chunks.map(c => c.filename))],
     };
 }
 
-/**
- * Few-Shot Exemplars for Query Calibration.
- * Demonstrates the difference between generic and 10x scouting queries.
- */
-const FEW_SHOT_EXEMPLARS = `
-══════════════════════════════════════════════════════════════
-📚 FEW-SHOT CALIBRATION: What "10x" Research Looks Like
-══════════════════════════════════════════════════════════════
+// =============================================================================
+// STEP 1: THE TECHNICAL AUDITOR (Extraction Phase)
+// =============================================================================
 
-EXAMPLE 1:
-- INPUT_CONTEXT: Client uses AWS/Java but backlog mentions 3-week deployment cycles.
-- ❌ POOR_QUERY: "How to improve AWS deployment?"
-- ✅ 10X_QUERY: "Analyze open-source Terraform modules for AWS serverless that reduce cold-start latency in Java-based financial microservices."
-- WHY_BETTER: Specific tech stack, specific metric, specific domain.
+const AUDITOR_PROMPT = `### MISSION
+You are the Technical Auditor — a rigorous Systems Architect and Forensic Auditor.
+Your task is to process internal documents and extract the "As-Is" DNA of the enterprise with 100% factual accuracy.
 
-EXAMPLE 2:
-- INPUT_CONTEXT: Operates in Australia/NZ, no mention of APAC expansion or regional competitors.
-- ❌ POOR_QUERY: "APAC fintech trends 2025"
-- ✅ 10X_QUERY: "Compare regulatory sandbox requirements for PSD2-equivalent APIs in Singapore vs Australia for cross-border B2B payment corridors."
-- WHY_BETTER: Geographic specificity, regulatory angle, business model focus.
+### INSTRUCTIONS
+1. Analyze the context and extract ONLY hard data points.
+2. Categories to map:
+   - [TECH_DNA]: Exact versions, cloud services (e.g., AWS EKS vs. just "AWS"), languages, frameworks, and legacy anchors (e.g., SAP version).
+   - [GEO_FENCE]: Exact operating regions, markets, and regulatory jurisdictions.
+   - [SECURITY_ANALYSIS]: Specific compliance standards (Essential Eight, SOC2, ISO 27001, PCI-DSS) and acknowledged vulnerabilities.
+   - [STRATEGIC_INTENT]: The top 3 priorities as explicitly stated by the business.
 
-EXAMPLE 3:
-- INPUT_CONTEXT: Dossier mentions SOC2 compliance but no recent security audit or threat modeling.
-- ❌ POOR_QUERY: "Cloud security best practices"
-- ✅ 10X_QUERY: "Identify CVEs disclosed in the last 6 months affecting Java Spring Boot microservices on AWS EKS with emphasis on supply chain attacks."
-- WHY_BETTER: CVE-specific, time-bound, architecture-matched.
+### CRITICAL RULES
+- Do NOT interpret. Do NOT find gaps. Do NOT suggest improvements.
+- If a detail is missing from the documents, mark it [UNKNOWN].
+- Quote exact phrases when possible.
+- Be exhaustive — miss nothing that is stated.
+
+### OUTPUT FORMAT
+\`\`\`json
+{
+  "TECH_DNA": {
+    "cloud_providers": ["..."],
+    "languages": ["..."],
+    "frameworks": ["..."],
+    "databases": ["..."],
+    "legacy_systems": ["..."],
+    "specific_versions": ["..."]
+  },
+  "GEO_FENCE": {
+    "primary_regions": ["..."],
+    "secondary_markets": ["..."],
+    "regulatory_jurisdictions": ["..."]
+  },
+  "SECURITY_ANALYSIS": {
+    "compliance_standards": ["..."],
+    "acknowledged_risks": ["..."],
+    "security_tools": ["..."]
+  },
+  "STRATEGIC_INTENT": {
+    "priority_1": "...",
+    "priority_2": "...",
+    "priority_3": "..."
+  }
+}
+\`\`\`
 `;
 
-/**
- * The Strategic Scout Master Prompt for Gap Analysis & Research Scoping.
- * 
- * Enhanced with:
- * 1. Structural Anchor (TECH_STACK, GEOGRAPHY, SECURITY categorization)
- * 2. Few-Shot Exemplars (Poor vs 10x query calibration)
- * 3. JSON-Ready Output (Search API Payloads for agentic handoff)
- */
-function buildScopingPrompt(
-    dossierContext: string,
-    backlogContext: string,
-    sources: string[]
-): string {
-    return `### ROLE
-You are the "Strategic Scout" — an elite research scoping agent for the 10x Innovation Protocol.
-Your task: Analyze internal enterprise data and generate a RESEARCH MANDATE for an external agentic research team.
+async function runTechnicalAudit(dossierContext: string, backlogContext: string): Promise<AuditResult> {
+    console.log(`[SupremeScout] Step 1: Running Technical Audit...`);
 
-You are NOT summarizing what we know. You are identifying KNOWLEDGE GAPS that require external market intelligence.
+    const prompt = `${AUDITOR_PROMPT}
 
 ══════════════════════════════════════════════════════════════
-📁 ENTERPRISE DOSSIER (Architecture, Tech Stack, Geography, Strengths)
+📁 ENTERPRISE DOSSIER
 ══════════════════════════════════════════════════════════════
 ${dossierContext}
 
 ══════════════════════════════════════════════════════════════
-📋 CLIENT BACKLOG (Operational Friction & Strategic Priorities)
+📋 CLIENT BACKLOG
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
+Now extract the Technical DNA. Output ONLY the JSON block.`;
+
+    const { text } = await generateText({
+        model: google('gemini-2.5-flash'),
+        prompt,
+    });
+
+    console.log(`[SupremeScout] Step 1 Complete: Audit extracted`);
+
+    return {
+        techDNA: text,
+        geoFence: text,
+        securityAnalysis: text,
+        strategicIntent: text,
+        rawOutput: text,
+    };
+}
+
+// =============================================================================
+// STEP 2: THE STRATEGIC GAP DETECTIVE (Inference Phase)
+// =============================================================================
+
+const DETECTIVE_PROMPT = `### MISSION
+You are the Gap Detective — a Hostile Competitor and Disruptive Analyst.
+You take a "Technical DNA Map" and look for the specific "Friction Points" that will cause the business to fail in a 2025-2026 market.
+
+### YOUR ADVERSARIAL LENS
+Think like a competitor who:
+- Has just raised $50M to disrupt this exact market
+- Has access to cutting-edge AI/ML capabilities they don't mention
+- Operates with zero legacy constraints
+
+### TASK: IDENTIFY THE "BLIND SPOTS"
+
+1. **Architecture Collision**: How does their [TECH_DNA] prevent them from achieving their [STRATEGIC_INTENT]?
+   - Example: "They want AI-driven routing, but their batch-processed SAP core creates 24-hour data latency"
+   - Be SPECIFIC about the technical constraint and the business impact.
+
+2. **The "Missing" Signal**: What is the ONE external threat that is NOT mentioned in their security or risk logs?
+   - Look for: regulatory changes, emerging competitors, technology shifts, talent gaps
+
+3. **Provocation Points**: Identify 2 specific scenarios that would embarrass the current leadership's strategy.
+   - Frame as: "If [EXTERNAL_EVENT], their [CURRENT_APPROACH] would [FAILURE_MODE]"
+
+### OUTPUT FORMAT
+\`\`\`json
+{
+  "ARCHITECTURE_COLLISION": {
+    "constraint": "...",
+    "strategic_goal_blocked": "...",
+    "technical_root_cause": "...",
+    "business_impact": "..."
+  },
+  "MISSING_SIGNAL": {
+    "threat_category": "...",
+    "specific_threat": "...",
+    "why_not_mentioned": "...",
+    "potential_impact": "..."
+  },
+  "PROVOCATION_POINTS": [
+    {
+      "external_event": "...",
+      "current_approach": "...",
+      "failure_mode": "..."
+    },
+    {
+      "external_event": "...",
+      "current_approach": "...",
+      "failure_mode": "..."
+    }
+  ]
+}
+\`\`\`
+`;
+
+async function runGapAnalysis(auditResult: AuditResult, backlogContext: string): Promise<GapAnalysisResult> {
+    console.log(`[SupremeScout] Step 2: Running Gap Analysis...`);
+
+    const prompt = `${DETECTIVE_PROMPT}
+
 ══════════════════════════════════════════════════════════════
-📖 SOURCE DOCUMENTS ANALYZED
+🔬 TECHNICAL DNA MAP (From Auditor)
+══════════════════════════════════════════════════════════════
+${auditResult.rawOutput}
+
+══════════════════════════════════════════════════════════════
+📋 CLIENT BACKLOG (Internal Friction)
+══════════════════════════════════════════════════════════════
+${backlogContext}
+
+Now identify the Friction Points. Output ONLY the JSON block.`;
+
+    const { text } = await generateText({
+        model: google('gemini-2.5-flash'),
+        prompt,
+    });
+
+    console.log(`[SupremeScout] Step 2 Complete: Gaps identified`);
+
+    return {
+        architectureCollision: text,
+        missingSignal: text,
+        provocationPoints: [],
+        rawOutput: text,
+    };
+}
+
+// =============================================================================
+// STEP 3: THE MANDATE ARCHITECT (Instruction Phase)
+// =============================================================================
+
+const ARCHITECT_PROMPT = `### MISSION
+You are the Mandate Architect — the World's Greatest Research Scoping Specialist.
+Your task is to convert the identified gaps and friction points into machine-ready "Agent-to-Agent" search payloads.
+
+### YOUR CRAFT
+You engineer search queries like a cybersecurity analyst engineers penetration tests:
+- High precision, zero noise
+- Target high-signal domains
+- Use advanced search operators
+- Define clear success criteria
+
+### TASK: ENGINEER 10X SEARCH PAYLOADS
+
+Generate exactly 5 surgical research queries. For EACH query, you MUST include:
+
+1. **target_domain**: Force the next agent to look in high-signal zones:
+   - Technical: github.com, stackoverflow.com, news.ycombinator.com
+   - Business: sec.gov, crunchbase.com, linkedin.com/company
+   - Community: reddit.com/r/sysadmin, reddit.com/r/devops, reddit.com/r/aws
+
+2. **query_string**: Use Advanced Search Operators:
+   - site:github.com [technology] migration
+   - inurl:blog [tech_stack] "failure" OR "postmortem"
+   - "[competitor_name]" API documentation filetype:pdf
+
+3. **trigger_event**: Define the "Signal" that changes the strategy:
+   - "If you find a competitor offering [FEATURE] via serverless-native API, STOP and report"
+   - "If regulatory filing mentions [TECH] mandate, escalate immediately"
+
+4. **grounded_in**: Which audit/gap finding this query addresses
+
+### OUTPUT FORMAT (Markdown)
+
+## 🎯 SUPREME SCOUT RESEARCH MANDATE
+
+### The Blind Spot Hypothesis
+[2-3 sentences synthesizing the audit + gap analysis into the core strategic risk]
+
+---
+
+### Search Payload 1: [Topic]
+| Field | Value |
+|-------|-------|
+| **target_domain** | [domain] |
+| **query_string** | \`[exact query]\` |
+| **trigger_event** | [signal that changes strategy] |
+| **grounded_in** | [TECH_DNA/SECURITY/GAP reference] |
+
+### Search Payload 2: [Topic]
+[Same format...]
+
+### Search Payload 3: [Topic]
+[Same format...]
+
+### Search Payload 4: [Topic]
+[Same format...]
+
+### Search Payload 5: [Topic]
+[Same format...]
+
+---
+
+### Competitor Watchlist
+
+| Company | Why Monitor | Threat Vector | Watch Signal |
+|---------|-------------|---------------|--------------|
+| [Name] | [Rationale] | [Specific threat] | [Trigger] |
+| [Name] | [...] | [...] | [...] |
+| [Name] | [...] | [...] | [...] |
+
+---
+
+### Provocation Brief
+[2 sentences that would make the CTO uncomfortable about their current trajectory]
+`;
+
+async function writeResearchMandate(
+    auditResult: AuditResult,
+    gapResult: GapAnalysisResult,
+    sources: string[]
+): Promise<string> {
+    console.log(`[SupremeScout] Step 3: Architecting Research Mandate...`);
+
+    const prompt = `${ARCHITECT_PROMPT}
+
+══════════════════════════════════════════════════════════════
+🔬 TECHNICAL DNA MAP (From Auditor)
+══════════════════════════════════════════════════════════════
+${auditResult.rawOutput}
+
+══════════════════════════════════════════════════════════════
+⚡ FRICTION POINTS (From Gap Detective)
+══════════════════════════════════════════════════════════════
+${gapResult.rawOutput}
+
+══════════════════════════════════════════════════════════════
+📖 SOURCE DOCUMENTS
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-${FEW_SHOT_EXEMPLARS}
+Now architect the Research Mandate. Output the full Markdown format.`;
 
-══════════════════════════════════════════════════════════════
-🔍 STEP 1: CATEGORIZE THE INSIDE (Extract Before You Scope)
-══════════════════════════════════════════════════════════════
+    const { text } = await generateText({
+        model: google('gemini-2.5-flash'),
+        prompt,
+    });
 
-Before generating research queries, you MUST first extract and list these elements from the context:
+    console.log(`[SupremeScout] Step 3 Complete: Mandate written`);
 
-- **[TECH_STACK]**: Primary languages, cloud providers, frameworks, and legacy constraints mentioned.
-- **[GEOGRAPHY]**: Primary and secondary operating regions/markets.
-- **[SECURITY_POSTURE]**: Any mentioned compliance (SOC2, GDPR, PCI-DSS) or security concerns.
-- **[STRATEGIC_PILLARS]**: Top 3 strategic priorities from the Dossier.
-- **[OPERATIONAL_FRICTION]**: Key blockers or pain points from the Backlog.
+    return text;
+}
 
-══════════════════════════════════════════════════════════════
-🎯 STEP 2: GENERATE THE RESEARCH MANDATE
-══════════════════════════════════════════════════════════════
+// =============================================================================
+// MAIN ORCHESTRATOR: THE SUPREME SCOUT PIPELINE
+// =============================================================================
 
-Using the extracted categories, produce this structured output:
-
----
-
-## 📊 INSIDE-OUT CATEGORIZATION
-
-### Tech Stack
-\`\`\`
-[List extracted technologies, languages, cloud providers, frameworks]
-\`\`\`
-
-### Geography
-\`\`\`
-[List operating regions and markets]
-\`\`\`
-
-### Security Posture
-\`\`\`
-[List compliance standards and security concerns]
-\`\`\`
-
-### Strategic Pillars
-\`\`\`
-[List top 3 priorities]
-\`\`\`
-
-### Operational Friction
-\`\`\`
-[List key blockers from backlog]
-\`\`\`
-
----
-
-## 🎯 THE BLIND SPOT HYPOTHESIS
-
-Write 2-3 sentences describing the friction between their current architecture/posture and market velocity. What are they NOT seeing?
-
----
-
-## 🔍 SEARCH API PAYLOADS
-
-Generate exactly 5 high-intent research queries. For each:
-
-### Query 1: [Topic Name]
-- **query_string**: "[Exact text for search engine]"
-- **intent**: [Why we are searching - e.g., "Architecture Validation", "Competitive Intelligence", "Regulatory Scan"]
-- **expected_signal**: [What specific evidence would change our strategy]
-- **grounded_in**: [Which [TECH_STACK], [GEOGRAPHY], or [SECURITY] element this targets]
-
-### Query 2: [Topic Name]
-[Same structure...]
-
-### Query 3: [Topic Name]
-[Same structure...]
-
-### Query 4: [Topic Name]
-[Same structure...]
-
-### Query 5: [Topic Name]
-[Same structure...]
-
----
-
-## 🏢 COMPETITOR WATCHLIST
-
-Identify 3 specific companies to monitor:
-
-| Company | Why Monitor | Threat Vector |
-|---------|-------------|---------------|
-| [Name] | [Rationale tied to client's [TECH_STACK] or [GEOGRAPHY]] | [Specific threat: e.g., "Alternative API", "Pricing pressure"] |
-| [Name] | [...] | [...] |
-| [Name] | [...] | [...] |
-
----
-
-## ⚠️ PROVOCATION TARGETS
-
-2 "Inside-Out" threats that directly challenge their tech stack or security posture:
-
-1. **[Threat Name]**: [How this specifically threatens their [TECH_STACK] or [SECURITY_POSTURE]]
-2. **[Threat Name]**: [How this specifically threatens their [GEOGRAPHY] or [STRATEGIC_PILLARS]]
-
----
-
-**CRITICAL CONSTRAINTS:**
-- Every query MUST reference a specific [TECH_STACK], [GEOGRAPHY], or [SECURITY] element.
-- Do NOT produce generic queries. Use the few-shot examples as your quality bar.
-- The output must be actionable for an agentic research team.
-- Ground every insight in evidence from the source documents.
-`;
+export interface BriefGenerationProgress {
+    step: 'auditing' | 'detecting' | 'architecting' | 'complete' | 'error';
+    message: string;
 }
 
 /**
- * Generate Research Brief (Gap Analysis) using Pinecone RAG.
+ * Generate Research Brief using the Supreme Scout 3-Step Sequential Chain.
  * 
- * Enhanced with few-shot prompting and tech-stack grounding.
- * Output: A Research Mandate with Search API Payloads for agentic handoff.
+ * Pipeline:
+ * 1. Technical Auditor → Extract hard data (TECH_DNA, GEO_FENCE, SECURITY)
+ * 2. Gap Detective → Infer friction points and blind spots
+ * 3. Mandate Architect → Engineer agent-ready search payloads
  */
 export async function generateBrief(workshopId: string) {
-    console.log(`[ContextEngine] ========== Generating Research Scope for ${workshopId} ==========`);
+    console.log(`[SupremeScout] ========== Starting Pipeline for ${workshopId} ==========`);
 
     try {
-        // 1. Query Pinecone for relevant chunks - focus on architecture, strategy, geography
-        const query = "Analyze the enterprise architecture, technology stack, cloud providers, programming languages, geographic operations, compliance requirements, strategic priorities, operational friction, and innovation capabilities";
+        // 0. Retrieve context from Pinecone
+        const query = "Analyze enterprise architecture, technology stack, cloud providers, programming languages, geographic operations, compliance requirements, strategic priorities, operational friction";
         const retrieval = await queryPinecone(workshopId, query, {
-            topK: 25, // More chunks for comprehensive gap analysis
+            topK: 30,
             filterType: ['DOSSIER', 'BACKLOG'],
         });
 
@@ -306,42 +426,49 @@ export async function generateBrief(workshopId: string) {
             };
         }
 
-        // 2. Format context for prompt
         const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
 
-        // 3. Build the Strategic Scout Scoping Prompt (with few-shot exemplars)
-        const prompt = buildScopingPrompt(dossierContext, backlogContext, sources);
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 1: THE TECHNICAL AUDITOR
+        // ═══════════════════════════════════════════════════════════════════
+        const auditResult = await runTechnicalAudit(dossierContext, backlogContext);
 
-        console.log(`[ContextEngine] Generating research scope from ${retrieval.documentCount} documents...`);
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 2: THE STRATEGIC GAP DETECTIVE
+        // ═══════════════════════════════════════════════════════════════════
+        const gapResult = await runGapAnalysis(auditResult, backlogContext);
 
-        // 4. Generate with Gemini
-        const { text } = await generateText({
-            model: google('gemini-2.5-flash'),
-            prompt,
-        });
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 3: THE MANDATE ARCHITECT
+        // ═══════════════════════════════════════════════════════════════════
+        const mandate = await writeResearchMandate(auditResult, gapResult, sources);
 
-        // 5. Save to WorkshopContext
+        // Save to WorkshopContext
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: text },
-            create: { workshopId, researchBrief: text },
+            update: { researchBrief: mandate },
+            create: { workshopId, researchBrief: mandate },
         });
 
-        console.log(`[ContextEngine] Research scope generated successfully`);
+        console.log(`[SupremeScout] ========== Pipeline Complete ==========`);
         revalidatePath(`/workshop/${workshopId}`);
 
         return {
             success: true,
-            brief: text,
+            brief: mandate,
             documentCount: retrieval.documentCount,
             sources,
+            pipeline: {
+                audit: auditResult.rawOutput,
+                gaps: gapResult.rawOutput,
+            },
         };
 
     } catch (error) {
-        console.error("[ContextEngine] Research Scoping Error:", error);
+        console.error("[SupremeScout] Pipeline Error:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to generate research scope.",
+            error: error instanceof Error ? error.message : "Pipeline failed.",
             documentCount: 0,
         };
     }
@@ -349,15 +476,11 @@ export async function generateBrief(workshopId: string) {
 
 /**
  * Query Pinecone for specific asset type (for surgical retrieval).
- * Useful for targeted queries like "only backlog" or "only dossier".
  */
 export async function queryContext(
     workshopId: string,
     query: string,
     assetType?: AssetType
 ): Promise<RetrievalResult> {
-    return queryPinecone(workshopId, query, {
-        topK: 10,
-        filterType: assetType,
-    });
+    return queryPinecone(workshopId, query, { topK: 10, filterType: assetType });
 }
