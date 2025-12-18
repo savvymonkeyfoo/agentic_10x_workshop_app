@@ -9,11 +9,19 @@ const pdf = require('pdf-parse');
  */
 export async function indexAsset(assetId: string): Promise<{ success: boolean; chunksProcessed: number; error?: string }> {
     try {
-        console.log(`[IndexAsset] Starting indexing for asset: ${assetId}`);
+        console.log(`[IndexAsset] ========== WORKER STARTED ==========`);
+        console.log(`[IndexAsset] Asset ID: ${assetId}`);
+        console.log(`[IndexAsset] Timestamp: ${new Date().toISOString()}`);
+
+        // Force Prisma connection to establish before processing
+        console.log(`[IndexAsset] Connecting to database...`);
+        await prisma.$connect();
+        console.log(`[IndexAsset] Database connected!`);
 
         const asset = await prisma.asset.findUnique({
             where: { id: assetId }
         });
+        console.log(`[IndexAsset] Asset lookup complete:`, asset ? 'Found' : 'Not found');
 
         if (!asset) {
             console.error(`[IndexAsset] Asset not found: ${assetId}`);

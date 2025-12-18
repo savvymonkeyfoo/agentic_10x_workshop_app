@@ -13,6 +13,9 @@ export const dynamic = 'force-dynamic';
  * Can be called externally or used as a fallback if direct function call fails.
  */
 export async function POST(request: Request) {
+    console.log(`[index-rag] ========== WORKER HIT ==========`);
+    console.log(`[index-rag] Timestamp: ${new Date().toISOString()}`);
+
     try {
         const { assetId } = await request.json();
 
