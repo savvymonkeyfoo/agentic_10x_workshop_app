@@ -26,21 +26,6 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
-interface AuditResult {
-    techDNA: string;
-    geoFence: string;
-    securityAnalysis: string;
-    strategicIntent: string;
-    rawOutput: string;
-}
-
-interface GapAnalysisResult {
-    architectureCollision: string;
-    missingSignal: string;
-    provocationPoints: string[];
-    rawOutput: string;
-}
-
 // =============================================================================
 // PINECONE RETRIEVAL
 // =============================================================================
@@ -52,7 +37,7 @@ async function queryPinecone(
 ): Promise<RetrievalResult> {
     const { topK = 15, filterType } = options;
 
-    console.log(`[ContextEngine] Querying Pinecone for workshop: ${workshopId}`);
+    console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
 
     const { embedding } = await embed({
         model: google.textEmbeddingModel('text-embedding-004'),
@@ -83,7 +68,7 @@ async function queryPinecone(
     }));
 
     const uniqueFiles = new Set(chunks.map(c => c.filename));
-    console.log(`[ContextEngine] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
+    console.log(`[SupremeScout] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
 
     return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
@@ -101,20 +86,23 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// STEP 1: THE TECHNICAL AUDITOR (Extraction Phase)
+// STEP 1: THE TECHNICAL AUDITOR
+// Persona: Cold, Precise Systems Architect and Forensic Auditor
+// Mission: Extract "Inside-Out" DNA without bias or fluff
 // =============================================================================
 
-const AUDITOR_PROMPT = `### MISSION
-You are the Technical Auditor — a rigorous Systems Architect and Forensic Auditor.
+const AUDITOR_PROMPT = `### ROLE
+You are the Technical Auditor — a cold, precise Systems Architect and Forensic Auditor.
 Your task is to process internal documents and extract the "As-Is" DNA of the enterprise with 100% factual accuracy.
 
 ### INSTRUCTIONS
 1. Analyze the context and extract ONLY hard data points.
 2. Categories to map:
-   - [TECH_DNA]: Exact versions, cloud services (e.g., AWS EKS vs. just "AWS"), languages, frameworks, and legacy anchors (e.g., SAP version).
-   - [GEO_FENCE]: Exact operating regions, markets, and regulatory jurisdictions.
-   - [SECURITY_ANALYSIS]: Specific compliance standards (Essential Eight, SOC2, ISO 27001, PCI-DSS) and acknowledged vulnerabilities.
-   - [STRATEGIC_INTENT]: The top 3 priorities as explicitly stated by the business.
+   - [TECH_DNA]: Specific cloud services (e.g., AWS EKS, GCP BigQuery), ERP systems (SAP S/4HANA), integration layers (Kong, Mulesoft), deployment practices.
+   - [GEO_COORDINATES]: Primary jurisdictions, international logistics hubs, regulatory environments.
+   - [SECURITY_GUARDRAILS]: Specific compliance frameworks (Essential Eight, SOC2, ISO 27001), security tools, risk posture.
+   - [STRATEGIC_POSTURE]: Top priorities, transformation programs, investment levels, stated ambitions.
+   - [OPERATIONAL_VELOCITY]: Deployment frequency, release cycles, automation maturity.
 
 ### CRITICAL RULES
 - Do NOT interpret. Do NOT find gaps. Do NOT suggest improvements.
@@ -123,36 +111,25 @@ Your task is to process internal documents and extract the "As-Is" DNA of the en
 - Be exhaustive — miss nothing that is stated.
 
 ### OUTPUT FORMAT
-\`\`\`json
-{
-  "TECH_DNA": {
-    "cloud_providers": ["..."],
-    "languages": ["..."],
-    "frameworks": ["..."],
-    "databases": ["..."],
-    "legacy_systems": ["..."],
-    "specific_versions": ["..."]
-  },
-  "GEO_FENCE": {
-    "primary_regions": ["..."],
-    "secondary_markets": ["..."],
-    "regulatory_jurisdictions": ["..."]
-  },
-  "SECURITY_ANALYSIS": {
-    "compliance_standards": ["..."],
-    "acknowledged_risks": ["..."],
-    "security_tools": ["..."]
-  },
-  "STRATEGIC_INTENT": {
-    "priority_1": "...",
-    "priority_2": "...",
-    "priority_3": "..."
-  }
-}
-\`\`\`
+Provide a structured extraction in this exact format:
+
+## TECHNICAL DNA
+[List all technologies, platforms, and systems mentioned]
+
+## GEOGRAPHIC COORDINATES  
+[List all regions, markets, and jurisdictions]
+
+## SECURITY GUARDRAILS
+[List all compliance, security, and risk elements]
+
+## STRATEGIC POSTURE
+[List stated priorities and transformation goals]
+
+## OPERATIONAL VELOCITY
+[List deployment practices, automation, and delivery metrics]
 `;
 
-async function runTechnicalAudit(dossierContext: string, backlogContext: string): Promise<AuditResult> {
+async function runTechnicalAudit(dossierContext: string, backlogContext: string): Promise<string> {
     console.log(`[SupremeScout] Step 1: Running Technical Audit...`);
 
     const prompt = `${AUDITOR_PROMPT}
@@ -167,7 +144,7 @@ ${dossierContext}
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
-Now extract the Technical DNA. Output ONLY the JSON block.`;
+Now extract the Technical DNA. Be forensic and exhaustive.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
@@ -175,74 +152,52 @@ Now extract the Technical DNA. Output ONLY the JSON block.`;
     });
 
     console.log(`[SupremeScout] Step 1 Complete: Audit extracted`);
-
-    return {
-        techDNA: text,
-        geoFence: text,
-        securityAnalysis: text,
-        strategicIntent: text,
-        rawOutput: text,
-    };
+    return text;
 }
 
 // =============================================================================
-// STEP 2: THE STRATEGIC GAP DETECTIVE (Inference Phase)
+// STEP 2: THE STRATEGIC GAP DETECTIVE
+// Persona: Hostile Disruptor and Skeptical Consultant
+// Mission: Identify where "As-Is" DNA will shatter against market forces
 // =============================================================================
 
-const DETECTIVE_PROMPT = `### MISSION
-You are the Gap Detective — a Hostile Competitor and Disruptive Analyst.
-You take a "Technical DNA Map" and look for the specific "Friction Points" that will cause the business to fail in a 2025-2026 market.
+const DETECTIVE_PROMPT = `### ROLE
+You are the Gap Detective — a Hostile Disruptor and Skeptical Consultant.
+You take the "Technical DNA Map" and look for "Collision Points" where the organization is too slow, too rigid, or too blind to survive in a 2025-2026 market.
 
 ### YOUR ADVERSARIAL LENS
-Think like a competitor who:
-- Has just raised $50M to disrupt this exact market
-- Has access to cutting-edge AI/ML capabilities they don't mention
-- Operates with zero legacy constraints
+Think like:
+- A well-funded startup that just raised $100M to disrupt their exact market
+- A consultant who only gets paid if they find uncomfortable truths
+- A board member who will lose their seat if this company fails
 
-### TASK: IDENTIFY THE "BLIND SPOTS"
+### MISSION: IDENTIFY THE "FRICTION ZONES"
 
-1. **Architecture Collision**: How does their [TECH_DNA] prevent them from achieving their [STRATEGIC_INTENT]?
-   - Example: "They want AI-driven routing, but their batch-processed SAP core creates 24-hour data latency"
-   - Be SPECIFIC about the technical constraint and the business impact.
+1. **The Agility Collision**: Where does their stated velocity (deployments/year) crash into their architectural constraints (batch processing, legacy cores)? Why will this gap widen, not shrink?
 
-2. **The "Missing" Signal**: What is the ONE external threat that is NOT mentioned in their security or risk logs?
-   - Look for: regulatory changes, emerging competitors, technology shifts, talent gaps
+2. **The Intelligence Delusion**: Where do they claim AI/ML ambition but lack the real-time data infrastructure (streaming, event-driven architecture) to make it real? What promises will they break?
 
-3. **Provocation Points**: Identify 2 specific scenarios that would embarrass the current leadership's strategy.
-   - Frame as: "If [EXTERNAL_EVENT], their [CURRENT_APPROACH] would [FAILURE_MODE]"
+3. **The Disruption Hypothesis**: Identify 1 specific, concrete competitor move or market shift that would make their core value proposition obsolete within 18 months.
+
+4. **The Blind Spot**: What is the ONE external threat (regulatory, technological, competitive) that is conspicuously ABSENT from their documents?
 
 ### OUTPUT FORMAT
-\`\`\`json
-{
-  "ARCHITECTURE_COLLISION": {
-    "constraint": "...",
-    "strategic_goal_blocked": "...",
-    "technical_root_cause": "...",
-    "business_impact": "..."
-  },
-  "MISSING_SIGNAL": {
-    "threat_category": "...",
-    "specific_threat": "...",
-    "why_not_mentioned": "...",
-    "potential_impact": "..."
-  },
-  "PROVOCATION_POINTS": [
-    {
-      "external_event": "...",
-      "current_approach": "...",
-      "failure_mode": "..."
-    },
-    {
-      "external_event": "...",
-      "current_approach": "...",
-      "failure_mode": "..."
-    }
-  ]
-}
-\`\`\`
+Provide your analysis in this exact format:
+
+## THE AGILITY COLLISION
+[Describe the specific friction between ambition and architecture]
+
+## THE INTELLIGENCE DELUSION
+[Describe the gap between AI aspirations and data reality]
+
+## THE DISRUPTION HYPOTHESIS
+[Describe a specific scenario that would embarrass current strategy]
+
+## THE BLIND SPOT
+[Describe the threat they are not discussing]
 `;
 
-async function runGapAnalysis(auditResult: AuditResult, backlogContext: string): Promise<GapAnalysisResult> {
+async function runGapAnalysis(auditResult: string, backlogContext: string): Promise<string> {
     console.log(`[SupremeScout] Step 2: Running Gap Analysis...`);
 
     const prompt = `${DETECTIVE_PROMPT}
@@ -250,14 +205,14 @@ async function runGapAnalysis(auditResult: AuditResult, backlogContext: string):
 ══════════════════════════════════════════════════════════════
 🔬 TECHNICAL DNA MAP (From Auditor)
 ══════════════════════════════════════════════════════════════
-${auditResult.rawOutput}
+${auditResult}
 
 ══════════════════════════════════════════════════════════════
 📋 CLIENT BACKLOG (Internal Friction)
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
-Now identify the Friction Points. Output ONLY the JSON block.`;
+Now identify the Friction Zones. Be hostile, specific, and uncomfortable.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
@@ -265,98 +220,96 @@ Now identify the Friction Points. Output ONLY the JSON block.`;
     });
 
     console.log(`[SupremeScout] Step 2 Complete: Gaps identified`);
-
-    return {
-        architectureCollision: text,
-        missingSignal: text,
-        provocationPoints: [],
-        rawOutput: text,
-    };
+    return text;
 }
 
 // =============================================================================
-// STEP 3: THE MANDATE ARCHITECT (Instruction Phase)
+// STEP 3: THE MANDATE ARCHITECT
+// Persona: Visionary Research Director
+// Mission: Produce high-level Research Brief for strategic stimulus
 // =============================================================================
 
-const ARCHITECT_PROMPT = `### MISSION
-You are the Mandate Architect — the World's Greatest Research Scoping Specialist.
-Your task is to convert the identified gaps and friction points into machine-ready "Agent-to-Agent" search payloads.
+const ARCHITECT_PROMPT = `### ROLE
+You are the Mandate Architect — a Visionary Research Director for the 10x Innovation Protocol.
+Your task is to take the "Gaps" and "Friction Points" and engineer a Strategic Research Brief that will inspire a professional research team to find stimulus for an executive ideation workshop.
 
-### YOUR CRAFT
-You engineer search queries like a cybersecurity analyst engineers penetration tests:
-- High precision, zero noise
-- Target high-signal domains
-- Use advanced search operators
-- Define clear success criteria
+### YOUR PURPOSE
+You are NOT writing a technical specification. You are NOT listing search queries.
+You ARE writing a compelling research mandate that:
+- Tells a story of a looming threat or hidden opportunity
+- Inspires researchers to find "Outside-In" stimulus
+- Connects directly to ideas that will appear on an ideation board
+- Makes executives uncomfortable enough to innovate
 
-### TASK: ENGINEER 10X SEARCH PAYLOADS
+### OUTPUT STRUCTURE: THE STRATEGIC RESEARCH MANDATE
 
-Generate exactly 5 surgical research queries. For EACH query, you MUST include:
+## 🔥 THE PROVOCATION NARRATIVE
 
-1. **target_domain**: Force the next agent to look in high-signal zones:
-   - Technical: github.com, stackoverflow.com, news.ycombinator.com
-   - Business: sec.gov, crunchbase.com, linkedin.com/company
-   - Community: reddit.com/r/sysadmin, reddit.com/r/devops, reddit.com/r/aws
+Write a 3-paragraph executive summary that answers: "Why is 'Business as Usual' a death sentence for this organization?"
 
-2. **query_string**: Use Advanced Search Operators:
-   - site:github.com [technology] migration
-   - inurl:blog [tech_stack] "failure" OR "postmortem"
-   - "[competitor_name]" API documentation filetype:pdf
+Paragraph 1: The Illusion of Progress
+- Acknowledge what they're doing well (their Post26 transformation, investments, etc.)
+- But reveal why this progress is inadequate for the speed of market change
 
-3. **trigger_event**: Define the "Signal" that changes the strategy:
-   - "If you find a competitor offering [FEATURE] via serverless-native API, STOP and report"
-   - "If regulatory filing mentions [TECH] mandate, escalate immediately"
+Paragraph 2: The Collision Course
+- Draw from the friction zones to paint a picture of inevitable failure
+- Be specific about what will break and when
 
-4. **grounded_in**: Which audit/gap finding this query addresses
-
-### OUTPUT FORMAT (Markdown)
-
-## 🎯 SUPREME SCOUT RESEARCH MANDATE
-
-### The Blind Spot Hypothesis
-[2-3 sentences synthesizing the audit + gap analysis into the core strategic risk]
+Paragraph 3: The Window of Opportunity
+- Pivot to what could be done differently
+- Create urgency without despair
 
 ---
 
-### Search Payload 1: [Topic]
-| Field | Value |
-|-------|-------|
-| **target_domain** | [domain] |
-| **query_string** | \`[exact query]\` |
-| **trigger_event** | [signal that changes strategy] |
-| **grounded_in** | [TECH_DNA/SECURITY/GAP reference] |
+## 🎯 STRATEGIC STIMULUS AREAS
 
-### Search Payload 2: [Topic]
-[Same format...]
+Define exactly 3 "Research Hunts" — high-level areas where external intelligence could fundamentally change the strategic conversation.
 
-### Search Payload 3: [Topic]
-[Same format...]
+For each hunt, provide:
 
-### Search Payload 4: [Topic]
-[Same format...]
+### Hunt 1: [Evocative Title, e.g., "The Autonomous Middle-Mile"]
+**The Strategic Question**: [What business question are we trying to answer?]
+**Why This Matters Now**: [Why is 2025-2026 the critical window?]
+**The Idea Seed**: [How will this research become an idea on the ideation board?]
 
-### Search Payload 5: [Topic]
-[Same format...]
+### Hunt 2: [Evocative Title]
+[Same structure...]
+
+### Hunt 3: [Evocative Title]
+[Same structure...]
 
 ---
 
-### Competitor Watchlist
+## 📜 EVIDENCE REQUIREMENTS
 
-| Company | Why Monitor | Threat Vector | Watch Signal |
-|---------|-------------|---------------|--------------|
-| [Name] | [Rationale] | [Specific threat] | [Trigger] |
-| [Name] | [...] | [...] | [...] |
-| [Name] | [...] | [...] | [...] |
+For each hunt, describe what "Gold Standard" evidence looks like:
+
+| Hunt | Gold Standard Evidence | Would Change Everything If... |
+|------|------------------------|-------------------------------|
+| Hunt 1 | [Specific type of evidence] | [What insight would be transformative] |
+| Hunt 2 | [Specific type of evidence] | [What insight would be transformative] |
+| Hunt 3 | [Specific type of evidence] | [What insight would be transformative] |
 
 ---
 
-### Provocation Brief
-[2 sentences that would make the CTO uncomfortable about their current trajectory]
+## 💡 FROM RESEARCH TO IDEATION
+
+Write 2-3 sentences explaining how this research will be used in the workshop. Example:
+"This research will provide the external stimulus needed to generate '10x Ideas' — concepts that challenge the organization's current trajectory. Each hunt is designed to produce at least 3 specific ideation prompts that will appear on the workshop board."
+
+---
+
+### CRITICAL CONSTRAINTS
+- Do NOT include search strings, query operators, or technical domains
+- Do NOT mention JSON, APIs, or agent handoffs
+- Focus on BUSINESS VALUE and STRATEGIC PROVOCATION
+- Tone: Professional, visionary, and urgent — like a McKinsey partner writing for the board
+- Length: ~800-1000 words total
 `;
 
 async function writeResearchMandate(
-    auditResult: AuditResult,
-    gapResult: GapAnalysisResult,
+    auditResult: string,
+    gapResult: string,
     sources: string[]
 ): Promise<string> {
     console.log(`[SupremeScout] Step 3: Architecting Research Mandate...`);
@@ -366,19 +319,19 @@ async function writeResearchMandate(
 ══════════════════════════════════════════════════════════════
 🔬 TECHNICAL DNA MAP (From Auditor)
 ══════════════════════════════════════════════════════════════
-${auditResult.rawOutput}
+${auditResult}
 
 ══════════════════════════════════════════════════════════════
-⚡ FRICTION POINTS (From Gap Detective)
+⚡ FRICTION ZONES (From Gap Detective)
 ══════════════════════════════════════════════════════════════
-${gapResult.rawOutput}
+${gapResult}
 
 ══════════════════════════════════════════════════════════════
-📖 SOURCE DOCUMENTS
+📖 SOURCE DOCUMENTS ANALYZED
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-Now architect the Research Mandate. Output the full Markdown format.`;
+Now write the Strategic Research Mandate. Make it compelling, provocative, and actionable.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
@@ -386,7 +339,6 @@ Now architect the Research Mandate. Output the full Markdown format.`;
     });
 
     console.log(`[SupremeScout] Step 3 Complete: Mandate written`);
-
     return text;
 }
 
@@ -394,25 +346,23 @@ Now architect the Research Mandate. Output the full Markdown format.`;
 // MAIN ORCHESTRATOR: THE SUPREME SCOUT PIPELINE
 // =============================================================================
 
-export interface BriefGenerationProgress {
-    step: 'auditing' | 'detecting' | 'architecting' | 'complete' | 'error';
-    message: string;
-}
-
 /**
  * Generate Research Brief using the Supreme Scout 3-Step Sequential Chain.
  * 
  * Pipeline:
- * 1. Technical Auditor → Extract hard data (TECH_DNA, GEO_FENCE, SECURITY)
+ * 1. Technical Auditor → Extract hard data (TECH_DNA, GEO, SECURITY)
  * 2. Gap Detective → Infer friction points and blind spots
- * 3. Mandate Architect → Engineer agent-ready search payloads
+ * 3. Mandate Architect → Write strategic, narrative-driven research brief
+ * 
+ * Output: A compelling research mandate focused on business value,
+ * NOT technical search specifications.
  */
 export async function generateBrief(workshopId: string) {
     console.log(`[SupremeScout] ========== Starting Pipeline for ${workshopId} ==========`);
 
     try {
         // 0. Retrieve context from Pinecone
-        const query = "Analyze enterprise architecture, technology stack, cloud providers, programming languages, geographic operations, compliance requirements, strategic priorities, operational friction";
+        const query = "Analyze enterprise architecture, technology stack, cloud providers, programming languages, geographic operations, compliance requirements, strategic priorities, operational friction, transformation programs, competitive positioning";
         const retrieval = await queryPinecone(workshopId, query, {
             topK: 30,
             filterType: ['DOSSIER', 'BACKLOG'],
@@ -430,16 +380,19 @@ export async function generateBrief(workshopId: string) {
 
         // ═══════════════════════════════════════════════════════════════════
         // STEP 1: THE TECHNICAL AUDITOR
+        // Extract the "As-Is" DNA with forensic precision
         // ═══════════════════════════════════════════════════════════════════
         const auditResult = await runTechnicalAudit(dossierContext, backlogContext);
 
         // ═══════════════════════════════════════════════════════════════════
         // STEP 2: THE STRATEGIC GAP DETECTIVE
+        // Find the friction zones where DNA collides with market reality
         // ═══════════════════════════════════════════════════════════════════
         const gapResult = await runGapAnalysis(auditResult, backlogContext);
 
         // ═══════════════════════════════════════════════════════════════════
         // STEP 3: THE MANDATE ARCHITECT
+        // Write a compelling, narrative research brief (NOT technical specs)
         // ═══════════════════════════════════════════════════════════════════
         const mandate = await writeResearchMandate(auditResult, gapResult, sources);
 
@@ -458,10 +411,6 @@ export async function generateBrief(workshopId: string) {
             brief: mandate,
             documentCount: retrieval.documentCount,
             sources,
-            pipeline: {
-                audit: auditResult.rawOutput,
-                gaps: gapResult.rawOutput,
-            },
         };
 
     } catch (error) {
