@@ -110,83 +110,107 @@ function formatContext(chunks: RetrievedChunk[]): {
 }
 
 /**
- * The 10x Protocol Master Prompt for Research Brief Generation.
+ * The Strategic Scout Master Prompt for Gap Analysis & Research Scoping.
+ * 
+ * This prompt analyzes "Inside-Out" knowledge to identify "Outside-In" research gaps.
+ * Focus: What we DON'T know, not what we already know.
  */
-function buildMasterPrompt(
+function buildScopingPrompt(
     dossierContext: string,
     backlogContext: string,
     sources: string[]
 ): string {
-    return `You are the Strategic Research Lead for the 10x Innovation Protocol.
+    return `### ROLE
+You are the "Strategic Scout." Your task is to analyze internal enterprise data and identify the "Knowledge Gaps" that must be filled with external market research.
 
-Your mission is to synthesize the provided Enterprise Dossier and Client Backlog into a "Strategic Foundations" research brief that will guide an AI-powered ideation workshop.
+You are NOT summarizing what we know. You are identifying what is MISSING — the blind spots that could blindside this organization.
 
 ══════════════════════════════════════════════════════════════
-📁 ENTERPRISE DOSSIER (Company Context & Capabilities)
+📁 ENTERPRISE DOSSIER (Architecture, Tech Stack, Geography, Strengths)
 ══════════════════════════════════════════════════════════════
 ${dossierContext}
 
 ══════════════════════════════════════════════════════════════
-📋 CLIENT BACKLOG (Current Initiatives & Priorities)
+📋 CLIENT BACKLOG (Operational Friction & Strategic Priorities)
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
 ══════════════════════════════════════════════════════════════
-📖 SOURCE DOCUMENTS
+📖 SOURCE DOCUMENTS ANALYZED
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
 ══════════════════════════════════════════════════════════════
-🎯 YOUR TASK: Generate a Strategic Foundations Brief
+🔍 ANALYSIS FRAMEWORK: The "Inside-Out" Lens
 ══════════════════════════════════════════════════════════════
 
-Produce a ~500-word research brief with the following structure:
+Apply each lens to identify gaps:
 
-## 🏢 Client Context Summary
-A 2-3 sentence summary of who this client is, their industry, and core business model based on the Dossier.
+1. **Architecture & Tech Stack**: Based on their current technology choices, what emerging technology shifts (e.g., edge computing, specific AI breakthroughs, new frameworks) are they currently ignoring?
 
-## 📊 Current Strategic Posture
-Analyze their backlog to identify:
-- What are they currently focused on?
-- What capabilities are they building?
-- What technology themes emerge?
+2. **Geography & Market**: Given their operating geography, what "Outside-In" signals from nearby regions, emerging markets, or global competitors would threaten their business strategy?
 
-## 🔍 Identified Blind Spots
-List 3 critical areas that are MISSING from their backlog compared to modern industry standards:
-1. **[Gap Name]**: [Why this matters + Evidence from context]
-2. **[Gap Name]**: [Why this matters + Evidence from context]
-3. **[Gap Name]**: [Why this matters + Evidence from context]
+3. **Security & Regulatory**: What hidden security risks or regulatory shifts in their industry are NOT mentioned in their internal documents?
 
-## ⚠️ Risk Assessment
-One major strategic risk based on their current trajectory.
+4. **Innovation Counter-Signals**: For each strength they claim, find the "Counter-Signal"—a competitor or startup doing the exact opposite successfully.
 
-## 🎯 Recommended Research Queries
-Suggest 2 specific market research queries to validate the blind spots:
-1. "[Query 1]"
-2. "[Query 2]"
+══════════════════════════════════════════════════════════════
+🎯 YOUR TASK: Generate a Targeted Research Mandate
+══════════════════════════════════════════════════════════════
+
+Produce a structured "Research Roadmap" with the following sections:
+
+## 🎯 The Blind Spot Hypothesis
+A 2-3 sentence summary of what is likely MISSING from their current perspective. What are they not seeing?
+
+## 🔍 Priority Research Queries
+Generate 5 highly specific, actionable search queries for an external research team:
+1. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+2. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+3. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+4. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+5. **[Topic]**: "[Exact query text]" — *Why this matters: [brief rationale]*
+
+## 🏢 Competitor Watchlist
+Identify 3 specific companies they should be monitoring based on their current roadmap:
+1. **[Company Name]**: [Why they matter to this client's strategy]
+2. **[Company Name]**: [Why they matter to this client's strategy]
+3. **[Company Name]**: [Why they matter to this client's strategy]
+
+## ⚠️ Strategic Risk Signals
+2 external forces that could disrupt their current trajectory:
+1. **[Risk Category]**: [Specific threat and leading indicators to watch]
+2. **[Risk Category]**: [Specific threat and leading indicators to watch]
+
+## 📊 Recommended Market Signals
+Suggest 2 specific data sources or publications to monitor:
+1. **[Source/Publication]**: [What to look for]
+2. **[Source/Publication]**: [What to look for]
 
 ---
-**CRITICAL INSTRUCTIONS:**
-- Ground ALL analysis in the provided context. Do NOT hallucinate.
-- Reference specific details, projects, or initiatives from the source documents.
-- Be concise and punchy—this is a boardroom-ready document.
-- Use bold formatting for key insights.
-- Every blind spot must cite evidence from the context.
+**CRITICAL CONSTRAINTS:**
+- Do NOT summarize what we already know from the dossier/backlog.
+- Focus EXCLUSIVELY on what is NOT in the documents.
+- Be highly specific (e.g., "Analyze [Competitor X]'s latest patent in [Technology Y]").
+- Every query must be tied to a specific gap in their current knowledge.
+- Ground your gap analysis in evidence from the context—explain WHY something is missing.
 `;
 }
 
 /**
- * Generate Research Brief using Pinecone RAG.
- * Queries Pinecone for relevant context and synthesizes with Gemini.
+ * Generate Research Brief (Gap Analysis) using Pinecone RAG.
+ * 
+ * This function analyzes Inside-Out knowledge to scope Outside-In research.
+ * Output: A Research Mandate with specific queries and competitor watchlist.
  */
 export async function generateBrief(workshopId: string) {
-    console.log(`[ContextEngine] ========== Generating Brief for ${workshopId} ==========`);
+    console.log(`[ContextEngine] ========== Generating Research Scope for ${workshopId} ==========`);
 
     try {
-        // 1. Query Pinecone for relevant chunks
-        const query = "Analyze the enterprise context, capabilities, strategic initiatives, and backlog priorities";
+        // 1. Query Pinecone for relevant chunks - focus on architecture, strategy, geography
+        const query = "Analyze the enterprise architecture, technology stack, geographic operations, strategic priorities, operational friction, and innovation capabilities";
         const retrieval = await queryPinecone(workshopId, query, {
-            topK: 20,
+            topK: 25, // More chunks for comprehensive gap analysis
             filterType: ['DOSSIER', 'BACKLOG'],
         });
 
@@ -201,10 +225,10 @@ export async function generateBrief(workshopId: string) {
         // 2. Format context for prompt
         const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
 
-        // 3. Build the Master Prompt
-        const prompt = buildMasterPrompt(dossierContext, backlogContext, sources);
+        // 3. Build the Strategic Scout Scoping Prompt
+        const prompt = buildScopingPrompt(dossierContext, backlogContext, sources);
 
-        console.log(`[ContextEngine] Generating brief from ${retrieval.documentCount} documents...`);
+        console.log(`[ContextEngine] Generating research scope from ${retrieval.documentCount} documents...`);
 
         // 4. Generate with Gemini
         const { text } = await generateText({
@@ -219,7 +243,7 @@ export async function generateBrief(workshopId: string) {
             create: { workshopId, researchBrief: text },
         });
 
-        console.log(`[ContextEngine] Brief generated successfully`);
+        console.log(`[ContextEngine] Research scope generated successfully`);
         revalidatePath(`/workshop/${workshopId}`);
 
         return {
@@ -230,10 +254,10 @@ export async function generateBrief(workshopId: string) {
         };
 
     } catch (error) {
-        console.error("[ContextEngine] Brief Generation Error:", error);
+        console.error("[ContextEngine] Research Scoping Error:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to generate brief.",
+            error: error instanceof Error ? error.message : "Failed to generate research scope.",
             documentCount: 0,
         };
     }
