@@ -47,17 +47,24 @@ export async function POST(request: Request): Promise<NextResponse> {
             }
         });
 
-        // 3. Trigger RAG Indexing (Async/Fire-and-forget logic)
-        // We fetch our own API. using process.env.NEXT_PUBLIC_APP_URL or relative if on same host?
-        // For server-side fetch to self, usually requires absolute URL.
-        // If undefined, might fail. fallback to just returning.
-        // Ideally, use a queue, but here we just fetch.
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        fetch(`${baseUrl}/api/index-rag`, {
+        // 3. Trigger RAG Indexing (Fire-and-Forget with Dispatch Guard)
+        // Use request.url to dynamically determine the origin (works on localhost AND Vercel)
+        const origin = new URL(request.url).origin;
+        console.log("Triggering indexing at:", `${origin}/api/index-rag`);
+
+        // Fire-and-forget with dispatch guard: Wait briefly to ensure request is dispatched
+        // before the serverless function terminates
+        const indexingPromise = fetch(`${origin}/api/index-rag`, {
             method: 'POST',
             body: JSON.stringify({ assetId: asset.id }),
             headers: { 'Content-Type': 'application/json' }
-        }).catch(err => console.error("Trigger Indexing Failed:", err));
+        });
+
+        // Wait up to 500ms for the request to be dispatched (not completed)
+        await Promise.race([
+            indexingPromise.then(() => console.log("Indexing triggered successfully")).catch(err => console.error("Trigger Indexing Failed:", err)),
+            new Promise(resolve => setTimeout(resolve, 500))
+        ]);
 
         return NextResponse.json(asset);
 
