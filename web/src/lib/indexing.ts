@@ -12,6 +12,8 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
         console.log(`[IndexAsset] ========== WORKER STARTED ==========`);
         console.log(`[IndexAsset] Asset ID: ${assetId}`);
         console.log(`[IndexAsset] Timestamp: ${new Date().toISOString()}`);
+        console.log(`[IndexAsset] GOOGLE_GENERATIVE_AI_API_KEY present:`, !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+        console.log(`[IndexAsset] DATABASE_URL present:`, !!process.env.DATABASE_URL);
 
         // Force Prisma connection to establish before processing
         console.log(`[IndexAsset] Connecting to database...`);
@@ -36,6 +38,7 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
         }
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+        console.log(`[IndexAsset] File fetched: ${buffer.length} bytes`);
 
         // 2. Parse Text (PDF or plain text)
         let rawText = '';
@@ -60,11 +63,12 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
 
         // 4. Embedding
         if (chunks.length > 0) {
-            console.log(`[IndexAsset] Generating embeddings...`);
+            console.log(`[IndexAsset] Generating embeddings for ${chunks.length} chunks...`);
             const { embeddings } = await embedMany({
                 model: google.textEmbeddingModel('text-embedding-004'),
                 values: chunks,
             });
+            console.log(`[IndexAsset] Embeddings generated: ${embeddings.length}`);
 
             // 5. Store Chunks in Transaction
             console.log(`[IndexAsset] Storing ${chunks.length} chunks in database...`);
@@ -80,6 +84,7 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
                     })
                 )
             );
+            console.log(`[IndexAsset] Chunks stored successfully`);
         }
 
         // 6. Update Status to READY
@@ -92,7 +97,7 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
         return { success: true, chunksProcessed: chunks.length };
 
     } catch (error) {
-        console.error(`[IndexAsset] Error indexing asset ${assetId}:`, error);
+        console.error(`[IndexAsset] ERROR:`, error);
 
         // Mark asset as ERROR
         try {
