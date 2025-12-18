@@ -114,15 +114,20 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                 dfv: await getChartImg('print-dfv'),
             };
 
-            // 2. Prepare Data
+            // 2. Prepare Data (Explicit PDFData shape to satisfy TypeScript)
             const pdfData = {
-                ...data,
+                projectName: data.projectName ?? undefined,
+                frictionStatement: data.frictionStatement ?? undefined,
+                strategicHorizon: data.strategicHorizon ?? undefined,
+                whyDoIt: data.whyDoIt ?? undefined,
+                strategicRationale: data.strategicRationale ?? undefined,
                 efficiencyDisplay: efficiencyDisplay,
-                workflowSteps: data.workflowPhases || [],
+                workflowSteps: Array.isArray(data.workflowPhases) ? data.workflowPhases as { name?: string }[] : [],
+                definitionOfDone: data.definitionOfDone ?? undefined,
+                keyDecisions: data.keyDecisions ?? undefined,
+                keyRisks: data.systemGuardrails ?? undefined,
                 capabilitiesMissing: data.capabilitiesMissing || [],
                 capabilitiesExisting: data.capabilitiesExisting || [],
-                keyRisks: data.systemGuardrails,
-                strategicHorizon: data.strategicHorizon || ''
             };
 
             // 3. Generate PDF
