@@ -604,7 +604,9 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                             </Button>
                             <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={(e) => {
                                 e.stopPropagation();
-                                pendingSuggestion && confirmApplySuggestion(pendingSuggestion);
+                                if (pendingSuggestion) {
+                                    confirmApplySuggestion(pendingSuggestion);
+                                }
                             }}>
                                 Yes, Overwrite
                             </Button>
