@@ -1,73 +1,255 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { getWorkshopNamespace } from '@/lib/pinecone';
 import { google } from '@ai-sdk/google';
-import { generateText } from 'ai';
+import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 
+// Types
+type AssetType = 'DOSSIER' | 'BACKLOG' | 'MARKET_SIGNAL';
+
+interface RetrievedChunk {
+    id: string;
+    content: string;
+    filename: string;
+    type: AssetType;
+    score: number;
+}
+
+interface RetrievalResult {
+    chunks: RetrievedChunk[];
+    documentCount: number;
+    chunkCount: number;
+}
+
 /**
- * 2. Research Agent (Brief Generation)
- * Uses RAG to find gaps in the Client Backlog vs Market Signals (or generic knowledge).
+ * Query Pinecone for semantically relevant chunks.
+ * Supports filtering by asset type for surgical retrieval.
+ */
+async function queryPinecone(
+    workshopId: string,
+    query: string,
+    options: {
+        topK?: number;
+        filterType?: AssetType | AssetType[];
+    } = {}
+): Promise<RetrievalResult> {
+    const { topK = 15, filterType } = options;
+
+    console.log(`[ContextEngine] Querying Pinecone for workshop: ${workshopId}`);
+    console.log(`[ContextEngine] Query: "${query.slice(0, 100)}..."`);
+
+    // Generate embedding for the query
+    const { embedding } = await embed({
+        model: google.textEmbeddingModel('text-embedding-004'),
+        value: query,
+    });
+
+    // Build filter
+    let filter: Record<string, unknown> | undefined;
+    if (filterType) {
+        if (Array.isArray(filterType)) {
+            filter = { type: { "$in": filterType } };
+        } else {
+            filter = { type: { "$eq": filterType } };
+        }
+    }
+
+    // Query Pinecone namespace
+    const namespace = getWorkshopNamespace(workshopId);
+    const results = await namespace.query({
+        vector: embedding,
+        topK,
+        filter,
+        includeMetadata: true,
+    });
+
+    // Transform results
+    const chunks: RetrievedChunk[] = results.matches.map(match => ({
+        id: match.id,
+        content: (match.metadata?.content as string) || '',
+        filename: (match.metadata?.filename as string) || 'Unknown',
+        type: (match.metadata?.type as AssetType) || 'DOSSIER',
+        score: match.score || 0,
+    }));
+
+    // Count unique documents
+    const uniqueFiles = new Set(chunks.map(c => c.filename));
+
+    console.log(`[ContextEngine] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
+
+    return {
+        chunks,
+        documentCount: uniqueFiles.size,
+        chunkCount: chunks.length,
+    };
+}
+
+/**
+ * Format retrieved chunks into context sections for the prompt.
+ */
+function formatContext(chunks: RetrievedChunk[]): {
+    dossierContext: string;
+    backlogContext: string;
+    sources: string[];
+} {
+    const dossierChunks = chunks.filter(c => c.type === 'DOSSIER');
+    const backlogChunks = chunks.filter(c => c.type === 'BACKLOG');
+
+    const formatChunks = (arr: RetrievedChunk[]) =>
+        arr.map(c => `[Source: ${c.filename}]\n${c.content}`).join('\n\n---\n\n');
+
+    const sources = [...new Set(chunks.map(c => c.filename))];
+
+    return {
+        dossierContext: formatChunks(dossierChunks) || 'No enterprise context available.',
+        backlogContext: formatChunks(backlogChunks) || 'No backlog items available.',
+        sources,
+    };
+}
+
+/**
+ * The 10x Protocol Master Prompt for Research Brief Generation.
+ */
+function buildMasterPrompt(
+    dossierContext: string,
+    backlogContext: string,
+    sources: string[]
+): string {
+    return `You are the Strategic Research Lead for the 10x Innovation Protocol.
+
+Your mission is to synthesize the provided Enterprise Dossier and Client Backlog into a "Strategic Foundations" research brief that will guide an AI-powered ideation workshop.
+
+══════════════════════════════════════════════════════════════
+📁 ENTERPRISE DOSSIER (Company Context & Capabilities)
+══════════════════════════════════════════════════════════════
+${dossierContext}
+
+══════════════════════════════════════════════════════════════
+📋 CLIENT BACKLOG (Current Initiatives & Priorities)
+══════════════════════════════════════════════════════════════
+${backlogContext}
+
+══════════════════════════════════════════════════════════════
+📖 SOURCE DOCUMENTS
+══════════════════════════════════════════════════════════════
+${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+══════════════════════════════════════════════════════════════
+🎯 YOUR TASK: Generate a Strategic Foundations Brief
+══════════════════════════════════════════════════════════════
+
+Produce a ~500-word research brief with the following structure:
+
+## 🏢 Client Context Summary
+A 2-3 sentence summary of who this client is, their industry, and core business model based on the Dossier.
+
+## 📊 Current Strategic Posture
+Analyze their backlog to identify:
+- What are they currently focused on?
+- What capabilities are they building?
+- What technology themes emerge?
+
+## 🔍 Identified Blind Spots
+List 3 critical areas that are MISSING from their backlog compared to modern industry standards:
+1. **[Gap Name]**: [Why this matters + Evidence from context]
+2. **[Gap Name]**: [Why this matters + Evidence from context]
+3. **[Gap Name]**: [Why this matters + Evidence from context]
+
+## ⚠️ Risk Assessment
+One major strategic risk based on their current trajectory.
+
+## 🎯 Recommended Research Queries
+Suggest 2 specific market research queries to validate the blind spots:
+1. "[Query 1]"
+2. "[Query 2]"
+
+---
+**CRITICAL INSTRUCTIONS:**
+- Ground ALL analysis in the provided context. Do NOT hallucinate.
+- Reference specific details, projects, or initiatives from the source documents.
+- Be concise and punchy—this is a boardroom-ready document.
+- Use bold formatting for key insights.
+- Every blind spot must cite evidence from the context.
+`;
+}
+
+/**
+ * Generate Research Brief using Pinecone RAG.
+ * Queries Pinecone for relevant context and synthesizes with Gemini.
  */
 export async function generateBrief(workshopId: string) {
+    console.log(`[ContextEngine] ========== Generating Brief for ${workshopId} ==========`);
+
     try {
-        // A. Retrieve Context
-        // Fetch Ready Assets (Dossier & Backlog)
-        const assets = await prisma.asset.findMany({
-            where: {
-                workshopId,
-                status: 'READY',
-                type: { in: ['DOSSIER', 'BACKLOG'] }
-            },
-            include: { chunks: true }
+        // 1. Query Pinecone for relevant chunks
+        const query = "Analyze the enterprise context, capabilities, strategic initiatives, and backlog priorities";
+        const retrieval = await queryPinecone(workshopId, query, {
+            topK: 20,
+            filterType: ['DOSSIER', 'BACKLOG'],
         });
 
-        // Flatten chunks to plain text
-        const contextText = assets
-            .flatMap((asset: any) => asset.chunks)
-            .map((chunk: any) => chunk.content)
-            .join('\n\n')
-            .slice(0, 30000); // Token limit safety (approx 30k chars)
-
-        if (!contextText) {
-            return { success: false, brief: "No client context found. Please upload a dossier or backlog first." };
+        if (retrieval.chunkCount === 0) {
+            return {
+                success: false,
+                brief: "No indexed documents found. Please upload and index assets first.",
+                documentCount: 0,
+            };
         }
 
-        // B. Generate Research Brief
-        const prompt = `
-      You are a Strategic Research Lead.
-      Analyze the following Client Dossier & Backlog context:
-      "${contextText}"
+        // 2. Format context for prompt
+        const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
 
-      Your Goal: Identify "Blind Spots" - areas where the client is missing opportunities compared to modern industry standards (AI, Automation, Cloud).
-      
-      CRITICAL INSTRUCTION: You MUST use the provided context chunks above to ground your analysis. Do NOT halluciation generic advice. Reference specific details from the context where possible.
+        // 3. Build the Master Prompt
+        const prompt = buildMasterPrompt(dossierContext, backlogContext, sources);
 
-      Output a structured "Research Brief" in Markdown:
-      1. **Strategic Gaps**: 3 key areas missing from their backlog.
-      2. **Competitor Recon**: Suggest 2 specific queries to research (e.g., "How is Competitor X using GenAI?").
-      3. **Risk Warning**: One major risk in their current tech stack.
+        console.log(`[ContextEngine] Generating brief from ${retrieval.documentCount} documents...`);
 
-      Keep it concise and punchy.
-    `;
-
+        // 4. Generate with Gemini
         const { text } = await generateText({
             model: google('gemini-2.5-flash'),
             prompt,
         });
 
-        // C. Save to WorkshopContext
+        // 5. Save to WorkshopContext
         await prisma.workshopContext.upsert({
             where: { workshopId },
             update: { researchBrief: text },
-            create: { workshopId, researchBrief: text }
+            create: { workshopId, researchBrief: text },
         });
 
+        console.log(`[ContextEngine] Brief generated successfully`);
         revalidatePath(`/workshop/${workshopId}`);
-        return { success: true, brief: text };
+
+        return {
+            success: true,
+            brief: text,
+            documentCount: retrieval.documentCount,
+            sources,
+        };
 
     } catch (error) {
-        console.error("Brief Generation Error:", error);
-        return { success: false, error: "Failed to generate brief." };
+        console.error("[ContextEngine] Brief Generation Error:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to generate brief.",
+            documentCount: 0,
+        };
     }
+}
+
+/**
+ * Query Pinecone for specific asset type (for surgical retrieval).
+ * Useful for targeted queries like "only backlog" or "only dossier".
+ */
+export async function queryContext(
+    workshopId: string,
+    query: string,
+    assetType?: AssetType
+): Promise<RetrievalResult> {
+    return queryPinecone(workshopId, query, {
+        topK: 10,
+        filterType: assetType,
+    });
 }

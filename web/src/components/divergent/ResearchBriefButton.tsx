@@ -39,7 +39,7 @@ export function ResearchBriefButton({
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Consulting...
+                                    Reading {dossierCount + backlogCount} documents...
                                 </>
                             ) : (
                                 <>
