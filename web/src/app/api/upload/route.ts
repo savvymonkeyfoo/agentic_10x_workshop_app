@@ -43,18 +43,25 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
         console.log("Asset created:", asset.id);
 
-        // 3. Trigger RAG Indexing via HTTP (Fire-and-Forget)
+        // 3. Trigger RAG Indexing via HTTP (Fire-and-Forget with Dispatch Guard)
         // Use dynamic origin from request.url - works on localhost AND Vercel
         const baseUrl = new URL(request.url).origin;
         console.log("Triggering indexing at:", `${baseUrl}/api/index-rag`);
 
-        fetch(`${baseUrl}/api/index-rag`, {
+        // Dispatch guard: Wait briefly to ensure fetch request is initiated
+        // before the serverless function returns and potentially terminates
+        const indexPromise = fetch(`${baseUrl}/api/index-rag`, {
             method: 'POST',
             body: JSON.stringify({ assetId: asset.id }),
             headers: { 'Content-Type': 'application/json' }
-        }).catch(err => console.error("Trigger Indexing Failed:", err));
+        });
 
-        // Return immediately
+        await Promise.race([
+            indexPromise.then(() => console.log("Indexing request dispatched")).catch(err => console.error("Trigger Indexing Failed:", err)),
+            new Promise(resolve => setTimeout(resolve, 100)) // Wait max 100ms for dispatch
+        ]);
+
+        // Return immediately - indexing continues async
         return NextResponse.json(asset);
 
     } catch (error) {
