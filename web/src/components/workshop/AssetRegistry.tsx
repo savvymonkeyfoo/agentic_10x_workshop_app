@@ -33,7 +33,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
         if (indexingItems.length === 0) return;
 
         let attempts = 0;
-        const maxAttempts = 10; // 30 seconds approx (3s interval)
+        const maxAttempts = 40; // 2 minutes approx (3s interval)
 
         const interval = setInterval(async () => {
             attempts++;
