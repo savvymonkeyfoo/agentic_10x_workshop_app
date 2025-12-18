@@ -110,7 +110,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
 
     } catch (error) {
-        console.error('[Upload] Error:', error);
-        return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('[Upload] Error:', errorMessage);
+        return NextResponse.json({
+            error: 'Upload failed',
+            details: errorMessage
+        }, { status: 500 });
     }
 }
