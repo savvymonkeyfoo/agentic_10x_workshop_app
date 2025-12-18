@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { google } from '@ai-sdk/google';
 import { embedMany } from 'ai';
-const pdf = require('pdf-parse');
+import pdf from 'pdf-parse/lib/pdf-parse.js';
 
 /**
  * Core indexing logic - extracts text, chunks, embeds, and stores in DocumentChunk table.
