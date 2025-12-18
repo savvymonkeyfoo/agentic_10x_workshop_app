@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { google } from '@ai-sdk/google';
 import { embedMany } from 'ai';
-import pdf from 'pdf-parse/lib/pdf-parse.js';
+
+// Using require for pdf-parse to avoid ESM bundling issues on Vercel
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 /**
  * Core indexing logic - extracts text, chunks, embeds, and stores in DocumentChunk table.
@@ -44,7 +47,7 @@ export async function indexAsset(assetId: string): Promise<{ success: boolean; c
         let rawText = '';
         if (asset.name.toLowerCase().endsWith('.pdf')) {
             console.log(`[IndexAsset] Parsing PDF...`);
-            const data = await pdf(buffer);
+            const data = await pdfParse(buffer);
             rawText = data.text;
         } else {
             rawText = buffer.toString('utf-8');
