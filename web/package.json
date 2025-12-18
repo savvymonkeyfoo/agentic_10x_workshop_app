@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:seed": "npx prisma db seed",
     "test": "jest",
-    "postinstall": "prisma generate && prisma db push"
+    "postinstall": "prisma generate && prisma db push --accept-data-loss"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.46",
