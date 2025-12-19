@@ -229,16 +229,20 @@ Identify the Strategic Collision Points now.`;
 // Thinking Level: HIGH (maximum reasoning for brief architecture)
 // =============================================================================
 
-const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing briefs for an executive workshop.
+const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing standalone Mission Mandates for an external agency.
 
-Based on the Technical DNA and Strategic Collision Points, identify the 4-6 most critical areas requiring "Outside-In" stimulus. For each, generate a self-contained Strategic Research Brief.
+**MISSION: COMPANY-AWARE TRANSLATION**
+Your goal is to produce research briefs that a third party can execute without prior knowledge of the company's internal code-names.
 
 **BRIEF STRUCTURE (MANDATORY):**
 
 ## Strategic Research Brief [N]: [Professional Title]
+**Subject Company**: [CLIENT_NAME]
+**Industry Context**: [e.g., National Logistics & Postal GBE]
+**Transformation Pillar**: [Translate the internal goal into a plain-English business objective]
 
 ### Strategic Objective
-A 2-3 sentence statement of the high-level "Why" of this research. What strategic question are we answering? What decision will this inform?
+A 2-3 sentence statement of the high-level "Why." What strategic question are we answering? What decision will this inform?
 
 ### Contextual Anchor
 The specific internal facts (from the Technical DNA) that make this a priority. Ground the research in the organisation's reality.
@@ -257,22 +261,25 @@ The "Gold Standard" evidence required to provoke the workshop:
 - Case studies of success or failure
 
 ### Provocation Potential
-How will this research challenge current executive thinking? What assumption does it test? What decision could it force?
+How will this challenge current executive thinking? What assumption does it test? What decision could it force?
 
 ---
 
-**MANDATORY REQUIREMENTS:**
+**STRICT EXTERNAL-FACING RULES:**
 
-1. **Dynamic Inference**: Weigh the technical friction against market signals and decide how many briefs are required (4, 5, or 6). Do NOT follow a fixed template.
+1. **No Internal Jargon**: DO NOT use terms like "Post26", "POST+", or "CXT". Translate them (e.g., "The 2026 Strategic Transformation Program").
 
-2. **Serendipity Brief**: Include ONE brief designated as "Serendipity Brief" — research into a completely unrelated industry (Gaming, Biotech, Aerospace, Hospitality, High-Frequency Trading) that could provide unexpected strategic stimulus.
+2. **Self-Contained**: Assume the researcher has never heard of the company. Define the industry and the scale of the challenge.
 
-3. **Delimiter**: You MUST separate each brief with the exact string:
-${BRIEF_SEPARATOR}
+3. **Dynamic Inference**: Weigh the technical friction against market signals and decide how many briefs are required (4, 5, or 6). Do NOT follow a fixed template.
 
-4. **Professional Tone**: Strategic Partner preparing for Board presentation. No jargon, no acronyms without explanation, no casual language.
+4. **Serendipity Brief**: Include ONE brief designated as "Serendipity Brief" — research into a completely unrelated industry (Gaming, Biotech, Aerospace, Hospitality, High-Frequency Trading). You MUST explain the **Analogous Reasoning** (e.g., "We are looking at High-Frequency Trading because their data-packet latency mirrors our physical parcel-sorting friction").
 
-5. **Word Count**: Each brief should be 150-200 words.`;
+5. **Delimiter**: Separate each brief with: ${BRIEF_SEPARATOR}
+
+6. **Tone**: Senior Strategic Partner to a Board of Directors. No jargon, no acronyms without explanation, no casual language.
+
+7. **Word Count**: Each brief should be 150-200 words.`;
 
 interface ArchitectResult {
     briefs: string[];
@@ -282,11 +289,20 @@ interface ArchitectResult {
 async function architectResearchBriefs(
     auditData: string,
     gapHypotheses: string,
-    sources: string[]
+    sources: string[],
+    clientName: string
 ): Promise<ArchitectResult> {
-    console.log(`[SupremeScout] Step 3: Architecting Research Briefs (Gemini 3 Pro, Thinking: High)...`);
+    console.log(`[SupremeScout] Step 3: Architecting Mission Mandates for ${clientName}...`);
 
-    const prompt = `${RESEARCH_BRIEFS_PROMPT}
+    // Inject Client Name into the prompt template
+    const contextualPrompt = RESEARCH_BRIEFS_PROMPT.replace(/\[CLIENT_NAME\]/g, clientName);
+
+    const prompt = `${contextualPrompt}
+
+══════════════════════════════════════════════════════════════
+CLIENT IDENTITY: ${clientName}
+══════════════════════════════════════════════════════════════
+[Instruction: Ensure every brief identifies this company and its industry context explicitly.]
 
 ══════════════════════════════════════════════════════════════
 TECHNICAL DNA
@@ -367,7 +383,15 @@ export async function generateBrief(workshopId: string) {
     console.log(`[SupremeScout] Configuration: Thinking Level = ${AI_CONFIG.thinking.level}`);
 
     try {
-        // 0. Retrieve context from Pinecone
+        // 0a. Fetch Workshop details to get the Client Name
+        const workshop = await prisma.workshop.findUnique({
+            where: { id: workshopId },
+            select: { clientName: true }
+        });
+        const clientName = workshop?.clientName || "The Client";
+        console.log(`[SupremeScout] Client: ${clientName}`);
+
+        // 0b. Retrieve context from Pinecone
         const query = "Analyse enterprise architecture, technology, operations, strategy, transformation, compliance, and competitive positioning";
         const retrieval = await queryPinecone(workshopId, query, {
             topK: 25,
@@ -394,8 +418,13 @@ export async function generateBrief(workshopId: string) {
         const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
 
         // STEP 3: ARCHITECT RESEARCH BRIEFS
-        // Dynamic inference of 4-6 professional, self-contained briefs
-        const { briefs: researchBriefs, signature } = await architectResearchBriefs(auditData, gapHypotheses, sources);
+        // Dynamic inference of 4-6 professional, company-aware, self-contained briefs
+        const { briefs: researchBriefs, signature } = await architectResearchBriefs(
+            auditData,
+            gapHypotheses,
+            sources,
+            clientName
+        );
 
         // Save to WorkshopContext with new schema fields
         await prisma.workshopContext.upsert({
