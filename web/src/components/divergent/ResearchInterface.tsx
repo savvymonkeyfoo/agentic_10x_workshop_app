@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check } from 'lucide-react';
+import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { MOCK_RESEARCH_BRIEF, MOCK_BLIND_SPOTS, MOCK_CLUSTERS, MOCK_FEASIBILITY } from '@/mocks/research-data';
@@ -149,13 +149,29 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     ))}
                 </div>
 
-                <ResearchBriefButton
-                    onClick={handleGenerateBrief}
-                    isDisabled={!isReadyForResearch}
-                    isLoading={isAnalyzing}
-                    dossierCount={dossierReadyCount}
-                    backlogCount={backlogReadyCount}
-                />
+                {/* Header Action Logic */}
+                <div>
+                    {activeTab === 'context' && (
+                        <ResearchBriefButton
+                            onClick={handleGenerateBrief}
+                            isDisabled={!isReadyForResearch}
+                            isLoading={isAnalyzing}
+                            dossierCount={dossierReadyCount}
+                            backlogCount={backlogReadyCount}
+                        />
+                    )}
+
+                    {activeTab === 'research' && (
+                        <Button
+                            onClick={handleSynthesize}
+                            disabled={!hasMarket || isAnalyzing}
+                            className="bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center gap-2"
+                        >
+                            <UploadCloud className="w-4 h-4" />
+                            {isAnalyzing ? "Synthesizing..." : "Process Market Signals"}
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* TAB CONTENT */}
@@ -216,19 +232,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                                 title="Market Signals"
                                 assets={marketAssets}
                             />
-
-                            <Card className="flex-shrink-0">
-                                <CardContent className="p-6">
-                                    <Button
-                                        size="lg"
-                                        className="w-full h-14 text-lg bg-slate-900 hover:bg-slate-800 text-white"
-                                        disabled={!hasMarket || isAnalyzing}
-                                        onClick={handleSynthesize}
-                                    >
-                                        {isAnalyzing ? "Synthesizing Vectors..." : "Enter Intelligence Hub"} <ArrowRight className="ml-2" />
-                                    </Button>
-                                </CardContent>
-                            </Card>
                         </div>
                     </div>
                 )}
