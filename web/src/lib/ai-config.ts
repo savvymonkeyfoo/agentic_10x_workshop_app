@@ -3,12 +3,17 @@ import { google } from '@ai-sdk/google';
 /**
  * CENTRAL AI CONFIGURATION HUB
  * 
- * Purpose: Abstract model selection to enable zero-downtime model upgrades.
+ * GEMINI 3 SUPREME SCOUT ARCHITECTURE
  * 
- * GEMINI 3 ARCHITECTURE:
- * - Flash: PhD-level reasoning with 3x speed improvement
- * - Pro: Deep Think mode for extended reasoning chains
- * - Native multimodality: "Sees" architecture diagrams natively
+ * Model Strategy:
+ * - Flash: PhD-level reasoning with 3x speed (audit, extraction)
+ * - Pro: Deep Think mode for extended reasoning chains (strategy, briefs)
+ * 
+ * Thinking Levels (Gemini 3):
+ * - minimal: No thinking, fastest (Flash only)
+ * - low: Minimal reasoning, reduced latency
+ * - medium: Balanced reasoning (Flash only)
+ * - high: Maximum reasoning depth (default for strategic)
  * 
  * Environment Variables:
  * - AI_MODEL_AUDIT: Technical Audit (default: gemini-3-flash-preview)
@@ -46,6 +51,12 @@ export const THINKING_CONFIG = {
     // Current thinking level from environment (default: high for strategic work)
     level: (process.env.AI_THINKING_LEVEL || 'high') as ThinkingLevel,
 
+    // Audit thinking level (medium for balanced extraction)
+    auditLevel: 'medium' as ThinkingLevel,
+
+    // Strategic thinking level (high for deep reasoning)
+    strategicLevel: (process.env.AI_THINKING_LEVEL || 'high') as ThinkingLevel,
+
     // Budget presets for different thinking levels
     budgets: {
         minimal: 1000,
@@ -61,6 +72,31 @@ export const THINKING_CONFIG = {
 } as const;
 
 // =============================================================================
+// PROVIDER OPTIONS WITH THINKING CONFIG
+// =============================================================================
+
+/**
+ * Generate providerOptions for Gemini 3 with thinking_level
+ */
+export function getThinkingOptions(level: ThinkingLevel) {
+    return {
+        google: {
+            thinkingConfig: {
+                thinkingLevel: level,
+            },
+        },
+    };
+}
+
+// Pre-configured options for common use cases
+export const THINKING_OPTIONS = {
+    audit: getThinkingOptions(THINKING_CONFIG.auditLevel),
+    strategic: getThinkingOptions(THINKING_CONFIG.strategicLevel),
+    minimal: getThinkingOptions('minimal'),
+    high: getThinkingOptions('high'),
+} as const;
+
+// =============================================================================
 // CONFIGURED MODELS (ready to use in generateText/embed calls)
 // =============================================================================
 
@@ -69,8 +105,7 @@ export const AI_CONFIG = {
      * Audit Model (gemini-3-flash-preview)
      * 
      * Used for: Technical Audit step in Supreme Scout
-     * Optimized for: PhD-level reasoning with Flash latency
-     * Thinking Level: Uses current AI_THINKING_LEVEL
+     * Thinking Level: medium (balanced extraction with reasoning)
      */
     auditModel: google(MODEL_IDS.AUDIT),
 
@@ -78,8 +113,7 @@ export const AI_CONFIG = {
      * Strategic Model (gemini-3-pro-preview)
      * 
      * Used for: Gap Analysis, Brief Architecture
-     * Optimized for: Deep Think extended reasoning chains
-     * Thinking Level: Uses current AI_THINKING_LEVEL
+     * Thinking Level: high (maximum reasoning depth)
      */
     strategicModel: google(MODEL_IDS.STRATEGIC),
 
@@ -87,7 +121,6 @@ export const AI_CONFIG = {
      * General Model (gemini-3-flash-preview)
      * 
      * Used for: Canvas optimization, workshop analysis, recommendations
-     * Optimized for: Speed, cost efficiency with reasoning capability
      */
     generalModel: google(MODEL_IDS.GENERAL),
 
@@ -100,9 +133,10 @@ export const AI_CONFIG = {
     embeddingModel: google.textEmbeddingModel(MODEL_IDS.EMBEDDING),
 
     /**
-     * Thinking configuration for strategic reasoning
+     * Thinking configuration and provider options
      */
     thinking: THINKING_CONFIG,
+    thinkingOptions: THINKING_OPTIONS,
 
     /**
      * Raw model identifiers (for logging/debugging)

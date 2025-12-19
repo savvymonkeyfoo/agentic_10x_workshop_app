@@ -26,6 +26,9 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
+// Brief separator for array splitting
+const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
+
 // =============================================================================
 // PINECONE RETRIEVAL
 // =============================================================================
@@ -89,6 +92,7 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 // STEP 1: TECHNICAL AUDIT
 // Role: Forensic Systems Architect
 // Mission: Extract factual Tech DNA with zero interpretation
+// Thinking Level: MEDIUM (balanced extraction with reasoning)
 // =============================================================================
 
 const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect conducting a Technical Audit.
@@ -132,7 +136,7 @@ Your task is to extract ONLY hard data points from the enterprise documents. Map
 Provide a structured extraction using bullet points under each category heading.`;
 
 async function technicalAudit(dossierContext: string, backlogContext: string): Promise<string> {
-    console.log(`[SupremeScout] Step 1: Technical Audit...`);
+    console.log(`[SupremeScout] Step 1: Technical Audit (Gemini 3 Flash, Thinking: Medium)...`);
 
     const prompt = `${TECHNICAL_AUDIT_PROMPT}
 
@@ -151,6 +155,7 @@ Conduct the Technical Audit now.`;
     const { text } = await generateText({
         model: AI_CONFIG.auditModel,
         prompt,
+        providerOptions: AI_CONFIG.thinkingOptions.audit,
     });
 
     console.log(`[SupremeScout] Step 1 Complete: Technical Audit extracted`);
@@ -161,6 +166,7 @@ Conduct the Technical Audit now.`;
 // STEP 2: IDENTIFY STRATEGIC GAPS
 // Role: Strategic Disruption Analyst
 // Mission: Generate 3-5 disruption hypotheses
+// Thinking Level: HIGH (maximum reasoning for hostile analysis)
 // =============================================================================
 
 const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst retained by the Board.
@@ -190,7 +196,7 @@ Your task is to compare the Technical DNA against the Client Backlog and identif
 Provide 3-5 Collision Points in the format above. Be specific. Be hostile. Be professional.`;
 
 async function identifyStrategicGaps(auditData: string, backlogContext: string): Promise<string> {
-    console.log(`[SupremeScout] Step 2: Identifying Strategic Gaps...`);
+    console.log(`[SupremeScout] Step 2: Identifying Strategic Gaps (Gemini 3 Pro, Thinking: High)...`);
 
     const prompt = `${STRATEGIC_GAPS_PROMPT}
 
@@ -209,6 +215,7 @@ Identify the Strategic Collision Points now.`;
     const { text } = await generateText({
         model: AI_CONFIG.strategicModel,
         prompt,
+        providerOptions: AI_CONFIG.thinkingOptions.strategic,
     });
 
     console.log(`[SupremeScout] Step 2 Complete: Strategic Gaps identified`);
@@ -218,16 +225,15 @@ Identify the Strategic Collision Points now.`;
 // =============================================================================
 // STEP 3: ARCHITECT RESEARCH BRIEFS
 // Role: Strategic Research Director
-// Mission: Transform hypotheses into professional, self-contained briefs
+// Mission: Dynamic inference of 4-6 professional, self-contained briefs
+// Thinking Level: HIGH (maximum reasoning for brief architecture)
 // =============================================================================
 
 const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing briefs for an executive workshop.
 
-For each Disruption Hypothesis, generate a standalone **Strategic Research Brief**. Each brief must be professional, self-contained, and suitable for presentation to a Board of Directors.
+Based on the Technical DNA and Strategic Collision Points, identify the 4-6 most critical areas requiring "Outside-In" stimulus. For each, generate a self-contained Strategic Research Brief.
 
-**BRIEF STRUCTURE:**
-
----
+**BRIEF STRUCTURE (MANDATORY):**
 
 ## Strategic Research Brief [N]: [Professional Title]
 
@@ -238,13 +244,13 @@ A 2-3 sentence statement of the high-level "Why" of this research. What strategi
 The specific internal facts (from the Technical DNA) that make this a priority. Ground the research in the organisation's reality.
 
 ### Scope of Investigation
-2-3 precise areas for the research team to explore. Be specific about:
+2-3 precise areas for the research team to explore:
 - Geographic focus (if applicable)
 - Industry segments to examine
 - Technology domains to investigate
 
 ### Desired Intelligence
-The "Gold Standard" evidence required to provoke the workshop. Examples:
+The "Gold Standard" evidence required to provoke the workshop:
 - Specific competitor capabilities or announcements
 - Patent filings or technical documentation
 - Unit economics or cost structure comparisons
@@ -255,18 +261,25 @@ How will this research challenge current executive thinking? What assumption doe
 
 ---
 
-**MANDATORY INCLUSION:**
-Include one brief designated as **"Serendipity Brief"** — research into a completely unrelated industry (e.g., Gaming, Biotech, Aerospace, Hospitality) that could provide unexpected strategic stimulus.
+**MANDATORY REQUIREMENTS:**
 
-**CONSTRAINTS:**
-- Use professional terminology only
-- Each brief should be independently actionable
-- Avoid jargon, acronyms without explanation, or casual language
-- Total output: 4-6 briefs, each 150-200 words
-- Tone: Strategic Partner preparing for Board presentation`;
+1. **Dynamic Inference**: Weigh the technical friction against market signals and decide how many briefs are required (4, 5, or 6). Do NOT follow a fixed template.
 
-async function architectResearchBriefs(auditData: string, gapHypotheses: string, sources: string[]): Promise<string> {
-    console.log(`[SupremeScout] Step 3: Architecting Research Briefs...`);
+2. **Serendipity Brief**: Include ONE brief designated as "Serendipity Brief" — research into a completely unrelated industry (Gaming, Biotech, Aerospace, Hospitality, High-Frequency Trading) that could provide unexpected strategic stimulus.
+
+3. **Delimiter**: You MUST separate each brief with the exact string:
+${BRIEF_SEPARATOR}
+
+4. **Professional Tone**: Strategic Partner preparing for Board presentation. No jargon, no acronyms without explanation, no casual language.
+
+5. **Word Count**: Each brief should be 150-200 words.`;
+
+async function architectResearchBriefs(
+    auditData: string,
+    gapHypotheses: string,
+    sources: string[]
+): Promise<string[]> {
+    console.log(`[SupremeScout] Step 3: Architecting Research Briefs (Gemini 3 Pro, Thinking: High)...`);
 
     const prompt = `${RESEARCH_BRIEFS_PROMPT}
 
@@ -285,15 +298,22 @@ SOURCE DOCUMENTS ANALYSED
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-Generate the Strategic Research Briefs now.`;
+Generate the Strategic Research Briefs now. Remember to separate each brief with ${BRIEF_SEPARATOR}`;
 
     const { text } = await generateText({
         model: AI_CONFIG.strategicModel,
         prompt,
+        providerOptions: AI_CONFIG.thinkingOptions.strategic,
     });
 
-    console.log(`[SupremeScout] Step 3 Complete: Research Briefs architected`);
-    return text;
+    // Split the single string into a cleaned array of briefs
+    const briefArray = text
+        .split(BRIEF_SEPARATOR)
+        .map(b => b.trim())
+        .filter(b => b.length > 0);
+
+    console.log(`[SupremeScout] Step 3 Complete: ${briefArray.length} Research Briefs architected`);
+    return briefArray;
 }
 
 // =============================================================================
@@ -304,15 +324,16 @@ Generate the Strategic Research Briefs now.`;
  * Generate Strategic Research Briefs using the Supreme Scout Pipeline.
  * 
  * Pipeline Architecture:
- * 1. technicalAudit() → Extract factual Tech DNA
- * 2. identifyStrategicGaps() → Generate disruption hypotheses  
- * 3. architectResearchBriefs() → Transform into professional briefs
+ * 1. technicalAudit() → Extract factual Tech DNA (Flash, Thinking: Medium)
+ * 2. identifyStrategicGaps() → Generate disruption hypotheses (Pro, Thinking: High)
+ * 3. architectResearchBriefs() → Dynamic inference of 4-6 briefs (Pro, Thinking: High)
  * 
  * Output: An array of standalone Strategic Research Briefs suitable for
  * Board presentation or distribution to specialist research teams.
  */
 export async function generateBrief(workshopId: string) {
     console.log(`[SupremeScout] ========== Starting Pipeline for ${workshopId} ==========`);
+    console.log(`[SupremeScout] Configuration: Thinking Level = ${AI_CONFIG.thinking.level}`);
 
     try {
         // 0. Retrieve context from Pinecone
@@ -325,6 +346,7 @@ export async function generateBrief(workshopId: string) {
         if (retrieval.chunkCount === 0) {
             return {
                 success: false,
+                briefs: [],
                 brief: "No indexed documents found. Please upload and index assets first.",
                 documentCount: 0,
             };
@@ -337,26 +359,29 @@ export async function generateBrief(workshopId: string) {
         const auditData = await technicalAudit(dossierContext, backlogContext);
 
         // STEP 2: IDENTIFY STRATEGIC GAPS
-        // Generate 3-5 disruption hypotheses
+        // Generate 3-5 disruption hypotheses with hostile analysis
         const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
 
         // STEP 3: ARCHITECT RESEARCH BRIEFS
-        // Transform hypotheses into professional, self-contained briefs
+        // Dynamic inference of 4-6 professional, self-contained briefs
         const researchBriefs = await architectResearchBriefs(auditData, gapHypotheses, sources);
 
-        // Save to WorkshopContext
+        // Save to WorkshopContext (store as JSON array)
+        const briefsJson = JSON.stringify(researchBriefs);
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: researchBriefs },
-            create: { workshopId, researchBrief: researchBriefs },
+            update: { researchBrief: briefsJson },
+            create: { workshopId, researchBrief: briefsJson },
         });
 
         console.log(`[SupremeScout] ========== Pipeline Complete ==========`);
+        console.log(`[SupremeScout] Generated ${researchBriefs.length} Strategic Research Briefs`);
         revalidatePath(`/workshop/${workshopId}`);
 
         return {
             success: true,
-            brief: researchBriefs,
+            briefs: researchBriefs,
+            brief: researchBriefs.join('\n\n---\n\n'), // Legacy: combined string for backward compatibility
             documentCount: retrieval.documentCount,
             sources,
         };
@@ -365,6 +390,7 @@ export async function generateBrief(workshopId: string) {
         console.error("[SupremeScout] Pipeline Error:", error);
         return {
             success: false,
+            briefs: [],
             error: error instanceof Error ? error.message : "Pipeline failed.",
             documentCount: 0,
         };
