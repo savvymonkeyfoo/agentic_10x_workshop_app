@@ -12,10 +12,12 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { RotateCcw, AlertCircle } from 'lucide-react';
 
 
 
@@ -78,7 +80,9 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const [intelligenceState, setIntelligenceState] = useState<'idle' | 'initializing' | 'analyzing' | 'complete'>('idle');
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [completedCards, setCompletedCards] = useState<OpportunityCard[]>([]);
-    const [selectedCard, setSelectedCard] = useState<OpportunityCard | null>(null); // For Modal
+    const [selectedCard, setSelectedCard] = useState<OpportunityCard | null>(null);
+    const [isResetting, setIsResetting] = useState(false);
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
 
     // Context Cache REMOVED - Handled Lazy-Load on Server
@@ -91,9 +95,26 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     // Tab switching based on URL
     useEffect(() => {
         const stageParam = searchParams.get('stage');
-        if (stageParam === '3') setActiveTab('intelligence');
+        if (stageParam === '1') setActiveTab('context');
         else if (stageParam === '2') setActiveTab('research');
+        else if (stageParam === '3') setActiveTab('intelligence');
     }, [searchParams]);
+
+    // HANDLER: RESET
+    const handleResetAnalysis = async () => {
+        setIsResetting(true);
+        // 1. Clear DB
+        await resetWorkshopIntelligence(workshopId);
+
+        // 2. Clear Local State
+        setCompletedCards([]);
+        setQueue([]);
+        setIntelligenceState('idle'); // Returns to the "Ready to Analyze" screen
+
+        setIsResetting(false);
+        setIsResetModalOpen(false); // Close modal after reset
+        // User can now click "Initialize" again to restart the process
+    };
 
     // 0. AUTO-HYDRATION (The Persistence Fix - Simplified)
     useEffect(() => {
@@ -411,9 +432,32 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         />
                     )}
                     {activeTab === 'intelligence' && intelligenceState === 'complete' && (
-                        <Button onClick={() => router.push(`/workshop/${workshopId}/ideation`)}>
-                            Proceeed to Ideation <ArrowRight className="w-4 h-4 ml-1" />
-                        </Button>
+                        <div className="flex gap-2">
+                            {/* THE REDO BUTTON + MODAL */}
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-200"
+                                disabled={isResetting}
+                                onClick={() => setIsResetModalOpen(true)}
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                            </Button>
+
+                            <ConfirmationModal
+                                isOpen={isResetModalOpen}
+                                onClose={() => setIsResetModalOpen(false)}
+                                onConfirm={handleResetAnalysis}
+                                title="Rerun Deep-Chain Analysis?"
+                                description={`This will permanently delete the ${completedCards.length} generated opportunities and reset the board. The AI will re-read your backlog and generate fresh ideas. This action cannot be undone.`}
+                                confirmLabel="Yes, Overwrite Data"
+                                isLoading={isResetting}
+                            />
+
+                            <Button onClick={() => router.push(`/workshop/${workshopId}/ideation`)}>
+                                Proceed to Ideation <ArrowRight className="w-4 h-4 ml-1" />
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -504,6 +548,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             <div className="space-y-8 animate-in fade-in duration-500">
                                 {/* PIZZA TRACKER */}
                                 <PizzaTracker />
+
+
 
                                 {/* KANBAN BOARD */}
                                 <div className="grid grid-cols-3 gap-6">

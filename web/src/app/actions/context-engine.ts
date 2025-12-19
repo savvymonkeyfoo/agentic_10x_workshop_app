@@ -756,3 +756,25 @@ export async function queryContext(
 ): Promise<RetrievalResult> {
     return queryPinecone(workshopId, query, { topK: 10, filterType: assetType });
 }
+// =============================================================================
+// RESET WORKFLOW (RED BUTTON)
+// =============================================================================
+
+export async function resetWorkshopIntelligence(workshopId: string) {
+    try {
+        console.log(`[SupremeScout] Resetting intelligence for ${workshopId}...`);
+        await prisma.workshopContext.update({
+            where: { workshopId },
+            data: {
+                // @ts-ignore - intelligenceAnalysis is valid in schema but inference is stale
+                intelligenceAnalysis: { opportunities: [] } // Clear the array
+            }
+        });
+
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to reset intelligence", error);
+        return { success: false, error: "Failed to reset data" };
+    }
+}
