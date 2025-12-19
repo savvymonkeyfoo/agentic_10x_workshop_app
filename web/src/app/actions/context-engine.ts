@@ -2,25 +2,9 @@
 
 import { prisma } from '@/lib/prisma';
 import { getWorkshopNamespace } from '@/lib/pinecone';
-import { google } from '@ai-sdk/google';
+import { AI_CONFIG } from '@/lib/ai-config';
 import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
-
-// =============================================================================
-// GEMINI 3 MODEL CONFIGURATION
-// Hybrid deployment: Flash for speed, Pro for strategic reasoning
-// =============================================================================
-
-// Model identifiers for the Supreme Scout Pipeline
-const MODELS = {
-    // Gemini 3 Flash: Pro-level intelligence with Flash latency
-    // Used for Technical Audit where speed and accuracy matter
-    AUDIT: 'gemini-3-flash',
-
-    // Gemini 3 Pro: Deep reasoning capabilities
-    // Used for Strategic Gap Analysis and Brief Architecture
-    STRATEGIC: 'gemini-3-pro',
-} as const;
 
 // =============================================================================
 // TYPES
@@ -56,7 +40,7 @@ async function queryPinecone(
     console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
 
     const { embedding } = await embed({
-        model: google.textEmbeddingModel('text-embedding-004'),
+        model: AI_CONFIG.embeddingModel,
         value: query,
     });
 
@@ -165,7 +149,7 @@ ${backlogContext}
 Conduct the Technical Audit now.`;
 
     const { text } = await generateText({
-        model: google(MODELS.AUDIT),
+        model: AI_CONFIG.auditModel,
         prompt,
     });
 
@@ -223,7 +207,7 @@ ${backlogContext}
 Identify the Strategic Collision Points now.`;
 
     const { text } = await generateText({
-        model: google(MODELS.STRATEGIC),
+        model: AI_CONFIG.strategicModel,
         prompt,
     });
 
@@ -304,7 +288,7 @@ ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 Generate the Strategic Research Briefs now.`;
 
     const { text } = await generateText({
-        model: google(MODELS.STRATEGIC),
+        model: AI_CONFIG.strategicModel,
         prompt,
     });
 
