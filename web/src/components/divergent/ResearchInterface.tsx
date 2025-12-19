@@ -295,82 +295,69 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     // UI COMPONENTS
     // =========================================================================
 
-    const PizzaTracker = () => {
-        const total = queue.length;
-        const processed = completedCards.length;
-        const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+    const DualStreamTracker = () => {
+        // 1. Split the Queue
+        const backlogQueue = queue.filter(q => !q.id.startsWith('seed-'));
+        const researchQueue = queue.filter(q => q.id.startsWith('seed-'));
 
-        // Circular Progress Math
-        const radius = 30;
-        const circumference = 2 * Math.PI * radius;
-        const offset = circumference - (percent / 100) * circumference;
+        // 2. Calculate Stats
+        const backlogComplete = completedCards.filter(c => c.source === 'CLIENT_BACKLOG').length;
+        const researchComplete = completedCards.filter(c => c.source === 'MARKET_SIGNAL').length;
+
+        // 3. Helper for Progress Bar
+        const renderProgressBar = (total: number, current: number, colorClass: string, label: string, icon: React.ReactNode) => {
+            const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+            return (
+                <div className="space-y-2">
+                    <div className="flex justify-between items-end">
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-700 uppercase tracking-wider">
+                            {icon} {label}
+                        </div>
+                        <div className="text-xs font-mono text-slate-400">
+                            {current} / {total} Items
+                        </div>
+                    </div>
+                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className={cn("h-full transition-all duration-500 ease-out", colorClass)}
+                            style={{ width: `${percent}%` }}
+                        />
+                    </div>
+                </div>
+            );
+        };
 
         return (
-            <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-purple-100 p-6 mb-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
-                    <div
-                        className="h-full bg-purple-600 transition-all duration-500 ease-out"
-                        style={{ width: `${percent}%` }}
-                    />
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        {/* Circular Progress */}
-                        <div className="relative w-20 h-20 flex-shrink-0">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                    cx="40" cy="40" r={radius}
-                                    stroke="#f3f4f6" strokeWidth="6" fill="transparent"
-                                />
-                                <circle
-                                    cx="40" cy="40" r={radius}
-                                    stroke="currentColor" strokeWidth="6" fill="transparent"
-                                    className="text-purple-600 transition-all duration-500"
-                                    strokeDasharray={circumference}
-                                    strokeDashoffset={offset}
-                                    strokeLinecap="round"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                <span className="text-xl font-bold text-purple-900">{percent}%</span>
-                            </div>
-                        </div>
-
-                        {/* Status Text */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-bold text-lg text-gray-900">Deep-Chain Analysis Active</h3>
-                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 animate-pulse">
-                                    Live
-                                </Badge>
-                            </div>
-                            <p className="text-sm text-purple-600 font-mono flex items-center gap-2">
-                                {intelligenceState === 'analyzing' && <Loader2 className="w-3 h-3 animate-spin" />}
-                                {currentLog}
-                            </p>
-                        </div>
+            <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className={cn("w-3 h-3 rounded-full animate-pulse", intelligenceState === 'analyzing' ? "bg-emerald-500" : "bg-slate-300")} />
+                        <h3 className="font-bold text-slate-900">Deep-Chain Analysis Engine</h3>
                     </div>
-
-                    {/* Stats */}
-                    <div className="text-right">
-                        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Items Processed</div>
-                        <div className="text-3xl font-black text-gray-900 tracking-tight">
-                            {processed} <span className="text-gray-300 text-xl font-normal">/ {total}</span>
-                        </div>
+                    <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                        {currentLog || "Ready to Initialize"}
                     </div>
                 </div>
 
-                {/* Recent Success Pop */}
-                {processed > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3 text-sm text-gray-600 animate-in fade-in slide-in-from-top-1">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span>Analysis complete: <span className="font-bold text-gray-800">{completedCards[processed - 1].title}</span></span>
-                        <span className="ml-auto text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-500 font-mono">
-                            {completedCards[processed - 1].category}
-                        </span>
-                    </div>
-                )}
+                <div className="grid gap-8">
+                    {/* ROW 1: BACKLOG ENRICHMENT (BLUE) */}
+                    {renderProgressBar(
+                        backlogQueue.length,
+                        backlogComplete,
+                        "bg-blue-600",
+                        "Backlog Enrichment",
+                        <div className="p-1 bg-blue-100 text-blue-700 rounded"><CheckCircle className="w-3 h-3" /></div>
+                    )}
+
+                    {/* ROW 2: MARKET SIGNALS (PURPLE) */}
+                    {renderProgressBar(
+                        researchQueue.length,
+                        researchComplete,
+                        "bg-purple-600",
+                        "Strategic Ideation",
+                        <div className="p-1 bg-purple-100 text-purple-700 rounded"><Zap className="w-3 h-3" /></div>
+                    )}
+                </div>
             </div>
         );
     };
@@ -547,8 +534,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         {/* STATE: ACTIVE OR COMPLETE */}
                         {(intelligenceState === 'analyzing' || intelligenceState === 'complete') && (
                             <div className="space-y-8 animate-in fade-in duration-500">
-                                {/* PIZZA TRACKER */}
-                                <PizzaTracker />
+                                {/* DUAL STREAM TRACKER */}
+                                <DualStreamTracker />
 
 
 
