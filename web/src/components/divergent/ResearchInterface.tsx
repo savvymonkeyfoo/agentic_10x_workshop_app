@@ -12,7 +12,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, fetchAnalysisContext } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 
@@ -73,8 +73,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const [completedCards, setCompletedCards] = useState<OpportunityCard[]>([]);
     const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
 
-    // Context Cache for the AI Chain
-    const contextCache = useRef<{ dna: string; research: string } | null>(null);
+    // Context Cache REMOVED - Handled Lazy-Load on Server
+    // const contextCache = useRef<{ dna: string; research: string } | null>(null);
 
     // =========================================================================
     // EFFECTS
@@ -121,17 +121,10 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
             try {
                 // 4. CALL SERVER ACTION
-                // Ensure we have context
-                if (!contextCache.current) {
-                    console.error("Missing DNA or Research Context!");
-                    // Fail gracefully? For now, assume it's set in handleProcessSignals
-                    return;
-                }
-
+                // Context is now Lazy-Loaded on the Server
                 const result = await analyzeBacklogItem(
                     workshopId,
-                    { id: currentItem.id, title: currentItem.title, description: currentItem.description },
-                    contextCache.current
+                    { id: currentItem.id, title: currentItem.title, description: currentItem.description }
                 );
 
                 if (result.success && result.opportunity) {
@@ -206,17 +199,16 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         setCurrentLog("Hydrating Deep-Chain Context...");
 
         try {
-            // 1. Fetch Context & Items from Server
-            const result = await fetchAnalysisContext(workshopId);
+            // 1. Fetch Backlog Items (Fast Hydration)
+            const result = await hydrateBacklog(workshopId);
 
-            if (!result.success || !result.context || !result.items) {
-                toast.error("Failed to load analysis context");
+            if (!result.success || !result.items) {
+                toast.error("Failed to load backlog Items");
                 setIntelligenceState('idle');
                 return;
             }
 
-            // 2. Cache Context
-            contextCache.current = result.context;
+            // 2. Cache Context - REMOVED (Server Side)
 
             // 3. Hydrate Queue
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

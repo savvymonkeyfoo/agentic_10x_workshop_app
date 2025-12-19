@@ -401,20 +401,45 @@ OUTPUT JSON FORMAT:
 
 export async function analyzeBacklogItem(
     workshopId: string,
-    item: { id: string; title: string; description: string },
-    context: { dna: string; research: string }
+    item: { id: string; title: string; description: string }
 ) {
     try {
+        // 0. LAZY LOAD CONTEXT (The "Lazy Load" Feature)
+        const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
+
+        // Check for DNA
+        // @ts-ignore
+        let techDNA = dbContext?.extractedConstraints as string;
+
+        if (!techDNA) {
+            console.log(`[DeepChain] DNA missing for ${workshopId}. Running Just-in-Time Audit...`);
+            // Fetch Dossier Text
+            const retrieval = await queryContext(workshopId, "technical architecture legacy systems", 'DOSSIER');
+            const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
+
+            // Run Audit
+            techDNA = await technicalAudit(dossierContext, backlogContext);
+
+            // Save for next item
+            await prisma.workshopContext.update({
+                where: { workshopId },
+                data: { extractedConstraints: techDNA }
+            });
+        }
+
+        // Load Research (or default empty string if missing, triggers generic enhancement)
+        const research = dbContext?.researchBrief || "No specific research briefs available. Focus on industry best practices.";
+
         // STEP 1: THE AUDITOR (Technical Constraints)
         const { text: frictionReport } = await generateText({
             model: AI_CONFIG.auditModel,
-            prompt: `${AUDITOR_PROMPT}\n\nITEM: ${item.title} - ${item.description}\n\nDNA: ${context.dna}`
+            prompt: `${AUDITOR_PROMPT}\n\nITEM: ${item.title} - ${item.description}\n\nDNA: ${techDNA}`
         });
 
         // STEP 2: THE ENHANCER (Strategic Uplift)
         const { text: enhancement } = await generateText({
             model: AI_CONFIG.strategicModel,
-            prompt: `${ENHANCER_PROMPT}\n\nITEM: ${item.title}\nFRICTION: ${frictionReport}\n\nRESEARCH BRIEFS: ${context.research}`
+            prompt: `${ENHANCER_PROMPT}\n\nITEM: ${item.title}\nFRICTION: ${frictionReport}\n\nRESEARCH BRIEFS: ${research}`
         });
 
         // STEP 3: THE WRITER (Card Synthesis)
@@ -479,6 +504,56 @@ OUTPUT JSON:
 [
   { "id": "1", "title": "Feature Name", "description": "Short summary" }
 ]`;
+
+export async function hydrateBacklog(workshopId: string) {
+    console.log(`[SupremeScout] Hydrating Backlog for ${workshopId}...`);
+    try {
+        const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
+
+        // 1. Fast Path: Return Cached
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawBacklog = context?.rawBacklog as any;
+
+        if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
+            return { success: true, items: rawBacklog };
+        }
+
+        // 2. Slow Path: Extract from Text
+        const retrieval = await queryContext(workshopId, "backlog features requirements", 'BACKLOG');
+        const { backlogContext } = formatContext(retrieval.chunks);
+
+        if (!backlogContext) return { success: false, error: "No backlog content found" };
+
+        const { text } = await generateText({
+            model: AI_CONFIG.auditModel, // Flash is fast
+            prompt: `${BACKLOG_EXTRACTION_PROMPT}\n\nRAW BACKLOG:\n${backlogContext}`,
+        });
+
+        let items;
+        try {
+            // Handle potential backticks or plain json
+            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            items = JSON.parse(jsonStr);
+            if (items.items) items = items.items; // Handle wrapped object
+        } catch (e) {
+            console.error("Failed to parse backlog extraction", e);
+            return { success: false, error: "Failed to parse backlog JSON" };
+        }
+
+        // Save Cache
+        await prisma.workshopContext.upsert({
+            where: { workshopId },
+            update: { rawBacklog: items },
+            create: { workshopId, rawBacklog: items }
+        });
+
+        return { success: true, items };
+
+    } catch (e) {
+        console.error("Backlog Hydration Failed", e);
+        return { success: false, error: "Failed to parse backlog" };
+    }
+}
 
 export async function fetchAnalysisContext(workshopId: string) {
     try {
