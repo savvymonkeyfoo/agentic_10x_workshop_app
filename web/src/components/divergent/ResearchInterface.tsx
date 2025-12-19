@@ -112,26 +112,36 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
 
     return (
         <WorkshopPageShell header={header}>
-            {/* Tabs Header (Matches InputCanvas style exactly) */}
-            <div className="flex space-x-6 border-b border-[var(--glass-border)] mb-6 pb-2">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => !tab.disabled && setActiveTab(tab.id)}
-                        disabled={tab.disabled}
-                        className={`pb-2 text-xs font-bold tracking-widest transition-colors relative ${activeTab === tab.id
-                            ? 'text-brand-blue'
-                            : tab.disabled
-                                ? 'text-slate-300 cursor-not-allowed'
-                                : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                    >
-                        {tab.label}
-                        {activeTab === tab.id && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-blue" />
-                        )}
-                    </button>
-                ))}
+            {/* Tabs Header (Relocated Primary Action) */}
+            <div className="flex justify-between items-center mb-6 pb-2">
+                <div className="flex space-x-6">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => !tab.disabled && setActiveTab(tab.id)}
+                            disabled={tab.disabled}
+                            className={`pb-2 text-xs font-bold tracking-widest transition-colors relative ${activeTab === tab.id
+                                ? 'text-brand-blue'
+                                : tab.disabled
+                                    ? 'text-slate-300 cursor-not-allowed'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            {tab.label}
+                            {activeTab === tab.id && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-blue" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                <ResearchBriefButton
+                    onClick={handleGenerateBrief}
+                    isDisabled={!isReadyForResearch}
+                    isLoading={isAnalyzing}
+                    dossierCount={dossierReadyCount}
+                    backlogCount={backlogReadyCount}
+                />
             </div>
 
             {/* TAB CONTENT */}
@@ -152,15 +162,7 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
                             assets={backlogAssets}
                         />
 
-                        <div className="col-span-2 flex justify-center mt-4">
-                            <ResearchBriefButton
-                                onClick={handleGenerateBrief}
-                                isDisabled={!isReadyForResearch}
-                                isLoading={isAnalyzing}
-                                dossierCount={dossierReadyCount}
-                                backlogCount={backlogReadyCount}
-                            />
-                        </div>
+
                     </div>
                 )}
 
