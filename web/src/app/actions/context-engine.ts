@@ -229,16 +229,27 @@ Identify the Strategic Collision Points now.`;
 // Thinking Level: HIGH (maximum reasoning for brief architecture)
 // =============================================================================
 
-const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing standalone Mission Mandates for an external agency.
+const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing Mission Mandates for an external agency.
 
-**MISSION: COMPANY-AWARE TRANSLATION**
-Your goal is to produce research briefs that a third party can execute without prior knowledge of the company's internal code-names.
+**MISSION: CONTEXTUAL BRIDGE**
+Your goal is to translate internal strategic intent into clear external research directives.
+
+**CRITICAL INSTRUCTION - ENTITY DETECTION:**
+The "Client Name" provided below might be a codename (e.g., "Hobo Bacon Moose"). 
+You must analyze the [TECHNICAL DNA] to identify the **Real Subject Company** (e.g., Australia Post, Qantas, a Mining GBE).
+Use the **Real Subject Company** name in the brief headers.
+
+**CRITICAL INSTRUCTION - JARGON DEFINITION:**
+You MAY use internal project codes (e.g., "Post26", "POST+"), but you **MUST define them** immediately in parentheses.
+- *Bad*: "Analyze the risks of Post26."
+- *Good*: "Analyze the risks of Post26 (The 2026 Strategic Transformation Program)."
+- *Good*: "Evaluate the POST+ rollout (The $250M Point-of-Sale Modernization)."
 
 **BRIEF STRUCTURE (MANDATORY):**
 
 ## Strategic Research Brief [N]: [Professional Title]
-**Subject Company**: [CLIENT_NAME]
-**Industry Context**: [e.g., National Logistics & Postal GBE]
+**Subject Company**: [Real Entity Name detected from DNA]
+**Industry Context**: [e.g., National Logistics GBE]
 **Transformation Pillar**: [Translate the internal goal into a plain-English business objective]
 
 ### Strategic Objective
@@ -267,7 +278,7 @@ How will this challenge current executive thinking? What assumption does it test
 
 **STRICT EXTERNAL-FACING RULES:**
 
-1. **No Internal Jargon**: You must replace any internal project code-name with its functional description (e.g., 'The 2026 Logistics Strategy' or 'The Enterprise Point-of-Sale Modernization'). DO NOT use terms like "Post26", "POST+", or "CXT".
+1. **Jargon Definitions**: NEVER use an internal project code (e.g., Post26) without its functional description in parentheses.
 
 2. **Self-Contained**: Assume the researcher has never heard of the company. Define the industry and the scale of the challenge.
 
@@ -281,7 +292,7 @@ How will this challenge current executive thinking? What assumption does it test
 
 7. **Word Count**: Each brief should be 150-200 words.
 
-8. **Post-Processing Rule**: Final check: Read your own output. If you see a capitalized code-name that does not exist in the public domain, replace it.`;
+8. **Post-Processing Rule**: Final check: Read your own output. If you see a capitalized code-name that does not exist in the public domain and lacks a definition, replace or define it.`;
 
 interface ArchitectResult {
     briefs: string[];
@@ -296,18 +307,15 @@ async function architectResearchBriefs(
 ): Promise<ArchitectResult> {
     console.log(`[SupremeScout] Step 3: Architecting Mission Mandates for ${clientName}...`);
 
-    // Inject Client Name into the prompt template
-    const contextualPrompt = RESEARCH_BRIEFS_PROMPT.replace(/\[CLIENT_NAME\]/g, clientName);
-
-    const prompt = `${contextualPrompt}
+    const prompt = `${RESEARCH_BRIEFS_PROMPT}
 
 ══════════════════════════════════════════════════════════════
-CLIENT IDENTITY: ${clientName}
+PROVIDED CLIENT LABEL: ${clientName} 
+(NOTE: This may be a project codename. Trust the Audit Data for the true entity name.)
 ══════════════════════════════════════════════════════════════
-[Instruction: Ensure every brief identifies this company and its industry context explicitly.]
 
 ══════════════════════════════════════════════════════════════
-TECHNICAL DNA
+TECHNICAL DNA (Source of Truth)
 ══════════════════════════════════════════════════════════════
 ${auditData}
 

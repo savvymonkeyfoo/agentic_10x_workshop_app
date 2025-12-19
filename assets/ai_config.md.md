@@ -1,10 +1,13 @@
-
-#### **Variable: `RISK_ANALYSIS_PROMPT`**
+# AI Configuration: Supreme Scout & Risk Analysis
 
 ## 1. Risk & Autonomy Agent (Layer 2)
+
 *Trigger:* On_Blur of 'Agent Directive' fields (Tab B).
 
+#### **Variable: `RISK_ANALYSIS_PROMPT`**
+
 **System Prompt:**
+
 ```text
 ROLE: You are a Senior Enterprise Risk Officer.
 TASK: Analyze the provided 'Agent Directive' (Trigger/Action/Guardrail).
@@ -29,11 +32,9 @@ JSON SCHEMA:
 }
 ```
 
+#### **Variable: `NARRATIVE_GENERATION_PROMPT`**
 
-#### **Variable: `NARRATIVE_GENERATION_PROMPT`**
-
-
-```
+```text
 ROLE: You are a Strategy Partner at a top-tier consulting firm.
 TONE: Professional, authoritative, strategic.
 FORBIDDEN WORDS: "Cool", "Nice", "App", "Bot".
@@ -50,27 +51,81 @@ EXAMPLE OUTPUT:
 "We have prioritised the 'Internal Knowledge Agent' (Seq #1) to establish the RAG foundation in a safe environment. This approach effectively de-risks the subsequent deployment of the 'Customer Support Agent' (Seq #2), ensuring core capabilities are proven before public exposure."
 ```
 
+## 2. Final `schema.prisma` (Merged)
 
-
-
-
-
-
-
-
-### 2. Final `schema.prisma` (Merged) 
-*Change:* Merged the Strategic, Quantitative, and Execution fields into the main model so the developer doesn't have to "Add snippet here." 
+*Change:* Merged the Strategic, Quantitative, and Execution fields into the main model so the developer doesn't have to "Add snippet here."
 
 ```prisma
- // schema.prisma datasource db { provider = "postgresql" url = env("DATABASE_URL") } generator client { provider = "prisma-client-js" } 
- 
- // 1. Workshop Container model Workshop { id String @id @default(uuid()) clientName String createdAt DateTime @default(now()) status String @default("INPUT") // Draft, Input, Analysis opportunities Opportunity[] } 
- 
- // 2. The Opportunity Asset model Opportunity { id String @id @default(uuid()) workshopId String workshop Workshop @relation(fields: [workshopId], references: [id]) // Tab A: Strategic Context projectName String frictionStatement String strategicHorizon String // "GROWTH", "OPS", "STRATEGY" whyDoIt String @db.Text // Tab B: The Agent agentDirective Json // { "trigger": "...", "action": "...", "guardrail": "...", "autonomy": "L1" } 
- 
- // Tab C: Business Case (VRCC + Financials) scoreValue Int scoreCapability Int scoreComplexity Int scoreRiskFinal Int @default(0) scoreRiskAI Int @default(0) tShirtSize String // "XS", "S", "M", "L", "XL" benefitRevenue Float? benefitCost Float? benefitEfficiency Float? dfvDesirability String // "HIGH", "MED", "LOW" dfvFeasibility String dfvViability String // Tab D: Execution definitionOfDone String @db.Text keyDecisions String @db.Text impactedSystems String[] // Logic Engine capabilitiesConsumed CapabilityConsumed[] capabilitiesProduced CapabilityProduced[] // Outputs sequenceRank Int? matrixX Float? matrixY Float? } 
- 
- // 3. Capabilities model CapabilityConsumed { id String @id @default(uuid()) opportunityId String opportunity Opportunity @relation(fields: [opportunityId], references: [id]) name String status String 
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-/ "EXISTING" or "MISSING" } model CapabilityProduced { id String @id @default(uuid()) opportunityId String opportunity Opportunity @relation(fields: [opportunityId], references: [id]) name String }
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Workshop Container
+model Workshop {
+  id           String        @id @default(uuid())
+  clientName   String
+  createdAt    DateTime      @default(now())
+  status       String        @default("INPUT") // Draft, Input, Analysis
+  opportunities Opportunity[]
+}
+
+// 2. The Opportunity Asset
+model Opportunity {
+  id                String   @id @default(uuid())
+  workshopId        String
+  workshop          Workshop @relation(fields: [workshopId], references: [id])
+  // Tab A: Strategic Context
+  projectName       String
+  frictionStatement String
+  strategicHorizon  String // "GROWTH", "OPS", "STRATEGY"
+  whyDoIt           String   @db.Text
+  // Tab B: The Agent
+  agentDirective    Json // { "trigger": "...", "action": "...", "guardrail": "...", "autonomy": "L1" }
+
+  // Tab C: Business Case (VRCC + Financials)
+  scoreValue        Int
+  scoreCapability   Int
+  scoreComplexity   Int
+  scoreRiskFinal    Int      @default(0)
+  scoreRiskAI       Int      @default(0)
+  tShirtSize        String // "XS", "S", "M", "L", "XL"
+  benefitRevenue    Float?
+  benefitCost       Float?
+  benefitEfficiency Float?
+  dfvDesirability   String // "HIGH", "MED", "LOW"
+  dfvFeasibility    String
+  dfvViability      String
+  // Tab D: Execution
+  definitionOfDone  String   @db.Text
+  keyDecisions      String   @db.Text
+  impactedSystems   String[] // Logic Engine
+  capabilitiesConsumed CapabilityConsumed[]
+  capabilitiesProduced CapabilityProduced[]
+  // Outputs
+  sequenceRank      Int?
+  matrixX           Float?
+  matrixY           Float?
+}
+
+// 3. Capabilities
+model CapabilityConsumed {
+  id            String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  name          String
+  status        String // "EXISTING" or "MISSING"
+}
+
+model CapabilityProduced {
+  id            String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  name          String
+}
 ```
