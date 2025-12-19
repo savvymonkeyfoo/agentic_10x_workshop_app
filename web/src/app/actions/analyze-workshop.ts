@@ -1,10 +1,6 @@
 'use server';
 
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
+import { AI_CONFIG } from '@/lib/ai-config';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -46,7 +42,7 @@ export async function analyzeWorkshop(workshopId: string) {
 
         // 3. The 'Council of Agents' Prompt
         const { object } = await generateObject({
-            model: google('gemini-2.5-flash'),
+            model: AI_CONFIG.strategicModel,
             schema: z.object({
                 strategy: z.object({
                     // Force the model to output 'thinking steps' first (Chain of Thought)

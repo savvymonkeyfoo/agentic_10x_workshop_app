@@ -1,10 +1,6 @@
 'use server';
 import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
+import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,7 +11,7 @@ export async function recommendCapabilities(workflowContext: any) {
         const contextString = JSON.stringify(workflowContext, null, 2);
 
         const result = await generateObject({
-            model: google('gemini-2.5-flash'),
+            model: AI_CONFIG.generalModel,
             schema: z.object({
                 capabilities: z.array(z.string()).describe("List of 10-15 enterprise software, APIs, or data systems.")
             }),

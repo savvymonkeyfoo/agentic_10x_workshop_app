@@ -1,10 +1,6 @@
 'use server';
 import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
+import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,7 +27,7 @@ export async function draftExecutionPlan(context: any) {
 
         // 2. GENERATION: Run the Executive Strategist Persona
         const result = await generateObject({
-            model: google('gemini-2.5-flash'),
+            model: AI_CONFIG.generalModel,
             schema: z.object({
                 definitionOfDone: z.string().describe("Bulleted list of business-critical success metrics (e.g. Accuracy, Adoption, Speed)."),
                 keyDecisions: z.string().describe("Bulleted list of high-level strategic trade-offs (e.g. Build vs Buy, Compliance Strategy)."),

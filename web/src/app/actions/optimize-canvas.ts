@@ -1,17 +1,13 @@
 'use server';
 import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
+import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function optimizeCanvasContent(data: any) {
     try {
         const result = await generateObject({
-            model: google('gemini-1.5-pro-latest'),
+            model: AI_CONFIG.generalModel,
             schema: z.object({
                 friction: z.string().describe("Punchy 1-2 sentence problem statement. No 'The problem is...' prefixes."),
                 rationale: z.string().describe("1 concise strategic justification paragraph."),

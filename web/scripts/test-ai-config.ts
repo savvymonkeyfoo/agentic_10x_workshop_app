@@ -14,6 +14,7 @@ import 'dotenv/config';
 const MODELS = {
     AUDIT: process.env.AI_MODEL_AUDIT || 'gemini-2.5-flash',
     STRATEGIC: process.env.AI_MODEL_STRATEGIC || 'gemini-2.5-pro',
+    GENERAL: process.env.AI_MODEL_GENERAL || 'gemini-2.5-flash',
     EMBEDDING: process.env.AI_MODEL_EMBEDDING || 'text-embedding-004',
 };
 
@@ -33,7 +34,6 @@ async function testAuditModel() {
     const { text } = await generateText({
         model: google(MODELS.AUDIT),
         prompt: 'Say "AUDIT_MODEL_OK" and nothing else.',
-        maxTokens: 50,
     });
 
     if (text.includes('AUDIT_MODEL_OK')) {
@@ -51,12 +51,28 @@ async function testStrategicModel() {
     const { text } = await generateText({
         model: google(MODELS.STRATEGIC),
         prompt: 'Say "STRATEGIC_MODEL_OK" and nothing else.',
-        maxTokens: 50,
     });
 
     if (text.includes('STRATEGIC_MODEL_OK')) {
         console.log(`   Response: ${text.trim()}`);
         console.log('   ✅ Strategic Model working');
+    } else {
+        console.log(`   Response: ${text}`);
+        console.log('   ⚠️ Unexpected response (model may still work)');
+    }
+}
+
+async function testGeneralModel() {
+    console.log(`\n⚙️ Testing General Model (${MODELS.GENERAL})...`);
+
+    const { text } = await generateText({
+        model: google(MODELS.GENERAL),
+        prompt: 'Say "GENERAL_MODEL_OK" and nothing else.',
+    });
+
+    if (text.includes('GENERAL_MODEL_OK')) {
+        console.log(`   Response: ${text.trim()}`);
+        console.log('   ✅ General Model working');
     } else {
         console.log(`   Response: ${text}`);
         console.log('   ⚠️ Unexpected response (model may still work)');
@@ -89,7 +105,6 @@ async function testReasoningCapability() {
         prompt: `You are testing your reasoning capability. 
 Solve this step by step: If a company has 3 data centers and wants to reduce to 2, but each center serves 40% of traffic, what's the minimum capacity increase needed per remaining center?
 Think through this carefully, then provide the answer.`,
-        maxTokens: 500,
     });
 
     console.log('   Response preview:');
@@ -104,12 +119,14 @@ async function main() {
     console.log('\nModel Configuration:');
     console.log(`   AUDIT:     ${MODELS.AUDIT}`);
     console.log(`   STRATEGIC: ${MODELS.STRATEGIC}`);
+    console.log(`   GENERAL:   ${MODELS.GENERAL}`);
     console.log(`   EMBEDDING: ${MODELS.EMBEDDING}`);
 
     try {
         await testApiKey();
         await testAuditModel();
         await testStrategicModel();
+        await testGeneralModel();
         await testEmbeddingModel();
         await testReasoningCapability();
 
