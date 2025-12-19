@@ -386,28 +386,16 @@ Task: Extract the FULL list of backlog items from the raw text.
 CRITICAL RULE: Do not summarize. Do not skip items. If there are 10 items in the text, extract 10 items.
 Return them as a clean JSON array.`;
 
-const AUDITOR_PROMPT = `You are a Forensic Systems Architect.
-Task: Audit this specific Backlog Item against the Technical DNA.
-Constraint: You must quote the specific system/legacy constraint from the DNA (e.g. "Batch SAP", "On-prem Oracle").
-Output: A 'Friction Report' (1-2 sentences).`;
-
-const ENHANCER_PROMPT = `You are the Head of Agentic Automation.
-Task: Re-imagine this feature as an **Autonomous Workflow**.
-Input: Legacy backlog item.
-Goal: Transform "Human doing X" into "Agent doing X".
-Constraint: Identify the specific 'Human-in-the-Loop' trigger and the 'Autonomous' actions.`;
-
-const WRITER_PROMPT = `You are a Product Strategist.
-Task: Synthesize the final Opportunity Card.
-
-CRITICAL INSTRUCTION - NO GENERIC FLUFF:
-- **Friction Point**: MUST cite a specific system, cost, or delay. (Bad: "Improves efficiency". Good: "Eliminates 24hr SAP batch latency").
-- **Tech Alignment**: MUST cite a specific tool from the Tech DNA. (Bad: "Modern architecture". Good: "Leverages Kong Gateway & Event Mesh").
+const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
+Task: Enrich this Client Backlog Item without changing its core identity.
+1. **Title/Description**: KEEP EXACTLY AS PROVIDED. Do not rewrite.
+2. **Friction**: Analyze the item to find the specific operational pain point it solves.
+3. **Tech Alignment**: Map it to the Technical DNA (e.g. "Fits the Event Mesh strategy").
 
 OUTPUT JSON FORMAT:
 {
-  "title": "The Workflow Name (Action-Oriented)",
-  "description": "2-sentence summary of the end-to-end automation.",
+  "title": "Use Original Title",
+  "description": "Use Original Description",
   "friction": "Specific technical/process bottleneck (e.g. 'Manual PII redaction adds 4h delay').",
   "techAlignment": "Specific architectural fit (e.g. 'Aligns with Post26 Event-Driven Architecture').",
   "source": "CLIENT_BACKLOG", 
@@ -418,56 +406,79 @@ OUTPUT JSON FORMAT:
   "originalId": "string"
 }`;
 
+const GENERATION_PROMPT = `You are a Chief Innovation Officer.
+Task: Generate a BRAND NEW Strategic Opportunity based on the Research Briefs.
+1. **Constraint**: It must be totally different from the Client Backlog.
+2. **Focus**: Look for "Blue Ocean" workflows in the research (e.g. "Headless Logistics", "Predictive Rostering").
+3. **Output**: A new Title, Description, and rationale.
+
+OUTPUT JSON FORMAT:
+{
+  "title": "The Workflow Name (Action-Oriented)",
+  "description": "2-sentence summary of the end-to-end automation.",
+  "friction": "The market problem or internal gap this solves.",
+  "techAlignment": "How it leverages the Technical DNA.",
+  "source": "MARKET_SIGNAL", 
+  "provenance": "Generated purely from Market Research Signals.",
+  "status": "READY" | "RISKY" | "BLOCKED",
+  "horizon": "NOW" | "NEXT" | "LATER",
+  "category": "EFFICIENCY" | "GROWTH" | "MOONSHOT",
+  "originalId": "string"
+}`;
+
 export async function analyzeBacklogItem(
     workshopId: string,
-    item: { id: string; title: string; description: string }
+    item: { id: string; title: string; description: string; isSeed?: boolean }
 ) {
     try {
-        // 0. LAZY LOAD CONTEXT (The "Lazy Load" Feature)
+        console.log(`[DeepChain] Analyzing item: ${item.title} (Seed: ${item.isSeed})`);
+
+        // 0. LAZY LOAD CONTEXT
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
 
-        // Check for DNA
+        // Load DNA
         // @ts-ignore
         let techDNA = dbContext?.extractedConstraints as string;
-
         if (!techDNA) {
-            console.log(`[DeepChain] DNA missing for ${workshopId}. Running Just-in-Time Audit...`);
-            // Fetch Dossier Text
+            console.log(`[DeepChain] DNA missing. Running Just-in-Time Audit...`);
             const retrieval = await queryContext(workshopId, "technical architecture legacy systems", 'DOSSIER');
             const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
-
-            // Run Audit
             techDNA = await technicalAudit(dossierContext, backlogContext);
-
-            // Save for next item
             await prisma.workshopContext.update({
                 where: { workshopId },
                 data: { extractedConstraints: techDNA }
             });
         }
 
-        // Load Research (or default empty string if missing, triggers generic enhancement)
-        const research = dbContext?.researchBrief || "No specific research briefs available. Focus on industry best practices.";
+        // Load Research
+        const research = dbContext?.researchBrief || "No specific research briefs available.";
 
-        // STEP 1: THE AUDITOR (Technical Constraints)
-        const { text: frictionReport } = await generateText({
-            model: AI_CONFIG.auditModel,
-            prompt: `${AUDITOR_PROMPT}\n\nITEM: ${item.title} - ${item.description}\n\nDNA: ${techDNA}`
-        });
+        // Load Raw Backlog for Summary (to avoid duplicates in Generation Mode)
+        // @ts-ignore
+        const rawBacklog = dbContext?.rawBacklog as any[];
+        const backlogSummary = rawBacklog ? rawBacklog.map(b => b.title).join(", ") : "None";
 
-        // STEP 2: THE ENHANCER (Strategic Uplift)
-        const { text: enhancement } = await generateText({
-            model: AI_CONFIG.strategicModel,
-            prompt: `${ENHANCER_PROMPT}\n\nITEM: ${item.title}\nFRICTION: ${frictionReport}\n\nRESEARCH BRIEFS: ${research}`
-        });
+        let prompt, source;
 
-        // STEP 3: THE WRITER (Card Synthesis)
+        if (item.isSeed) {
+            // MODE A: GENERATION (The "New Stuff")
+            console.log(`[DeepChain] 🔵 MODE: GENERATION (Seed ${item.id})`);
+            prompt = `${GENERATION_PROMPT}\n\nRESEARCH BRIEFS:\n${research}\n\nEXISTING BACKLOG TO AVOID:\n${backlogSummary}\n\nTECHNICAL DNA:\n${techDNA}`;
+            source = 'MARKET_SIGNAL';
+        } else {
+            // MODE B: PRESERVATION (The "Respect" Mode)
+            console.log(`[DeepChain] 🔵 MODE: ENRICHMENT (Item ${item.title})`);
+            prompt = `${ENRICHMENT_PROMPT}\n\nITEM TITLE: ${item.title}\nITEM DESC: ${item.description}\n\nTECHNICAL DNA:\n${techDNA}`;
+            source = 'CLIENT_BACKLOG';
+        }
+
+        // EXECUTE AI
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
-            prompt: `${WRITER_PROMPT}\n\nORIGINAL: ${item.title}\nFRICTION: ${frictionReport}\nENHANCEMENT: ${enhancement}\nID: ${item.id}`,
-            // We use standard json parsing, response_format supported by some providers but keeping generic
+            prompt: prompt
         });
 
+        // PARSE OUTPUT
         let opportunity;
         try {
             const jsonStr = cardJson.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -477,22 +488,32 @@ export async function analyzeBacklogItem(
             return { success: false, error: "Failed to parse AI output" };
         }
 
-        // ATOMIC PERSISTENCE: Retrieve current list, append, and save
+        // CRITICAL: Force Original Title/Desc for Backlog Items
+        if (source === 'CLIENT_BACKLOG') {
+            opportunity.title = item.title;
+            opportunity.description = item.description;
+            opportunity.source = 'CLIENT_BACKLOG'; // Enhance safety
+            opportunity.originalId = item.id;
+        } else {
+            opportunity.source = 'MARKET_SIGNAL';
+            opportunity.originalId = item.id; // seed-X
+        }
+
+        // ATOMIC PERSISTENCE
         const currentContext = await prisma.workshopContext.findUnique({
             where: { workshopId },
-            // @ts-ignore - Field exists in schema and client, IDE cache issue
+            // @ts-ignore
             select: { intelligenceAnalysis: true }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // @ts-ignore - Field exists in generated client
+        // @ts-ignore
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
         const newOpportunities = [...(currentData.opportunities || []), opportunity];
 
         await prisma.workshopContext.update({
             where: { workshopId },
             data: {
-                // @ts-ignore - Field exists in schema and client, IDE cache issue
+                // @ts-ignore
                 intelligenceAnalysis: {
                     ...currentData,
                     opportunities: newOpportunities
@@ -524,7 +545,15 @@ export async function hydrateBacklog(workshopId: string) {
         const rawBacklog = context?.rawBacklog as any;
 
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
-            return { success: true, items: rawBacklog };
+            // INJECT RESEARCH SEEDS (AGI-02)
+            const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
+                id: `seed-${i}`,
+                title: `Strategic Opportunity Discovery ${i + 1}`,
+                description: "Analyzing market signals to generate a net-new opportunity...",
+                isSeed: true
+            }));
+
+            return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
         // 2. Slow Path: Extract from Text
@@ -556,7 +585,17 @@ export async function hydrateBacklog(workshopId: string) {
             create: { workshopId, rawBacklog: items }
         });
 
-        return { success: true, items };
+        // 3. INJECT RESEARCH SEEDS (AGI-02 Hybrid Pipeline)
+        const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
+            id: `seed-${i}`,
+            title: `Strategic Opportunity Discovery ${i + 1}`,
+            description: "Analyzing market signals to generate a net-new opportunity...",
+            isSeed: true
+        }));
+
+        const finalQueue = [...items, ...researchSeeds];
+
+        return { success: true, items: finalQueue };
 
     } catch (e) {
         console.error("Backlog Hydration Failed", e);

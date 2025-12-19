@@ -33,6 +33,7 @@ type QueueItem = {
     title: string;
     description: string;
     status: 'PENDING' | 'PROCESSING' | 'COMPLETE' | 'FAILED';
+    isSeed?: boolean;
 };
 
 // OPPORTUNITY CARD TYPE (Matches Server Output)
