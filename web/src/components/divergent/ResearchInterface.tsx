@@ -12,9 +12,12 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertTriangle } from 'lucide-react';
+
 
 interface ResearchInterfaceProps {
     workshopId: string;
@@ -34,6 +37,10 @@ type QueueItem = {
 type OpportunityCard = {
     title: string;
     description: string;
+    friction?: string;       // NEW
+    techAlignment?: string;  // NEW
+    source?: string;         // NEW
+    provenance?: string;     // NEW
     status: "READY" | "RISKY" | "BLOCKED";
     horizon: "NOW" | "NEXT" | "LATER";
     category: "EFFICIENCY" | "GROWTH" | "MOONSHOT";
@@ -71,6 +78,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const [intelligenceState, setIntelligenceState] = useState<'idle' | 'initializing' | 'analyzing' | 'complete'>('idle');
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [completedCards, setCompletedCards] = useState<OpportunityCard[]>([]);
+    const [selectedCard, setSelectedCard] = useState<OpportunityCard | null>(null); // For Modal
     const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
 
     // Context Cache REMOVED - Handled Lazy-Load on Server
@@ -87,7 +95,31 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         else if (stageParam === '2') setActiveTab('research');
     }, [searchParams]);
 
-    // THE DAISY CHAIN ORCHESTRATOR
+    // 0. AUTO-HYDRATION (The Persistence Fix)
+    useEffect(() => {
+        if (activeTab === 'intelligence' && intelligenceState === 'idle') {
+            const rehydrate = async () => {
+                const saved = await getWorkshopIntelligence(workshopId);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (saved.success && saved.opportunities && (saved.opportunities as any[]).length > 0) {
+                    setCompletedCards(saved.opportunities as OpportunityCard[]);
+                    setIntelligenceState('complete'); // Skip directly to Complete
+
+                    // Also populate queue as "Complete" so the tracker looks right
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setQueue(saved.opportunities.map((op: any) => ({
+                        id: op.originalId,
+                        title: op.title,
+                        description: op.description,
+                        status: 'COMPLETE'
+                    })));
+                }
+            };
+            rehydrate();
+        }
+    }, [activeTab, workshopId, intelligenceState]);
+
+    // 1. DAISY CHAIN PROCESSORATOR
     useEffect(() => {
         const processNextItem = async () => {
             if (intelligenceState !== 'analyzing') return;
@@ -477,14 +509,29 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                                             Efficiency (Now)
                                         </h3>
                                         {completedCards.filter(c => c.category === 'EFFICIENCY').map((card, i) => (
-                                            <Card key={i} className="border-l-4 border-l-emerald-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
-                                                <CardContent className="p-4">
-                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
-                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
-                                                    <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-50 border-emerald-100">
-                                                        {card.status}
-                                                    </Badge>
-                                                </CardContent>
+                                            <Card
+                                                key={i}
+                                                onClick={() => setSelectedCard(card)} // TRIGGER MODAL
+                                                className="p-4 border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md cursor-pointer transition-all group relative"
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex gap-1">
+                                                        <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                                                            {card.horizon}
+                                                        </div>
+                                                        {card.source === 'MARKET_SIGNAL' && (
+                                                            <div className="text-[10px] font-bold px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full flex items-center gap-1">
+                                                                <Zap className="w-3 h-3" /> Signal
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-emerald-700 transition-colors">
+                                                    {card.title}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 line-clamp-2">
+                                                    {card.description}
+                                                </p>
                                             </Card>
                                         ))}
                                     </div>
@@ -533,6 +580,55 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 )}
 
             </div>
+            {/* ================================================================= */}
+            {/* NEW: OPPORTUNITY DETAIL MODAL */}
+            {/* ================================================================= */}
+            <Dialog open={!!selectedCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline">{selectedCard?.horizon}</Badge>
+                            <Badge className={cn(
+                                "text-white",
+                                selectedCard?.category === 'MOONSHOT' ? "bg-purple-600" : "bg-blue-600"
+                            )}>
+                                {selectedCard?.category}
+                            </Badge>
+                        </div>
+                        <DialogTitle className="text-2xl font-black text-slate-900">
+                            {selectedCard?.title}
+                        </DialogTitle>
+                        <DialogDescription className="text-lg text-slate-600 mt-2">
+                            {selectedCard?.description}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid grid-cols-2 gap-4 my-6">
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                <AlertTriangle className="w-3 h-3" /> Friction Point
+                            </h4>
+                            <p className="text-sm text-slate-700 font-medium">
+                                {selectedCard?.friction || "Resolves operational bottlenecks."}
+                            </p>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <h4 className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
+                                <BrainCircuit className="w-3 h-3" /> Tech Alignment
+                            </h4>
+                            <p className="text-sm text-blue-800 font-medium">
+                                {selectedCard?.techAlignment || "Leverages existing architecture."}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 text-slate-400 p-4 rounded-lg text-xs font-mono">
+                        <span className="text-slate-500 uppercase font-bold mr-2">Provenance:</span>
+                        {selectedCard?.provenance || "AI Generated"}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
         </WorkshopPageShell>
     );
 }

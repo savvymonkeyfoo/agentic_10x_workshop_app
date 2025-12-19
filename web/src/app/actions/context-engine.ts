@@ -377,26 +377,37 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
 // DEEP-CHAIN INTELLIGENCE ENGINE (The "10 Humans" Simulator)
 // =============================================================================
 
+// =============================================================================
+// PROMPT UPGRADE: AGENTIC WORKFLOWS
+// =============================================================================
+
 const AUDITOR_PROMPT = `You are a Forensic Systems Architect.
 Task: Audit this specific Backlog Item against the Technical DNA.
 Constraint: You must quote the specific system/legacy constraint from the DNA that makes this difficult.
 Output: A 'Friction Report' (1-2 sentences).`;
 
-const ENHANCER_PROMPT = `You are an Innovation Strategist.
-Task: Look at the Friction Report. Now scan the Research Briefs.
-Goal: Find a specific concept/technology in the Research that solves this friction or makes the idea 10x better.
-Rule: Do not use generic buzzwords. Use specific terms found in the Research (e.g., 'MMO State Sync', 'Headless API').`;
+const ENHANCER_PROMPT = `You are the Head of Agentic Automation.
+Task: Stop thinking about 'features' or 'tools'. Start thinking about **Autonomous Workflows**.
+Input: A legacy backlog item.
+Goal: Re-imagine this as a self-driving, end-to-end workflow.
+- Don't build: An Address Cleaner Bot.
+- Build: The 'Zero-Touch Order Fulfillment Workflow' (where address hygiene is just Step 1 of 5).
+Constraint: Identify the 'Human-in-the-Loop' trigger and the 'Autonomous' actions.`;
 
-const WRITER_PROMPT = `You are a Strategy Partner.
-Task: Synthesize the Original Item, the Friction, and the Enhancement into a final Strategic Opportunity Card.
+const WRITER_PROMPT = `You are a Product Strategist.
+Task: Synthesize the Workflow.
 OUTPUT JSON FORMAT:
 {
-  "title": "The Enhanced Title",
-  "description": "30-word summary including the research insight.",
+  "title": "The Workflow Name (Action-Oriented)",
+  "description": "2-sentence summary of the end-to-end automation.",
+  "friction": "The specific operational pain point this eliminates (1 sentence).",
+  "techAlignment": "How this leverages the Tech DNA or Research (1 sentence).",
+  "source": "CLIENT_BACKLOG",
+  "provenance": "Derived from Client Backlog item and enhanced by Research.",
   "status": "READY" | "RISKY" | "BLOCKED",
   "horizon": "NOW" | "NEXT" | "LATER",
   "category": "EFFICIENCY" | "GROWTH" | "MOONSHOT",
-  "originalId": "string (pass through the ID)"
+  "originalId": "string"
 }`;
 
 export async function analyzeBacklogItem(
@@ -600,6 +611,7 @@ export async function fetchAnalysisContext(workshopId: string) {
             }
         }
 
+
         return {
             success: true,
             context: { dna, research },
@@ -613,6 +625,32 @@ export async function fetchAnalysisContext(workshopId: string) {
     } catch (e) {
         console.error("fetchAnalysisContext failed", e);
         return { success: false, error: "Failed to load context" };
+    }
+}
+
+// =============================================================================
+// NEW: HYDRATION (THE PERSISTENCE FIX)
+// =============================================================================
+
+export async function getWorkshopIntelligence(workshopId: string) {
+    try {
+        const context = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            // @ts-ignore - Field exists in schema
+            select: { intelligenceAnalysis: true }
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // @ts-ignore - Field exists
+        const data = context?.intelligenceAnalysis as any;
+
+        if (data && data.opportunities && Array.isArray(data.opportunities) && data.opportunities.length > 0) {
+            return { success: true, opportunities: data.opportunities };
+        }
+        return { success: false, opportunities: [] };
+    } catch (error) {
+        console.error("Hydration Failed", error);
+        return { success: false, error: "Failed to load intelligence" };
     }
 }
 
