@@ -1,21 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check, UploadCloud, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import ReactMarkdown from 'react-markdown';
-import { MOCK_RESEARCH_BRIEF, MOCK_BLIND_SPOTS, MOCK_CLUSTERS, MOCK_FEASIBILITY } from '@/mocks/research-data';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, generateIntelligence } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, fetchAnalysisContext } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 
@@ -25,156 +22,345 @@ interface ResearchInterfaceProps {
     initialBriefs?: string[];
 }
 
+// QUEUE ITEM TYPE
+type QueueItem = {
+    id: string;
+    title: string;
+    description: string;
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETE' | 'FAILED';
+};
+
+// OPPORTUNITY CARD TYPE (Matches Server Output)
+type OpportunityCard = {
+    title: string;
+    description: string;
+    status: "READY" | "RISKY" | "BLOCKED";
+    horizon: "NOW" | "NEXT" | "LATER";
+    category: "EFFICIENCY" | "GROWTH" | "MOONSHOT";
+    originalId: string;
+};
+
 export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: ResearchInterfaceProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // =========================================================================
+    // ASSET DATA
+    // =========================================================================
     const dossierAssets = assets.filter(a => a.type === 'DOSSIER');
     const backlogAssets = assets.filter(a => a.type === 'BACKLOG');
     const marketAssets = assets.filter(a => a.type === 'MARKET_SIGNAL');
 
-    // Count READY assets for the guardrail
+    // Count READY assets
     const dossierReadyCount = dossierAssets.filter(a => a.status === 'READY').length;
     const backlogReadyCount = backlogAssets.filter(a => a.status === 'READY').length;
-
-    // Guardrail: Must have >= 1 READY asset in each category
     const isReadyForResearch = dossierReadyCount > 0 && backlogReadyCount > 0;
-
-    // Derived state from real assets
-    const hasDossier = dossierAssets.length > 0;
     const hasBacklog = backlogAssets.length > 0;
     const hasMarket = marketAssets.some(a => a.status === 'READY');
 
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [briefCopied, setBriefCopied] = useState(false);
+    // =========================================================================
+    // STATE
+    // =========================================================================
+    const [activeTab, setActiveTab] = useState('context');
     const [generatedBriefs, setGeneratedBriefs] = useState<string[]>(initialBriefs);
 
-    // Intelligence State
-    const [intelligenceState, setIntelligenceState] = useState<'idle' | 'analyzing' | 'complete'>('idle');
-    const [analysisData, setAnalysisData] = useState<{
-        blindspots: any[];
-        feasibility: any[];
-        clusters: any[];
-    } | null>(null);
-    const [agentProgress, setAgentProgress] = useState(0); // 0-3 for step tracking
+    // Research Generation State
+    const [isGeneratingBriefs, setIsGeneratingBriefs] = useState(false);
 
-    // Use URL param or default to "context"
-    const stageParam = searchParams.get('stage');
-    const defaultTab = stageParam === '3' ? 'intelligence' : 'context';
-    const [activeTab, setActiveTab] = useState(defaultTab);
+    // INTELLIGENCE ENGINE STATE
+    const [intelligenceState, setIntelligenceState] = useState<'idle' | 'initializing' | 'analyzing' | 'complete'>('idle');
+    const [queue, setQueue] = useState<QueueItem[]>([]);
+    const [completedCards, setCompletedCards] = useState<OpportunityCard[]>([]);
+    const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
 
+    // Context Cache for the AI Chain
+    const contextCache = useRef<{ dna: string; research: string } | null>(null);
+
+    // =========================================================================
+    // EFFECTS
+    // =========================================================================
+
+    // Tab switching based on URL
     useEffect(() => {
+        const stageParam = searchParams.get('stage');
         if (stageParam === '3') setActiveTab('intelligence');
-    }, [stageParam]);
+        else if (stageParam === '2') setActiveTab('research');
+    }, [searchParams]);
+
+    // THE DAISY CHAIN ORCHESTRATOR
+    useEffect(() => {
+        const processNextItem = async () => {
+            if (intelligenceState !== 'analyzing') return;
+
+            // 1. Find next pending item
+            const nextIdx = queue.findIndex(i => i.status === 'PENDING');
+
+            // 2. CHECK FOR COMPLETION
+            if (nextIdx === -1) {
+                // If queue is not empty and no pending items, we are done
+                if (queue.length > 0) {
+                    // Small delay for UI polish
+                    setTimeout(() => {
+                        setIntelligenceState('complete');
+                        toast.success("Intelligence Analysis Complete");
+                    }, 1000);
+                }
+                return;
+            }
+
+            // 3. PREPARE ITEM
+            const currentItem = queue[nextIdx];
+
+            // Optimistic UI Update: Mark as Processing
+            const newQueue = [...queue];
+            newQueue[nextIdx].status = 'PROCESSING';
+            setQueue(newQueue);
+
+            // UI Log
+            setCurrentLog(`Analyzing: ${currentItem.title}...`);
+
+            try {
+                // 4. CALL SERVER ACTION
+                // Ensure we have context
+                if (!contextCache.current) {
+                    console.error("Missing DNA or Research Context!");
+                    // Fail gracefully? For now, assume it's set in handleProcessSignals
+                    return;
+                }
+
+                const result = await analyzeBacklogItem(
+                    workshopId,
+                    { id: currentItem.id, title: currentItem.title, description: currentItem.description },
+                    contextCache.current
+                );
+
+                if (result.success && result.opportunity) {
+                    // 5. SUCCESS
+                    setCompletedCards(prev => [...prev, result.opportunity]);
+
+                    const successQueue = [...newQueue];
+                    successQueue[nextIdx].status = 'COMPLETE';
+                    setQueue(successQueue);
+
+                    setCurrentLog(`Insights Generated for ${currentItem.title}`);
+                } else {
+                    // 6. FAILURE
+                    const failQueue = [...newQueue];
+                    failQueue[nextIdx].status = 'FAILED';
+                    setQueue(failQueue);
+                    setCurrentLog(`Failed to analyze ${currentItem.title}`);
+                }
+
+            } catch (error) {
+                console.error("Daisy Chain Error", error);
+                const failQueue = [...newQueue];
+                failQueue[nextIdx].status = 'FAILED';
+                setQueue(failQueue);
+            }
+        };
+
+        // Run the processor when queue or state changes
+        // Use a timeout to prevent rapid-fire loops if something breaks, serves as rate limiter
+        const timer = setTimeout(() => {
+            processNextItem();
+        }, 100); // 100ms throttle
+
+        return () => clearTimeout(timer);
+    }, [queue, intelligenceState, workshopId]);
+
+
+    // =========================================================================
+    // HANDLERS
+    // =========================================================================
 
     const handleGenerateBrief = async () => {
         if (generatedBriefs.length > 0) {
-            const confirmed = window.confirm(
-                "⚠️ WARNING: This will overwrite your existing Research Briefs.\n\nAre you sure you want to generate new ones?"
-            );
+            const confirmed = window.confirm("⚠️ WARNING: Overwrite existing Research Briefs?");
             if (!confirmed) return;
         }
 
-        setIsAnalyzing(true);
+        setIsGeneratingBriefs(true);
         try {
             const result = await generateBrief(workshopId);
             if (result.success && result.brief) {
-                // The current action returns a single string, wrap it in array for now or split if feasible
-                // Assuming it returns one markdown blob which is the "brief"
-                // Ideally backend should return array, but if string, treating as one card
-                setGeneratedBriefs([result.brief]);
+                setGeneratedBriefs(result.briefs || [result.brief]); // Handle array vs string
                 setActiveTab('research');
                 toast.success('Research Brief Generated');
             } else {
                 toast.error(result.error || 'Failed to generate brief');
             }
         } catch (error) {
-            console.error(error);
             toast.error('An unexpected error occurred');
         } finally {
-            setIsAnalyzing(false);
+            setIsGeneratingBriefs(false);
         }
     };
 
-    const handleProcessSignals = async () => {
-        if (intelligenceState === 'analyzing') return;
+    const handleStartAnalysis = async () => {
+        if (backlogAssets.length === 0) {
+            toast.error("No backlog items to analyze");
+            return;
+        }
 
-        setIntelligenceState('analyzing');
-        setAgentProgress(0);
-
-        // Simulation of steps for UX while waiting
-        const progressInterval = setInterval(() => {
-            setAgentProgress(prev => (prev < 2 ? prev + 1 : prev));
-        }, 2500);
+        setIntelligenceState('initializing');
+        setCurrentLog("Hydrating Deep-Chain Context...");
 
         try {
-            console.log("Launching Triad Pipeline...");
-            const result = await generateIntelligence(workshopId);
+            // 1. Fetch Context & Items from Server
+            const result = await fetchAnalysisContext(workshopId);
 
-            clearInterval(progressInterval);
-            setAgentProgress(3);
-
-            if (result.success && result.data) {
-                setAnalysisData(result.data);
-                setTimeout(() => setIntelligenceState('complete'), 500);
-                toast.success('Strategic Intelligence Generated');
-            } else {
-                toast.error(result.error || 'Pipeline failed');
+            if (!result.success || !result.context || !result.items) {
+                toast.error("Failed to load analysis context");
                 setIntelligenceState('idle');
+                return;
             }
-        } catch (e) {
-            console.error(e);
-            clearInterval(progressInterval);
-            toast.error("Pipeline Error");
+
+            // 2. Cache Context
+            contextCache.current = result.context;
+
+            // 3. Hydrate Queue
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const initialQueue: QueueItem[] = result.items.map((i: any) => ({
+                id: i.id,
+                title: i.title,
+                description: i.description,
+                status: 'PENDING'
+            }));
+
+            setQueue(initialQueue);
+            setCompletedCards([]);
+
+            // 4. Start Daisy Chain
+            setIntelligenceState('analyzing');
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Initialization Failed");
             setIntelligenceState('idle');
         }
     };
 
-    const handleCopyBrief = () => {
-        navigator.clipboard.writeText(generatedBriefs[0] || MOCK_RESEARCH_BRIEF);
-        setBriefCopied(true);
-        setTimeout(() => setBriefCopied(false), 2000);
+    // =========================================================================
+    // UI COMPONENTS
+    // =========================================================================
+
+    const PizzaTracker = () => {
+        const total = queue.length;
+        const processed = completedCards.length;
+        const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+
+        // Circular Progress Math
+        const radius = 30;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (percent / 100) * circumference;
+
+        return (
+            <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-purple-100 p-6 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                    <div
+                        className="h-full bg-purple-600 transition-all duration-500 ease-out"
+                        style={{ width: `${percent}%` }}
+                    />
+                </div>
+
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        {/* Circular Progress */}
+                        <div className="relative w-20 h-20 flex-shrink-0">
+                            <svg className="w-full h-full transform -rotate-90">
+                                <circle
+                                    cx="40" cy="40" r={radius}
+                                    stroke="#f3f4f6" strokeWidth="6" fill="transparent"
+                                />
+                                <circle
+                                    cx="40" cy="40" r={radius}
+                                    stroke="currentColor" strokeWidth="6" fill="transparent"
+                                    className="text-purple-600 transition-all duration-500"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={offset}
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                <span className="text-xl font-bold text-purple-900">{percent}%</span>
+                            </div>
+                        </div>
+
+                        {/* Status Text */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-bold text-lg text-gray-900">Deep-Chain Analysis Active</h3>
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 animate-pulse">
+                                    Live
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-purple-600 font-mono flex items-center gap-2">
+                                {intelligenceState === 'analyzing' && <Loader2 className="w-3 h-3 animate-spin" />}
+                                {currentLog}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="text-right">
+                        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Items Processed</div>
+                        <div className="text-3xl font-black text-gray-900 tracking-tight">
+                            {processed} <span className="text-gray-300 text-xl font-normal">/ {total}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recent Success Pop */}
+                {processed > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3 text-sm text-gray-600 animate-in fade-in slide-in-from-top-1">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span>Analysis complete: <span className="font-bold text-gray-800">{completedCards[processed - 1].title}</span></span>
+                        <span className="ml-auto text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-500 font-mono">
+                            {completedCards[processed - 1].category}
+                        </span>
+                    </div>
+                )}
+            </div>
+        );
     };
 
-    // Tab definitions
-    const tabs = [
+    const Tabs = [
         { id: 'context', label: 'CONTEXT', disabled: false },
         { id: 'research', label: 'RESEARCH', disabled: generatedBriefs.length === 0 && !isReadyForResearch },
-        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasMarket }
+        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasMarket } // Using existing flag logic
     ];
 
-    // Header Component
-    const header = (
-        <div className="px-8 py-5 flex justify-between items-center">
-            <div className="flex items-baseline gap-3">
-                <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-                    Research & Context Injection
-                </h1>
-            </div>
-            <p className="text-sm text-slate-500">
-                Ground the AI in your enterprise reality.
-            </p>
-        </div>
-    );
-
-
+    // =========================================================================
+    // RENDER
+    // =========================================================================
 
     return (
-        <WorkshopPageShell header={header}>
-            {/* Tabs Header (Relocated Primary Action) */}
-            <div className="flex justify-between items-center mb-6 pb-2">
-                <div className="flex space-x-6">
-                    {tabs.map((tab) => (
+        <WorkshopPageShell
+            header={
+                <div className="px-8 py-5 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10 border-b border-slate-100/50">
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <BrainCircuit className="w-6 h-6 text-brand-blue" />
+                            Deep-Chain Intelligence
+                        </h1>
+                    </div>
+                </div>
+            }
+        >
+            {/* TABS HEADER */}
+            <div className="flex justify-between items-center mb-8 pb-2 border-b border-slate-100">
+                <div className="flex space-x-8">
+                    {Tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => !tab.disabled && setActiveTab(tab.id)}
                             disabled={tab.disabled}
-                            className={`pb-2 text-xs font-bold tracking-widest transition-colors relative ${activeTab === tab.id
-                                ? 'text-brand-blue'
-                                : tab.disabled
-                                    ? 'text-slate-300 cursor-not-allowed'
-                                    : 'text-slate-400 hover:text-slate-600'
-                                }`}
+                            className={cn(
+                                "pb-4 text-xs font-bold tracking-widest transition-all relative",
+                                activeTab === tab.id
+                                    ? "text-brand-blue"
+                                    : tab.disabled ? "text-slate-300 cursor-not-allowed" : "text-slate-400 hover:text-slate-600"
+                            )}
                         >
                             {tab.label}
                             {activeTab === tab.id && (
@@ -184,40 +370,20 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     ))}
                 </div>
 
-                {/* Header Action Logic */}
+                {/* HEADER ACTIONS */}
                 <div>
                     {activeTab === 'context' && (
                         <ResearchBriefButton
                             onClick={handleGenerateBrief}
                             isDisabled={!isReadyForResearch}
-                            isLoading={isAnalyzing}
+                            isLoading={isGeneratingBriefs}
                             dossierCount={dossierReadyCount}
                             backlogCount={backlogReadyCount}
                         />
                     )}
-
-                    {activeTab === 'research' && (
-                        <Button
-                            onClick={handleProcessSignals}
-                            disabled={!hasMarket}
-                            className={`
-                                bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all 
-                                flex items-center gap-2 px-4 py-2 rounded-md font-medium
-                                ${!hasMarket ? 'opacity-50 cursor-not-allowed' : ''}
-                            `}
-                        >
-                            Process Market Signals
-                            <Zap className="w-4 h-4 ml-1" />
-                        </Button>
-                    )}
-
                     {activeTab === 'intelligence' && intelligenceState === 'complete' && (
-                        <Button
-                            className="bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center gap-2 px-4 py-2 rounded-md font-medium"
-                            onClick={() => router.push(`/workshop/${workshopId}/ideation`)}
-                        >
-                            Enter Ideation
-                            <ArrowRight className="w-4 h-4 ml-1" />
+                        <Button onClick={() => router.push(`/workshop/${workshopId}/ideation`)}>
+                            Proceeed to Ideation <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                     )}
                 </div>
@@ -225,177 +391,146 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
             {/* TAB CONTENT */}
             <div className="flex-1">
-                {/* TAB 1: Context Ingestion */}
+
+                {/* 1. CONTEXT */}
                 {activeTab === 'context' && (
-                    <div className="grid grid-cols-2 gap-6 h-[600px]">
-                        <AssetRegistry
-                            workshopId={workshopId}
-                            type="DOSSIER"
-                            title="Enterprise Dossier"
-                            assets={dossierAssets}
-                        />
-                        <AssetRegistry
-                            workshopId={workshopId}
-                            type="BACKLOG"
-                            title="Client Backlog"
-                            assets={backlogAssets}
-                        />
-
-
+                    <div className="grid grid-cols-2 gap-8 h-[600px]">
+                        <AssetRegistry workshopId={workshopId} type="DOSSIER" title="Enterprise Dossier" assets={dossierAssets} />
+                        <AssetRegistry workshopId={workshopId} type="BACKLOG" title="Client Backlog" assets={backlogAssets} />
                     </div>
                 )}
 
-                {/* TAB 2: Research Loop */}
-                {/* TAB 2: Research Loop */}
+                {/* 2. RESEARCH */}
                 {activeTab === 'research' && (
-                    <div className="grid grid-cols-2 gap-6 min-h-[600px]">
-                        <Card className="bg-slate-50 border-slate-200 text-slate-900 flex flex-col h-full shadow-inner">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <div className="grid grid-cols-2 gap-8 min-h-[600px]">
+                        <Card className="bg-slate-50 border-slate-200 shadow-sm flex flex-col h-full">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white border-b border-slate-100 rounded-t-xl">
                                 <CardTitle className="text-indigo-600 font-mono flex items-center gap-2 text-sm uppercase tracking-wider">
                                     <Search className="h-4 w-4" /> AI Research Briefs
                                 </CardTitle>
-                                <Badge variant="outline" className="text-xs bg-white">
-                                    {generatedBriefs.length} Briefs Generated
-                                </Badge>
+                                <Badge variant="outline">{generatedBriefs.length} Briefs</Badge>
                             </CardHeader>
-                            <CardContent className="overflow-y-auto flex-1 font-mono text-sm leading-relaxed p-0">
+                            <CardContent className="overflow-y-auto flex-1 p-0">
                                 {generatedBriefs.length > 0 ? (
-                                    <div className="p-4">
-                                        <ResearchBriefList briefs={generatedBriefs} />
-                                    </div>
+                                    <div className="p-4"><ResearchBriefList briefs={generatedBriefs} /></div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
-                                        <Search className="h-12 w-12 mb-4 opacity-20" />
                                         <p>No research generated yet.</p>
-                                        <p className="text-xs mt-2">Click "Generate" to analyze your assets.</p>
                                     </div>
                                 )}
                             </CardContent>
                         </Card>
 
-                        {/* Right Column: Market Signals Registry + Action */}
-                        <div className="flex flex-col h-fit min-h-[300px] gap-6">
-                            <AssetRegistry
-                                workshopId={workshopId}
-                                type="MARKET_SIGNAL"
-                                title="Market Signals"
-                                assets={marketAssets}
-                            />
+                        {/* Market Signals (Kept for reference, though less critical in Daisy Chain flow) */}
+                        <div className="flex flex-col h-fit gap-6">
+                            <AssetRegistry workshopId={workshopId} type="MARKET_SIGNAL" title="Market Signals" assets={marketAssets} />
                         </div>
                     </div>
                 )}
 
-                {/* TAB 3: Intelligence Hub */}
+                {/* 3. INTELLIGENCE (THE MAIN EVENT) */}
                 {activeTab === 'intelligence' && (
-                    <div className="h-full min-h-[600px]">
-                        {/* STATE 1: IDLE */}
+                    <div className="min-h-[600px]">
+
+                        {/* STATE: IDLE */}
                         {intelligenceState === 'idle' && (
                             <div className="flex flex-col items-center justify-center h-[500px] border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                                <Button
-                                    size="lg"
-                                    onClick={handleProcessSignals}
-                                    className="h-16 px-8 text-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-xl"
-                                >
-                                    <Zap className="mr-2 h-6 w-6" /> Run Strategic Analysis
-                                </Button>
-                                <p className="mt-4 text-slate-500 font-medium tracking-wide text-sm">LAUNCH MULTI-AGENT PIPELINE</p>
-                            </div>
-                        )}
-
-                        {/* STATE 2: ANALYZING */}
-                        {intelligenceState === 'analyzing' && (
-                            <div className="flex flex-col items-center justify-center h-[500px] space-y-8">
-                                {/* Agent A */}
-                                <div className={cn("flex items-center gap-4 transition-opacity duration-500", agentProgress >= 0 ? "opacity-100" : "opacity-30")}>
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                        {agentProgress > 0 ? <CheckCircle className="text-blue-600 w-6 h-6" /> : <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />}
+                                <div className="text-center max-w-lg space-y-6">
+                                    <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto text-purple-600">
+                                        <Sparkles className="w-8 h-8" />
                                     </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-900">Agent A: Feasibility Auditor</h3>
-                                        <p className="text-sm text-slate-500">Auditing technical constraints...</p>
-                                    </div>
-                                </div>
-
-                                {/* Agent B */}
-                                <div className={cn("flex items-center gap-4 transition-opacity duration-500", agentProgress >= 0 ? "opacity-100" : "opacity-30")}>
-                                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                        {agentProgress > 1 ? <CheckCircle className="text-purple-600 w-6 h-6" /> : <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />}
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-900">Agent B: Market Scout</h3>
-                                        <p className="text-sm text-slate-500">Scanning blindspots & trends...</p>
-                                    </div>
-                                </div>
-
-                                {/* Agent C */}
-                                <div className={cn("flex items-center gap-4 transition-opacity duration-500", agentProgress >= 1 ? "opacity-100" : "opacity-30")}>
-                                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                                        {agentProgress > 2 ? <CheckCircle className="text-amber-600 w-6 h-6" /> : (agentProgress === 2 ? <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" /> : <div className="w-3 h-3 bg-amber-300 rounded-full" />)}
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-900">Agent C: Opportunity Architect</h3>
-                                        <p className="text-sm text-slate-500">Synthesizing strategic clusters...</p>
+                                    <h2 className="text-2xl font-black text-slate-800">Ready to Analyze Backlog?</h2>
+                                    <p className="text-slate-500">
+                                        The Deep-Chain Engine will forensically audit each item, cross-reference it with our research, and generate strategic opportunity cards.
+                                    </p>
+                                    <Button
+                                        size="lg"
+                                        onClick={handleStartAnalysis}
+                                        className="h-14 px-8 text-lg bg-purple-600 hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all hover:scale-105"
+                                    >
+                                        <Zap className="mr-2 h-5 w-5" /> Initialize Deep-Chain Sequence
+                                    </Button>
+                                    <div className="flex items-center justify-center gap-4 text-xs font-mono text-slate-400">
+                                        <span>{backlogAssets.length} Items Queued</span>
+                                        <span>•</span>
+                                        <span>{dossierReadyCount > 0 ? "DNA Loaded" : "No DNA"}</span>
+                                        <span>•</span>
+                                        <span>{generatedBriefs.length} Research Briefs</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* STATE 3: COMPLETE (DASHBOARD) */}
-                        {intelligenceState === 'complete' && analysisData && (
-                            <div className="grid grid-cols-12 gap-6 h-full">
-                                {/* Row 1: Left (Blindspots) & Right (Feasibility) */}
-                                <div className="col-span-4 h-[400px]">
-                                    <Card className="flex flex-col h-full border-l-4 border-l-purple-500">
-                                        <CardHeader>
-                                            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Blind Spot Radar</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-3 flex-1 overflow-y-auto">
-                                            {analysisData.blindspots.map((spot, i) => (
-                                                <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg border">
-                                                    <span className="font-semibold text-foreground text-sm">{spot.name}</span>
-                                                    {spot.status === "CRITICAL" ? (
-                                                        <Badge variant="destructive" className="flex gap-1 text-xs"><AlertTriangle size={10} /> Critical</Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary" className="text-xs">Aligned</Badge>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                        {/* STATE: INITIALIZING */}
+                        {intelligenceState === 'initializing' && (
+                            <div className="flex flex-col items-center justify-center h-[500px]">
+                                <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
+                                <h3 className="font-bold text-lg text-slate-700">Hydrating Deep-Chain Context...</h3>
+                                <p className="text-slate-500 text-sm">Parsing backlog logic and loading technical DNA</p>
+                            </div>
+                        )}
 
-                                <div className="col-span-8 h-[400px]">
-                                    <Card className="flex flex-col h-full">
-                                        <CardHeader>
-                                            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Feasibility Heatmap</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="grid grid-cols-2 gap-4 overflow-y-auto content-start">
-                                            {analysisData.feasibility.map((item, i) => {
-                                                const isBlocked = item.status === "BLOCKED";
-                                                const isRisky = item.status === "RISKY";
-                                                return (
-                                                    <div key={i} className={cn("p-4 border rounded-lg flex justify-between items-center bg-white", isBlocked && "border-red-200 bg-red-50", isRisky && "border-orange-200 bg-orange-50")}>
-                                                        <span className="font-medium text-sm truncate pr-2" title={item.name}>{item.name}</span>
-                                                        <Badge variant={isBlocked ? "destructive" : (isRisky ? "outline" : "secondary")}>
-                                                            {item.status}
-                                                        </Badge>
-                                                    </div>
-                                                )
-                                            })}
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                        {/* STATE: ACTIVE OR COMPLETE */}
+                        {(intelligenceState === 'analyzing' || intelligenceState === 'complete') && (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                {/* PIZZA TRACKER */}
+                                <PizzaTracker />
 
-                                {/* Row 2: Clusters */}
-                                <div className="col-span-12">
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 mt-2">Strategic Opportunity Clusters</h3>
-                                    <div className="grid grid-cols-3 gap-6">
-                                        {analysisData.clusters.map((cluster, i) => (
-                                            <Card key={i} className="group p-5 hover:shadow-lg transition-all border-brand-blue/20 hover:border-brand-blue">
-                                                <Badge variant="outline" className="mb-3 text-xs">{cluster.horizon}</Badge>
-                                                <h4 className="text-lg font-bold text-slate-800 mb-1">{cluster.name}</h4>
-                                                <p className="text-xs font-medium text-brand-blue uppercase tracking-wider mb-3">{cluster.strategy}</p>
-                                                <div className="text-sm text-slate-500 font-medium">Derived from {cluster.count} insights</div>
+                                {/* KANBAN BOARD */}
+                                <div className="grid grid-cols-3 gap-6">
+                                    {/* COL 1: EFFICIENCY */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                            Efficiency (Now)
+                                        </h3>
+                                        {completedCards.filter(c => c.category === 'EFFICIENCY').map((card, i) => (
+                                            <Card key={i} className="border-l-4 border-l-emerald-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
+                                                <CardContent className="p-4">
+                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
+                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
+                                                    <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-50 border-emerald-100">
+                                                        {card.status}
+                                                    </Badge>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+
+                                    {/* COL 2: GROWTH */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                            Growth (Next)
+                                        </h3>
+                                        {completedCards.filter(c => c.category === 'GROWTH').map((card, i) => (
+                                            <Card key={i} className="border-l-4 border-l-blue-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
+                                                <CardContent className="p-4">
+                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
+                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
+                                                    <Badge variant="outline" className="text-[10px] text-blue-700 bg-blue-50 border-blue-100">
+                                                        {card.status}
+                                                    </Badge>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+
+                                    {/* COL 3: MOONSHOT */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-purple-500" />
+                                            Moonshot (Later)
+                                        </h3>
+                                        {completedCards.filter(c => c.category === 'MOONSHOT').map((card, i) => (
+                                            <Card key={i} className="border-l-4 border-l-purple-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
+                                                <CardContent className="p-4">
+                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
+                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
+                                                    <Badge variant="outline" className="text-[10px] text-purple-700 bg-purple-50 border-purple-100">
+                                                        {card.status}
+                                                    </Badge>
+                                                </CardContent>
                                             </Card>
                                         ))}
                                     </div>
@@ -404,9 +539,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         )}
                     </div>
                 )}
+
             </div>
         </WorkshopPageShell>
     );
 }
-
-

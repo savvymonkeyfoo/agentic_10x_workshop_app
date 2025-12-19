@@ -374,208 +374,170 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
 }
 
 // =============================================================================
-// MAIN ORCHESTRATOR: THE SUPREME SCOUT PIPELINE
+// DEEP-CHAIN INTELLIGENCE ENGINE (The "10 Humans" Simulator)
 // =============================================================================
 
-// =============================================================================
-// AGENT A: FEASIBILITY AUDITOR (The Realist)
-// Role: CTO / Chief Architect
-// Mission: Identify technical constraints and friction points
-// =============================================================================
+const AUDITOR_PROMPT = `You are a Forensic Systems Architect.
+Task: Audit this specific Backlog Item against the Technical DNA.
+Constraint: You must quote the specific system/legacy constraint from the DNA that makes this difficult.
+Output: A 'Friction Report' (1-2 sentences).`;
 
-const FEASIBILITY_PROMPT = `You are a pragmatic Chief Technology Officer (CTO).
-Your goal is to "kill bad ideas" by identifying technical constraints in the backlog.
+const ENHANCER_PROMPT = `You are an Innovation Strategist.
+Task: Look at the Friction Report. Now scan the Research Briefs.
+Goal: Find a specific concept/technology in the Research that solves this friction or makes the idea 10x better.
+Rule: Do not use generic buzzwords. Use specific terms found in the Research (e.g., 'MMO State Sync', 'Headless API').`;
 
-**INPUTS:**
-- Technical DNA (Existing Architecture)
-- Client Backlog (Proposed Features)
+const WRITER_PROMPT = `You are a Strategy Partner.
+Task: Synthesize the Original Item, the Friction, and the Enhancement into a final Strategic Opportunity Card.
+OUTPUT JSON FORMAT:
+{
+  "title": "The Enhanced Title",
+  "description": "30-word summary including the research insight.",
+  "status": "READY" | "RISKY" | "BLOCKED",
+  "horizon": "NOW" | "NEXT" | "LATER",
+  "category": "EFFICIENCY" | "GROWTH" | "MOONSHOT",
+  "originalId": "string (pass through the ID)"
+}`;
 
-**TASK:**
-Analyse each backlog item against the Technical DNA.
-For each major initiative, assign a Feasibility Score (HIGH/MEDIUM/LOW) and a Friction Assessment.
-
-**OUTPUT JSON FORMAT:**
-[
-  {
-    "name": "Feature Name",
-    "status": "READY" | "RISKY" | "BLOCKED",
-    "evidence": "One sentence explaining the technical constraint or enabler."
-  }
-]
-Return ONLY the raw JSON array.`;
-
-async function analyzeFeasibility(auditData: string, backlogContext: string): Promise<any[]> {
-    console.log(`[SupremeScout] Agent A: Feasibility Audit (Parallel)...`);
-    const prompt = `${FEASIBILITY_PROMPT}
-
-TECHNICAL DNA:
-${auditData}
-
-BACKLOG:
-${backlogContext}
-
-Generate Feasibility Map now.`;
-
-    const { text } = await generateText({
-        model: AI_CONFIG.auditModel, // Uses Flash for speed/logic
-        prompt,
-    });
-
+export async function analyzeBacklogItem(
+    workshopId: string,
+    item: { id: string; title: string; description: string },
+    context: { dna: string; research: string }
+) {
     try {
-        // Simple heuristic to extract JSON if wrapped in markdown
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
-    } catch (e) {
-        console.error("Failed to parse Feasibility JSON", e);
-        return [];
-    }
-}
+        // STEP 1: THE AUDITOR (Technical Constraints)
+        const { text: frictionReport } = await generateText({
+            model: AI_CONFIG.auditModel,
+            prompt: `${AUDITOR_PROMPT}\n\nITEM: ${item.title} - ${item.description}\n\nDNA: ${context.dna}`
+        });
 
-// =============================================================================
-// AGENT B: MARKET SCOUT (The Futurist)
-// Role: Competitor Analyst
-// Mission: Find missing links and blindspots
-// =============================================================================
+        // STEP 2: THE ENHANCER (Strategic Uplift)
+        const { text: enhancement } = await generateText({
+            model: AI_CONFIG.strategicModel,
+            prompt: `${ENHANCER_PROMPT}\n\nITEM: ${item.title}\nFRICTION: ${frictionReport}\n\nRESEARCH BRIEFS: ${context.research}`
+        });
 
-const BLINDSPOT_PROMPT = `You are a ruthless Competitor Analyst.
-Your goal is to find "Blind Spots" - things the market is doing that this client is NOT.
+        // STEP 3: THE WRITER (Card Synthesis)
+        const { text: cardJson } = await generateText({
+            model: AI_CONFIG.strategicModel,
+            prompt: `${WRITER_PROMPT}\n\nORIGINAL: ${item.title}\nFRICTION: ${frictionReport}\nENHANCEMENT: ${enhancement}\nID: ${item.id}`,
+            // We use standard json parsing, response_format supported by some providers but keeping generic
+        });
 
-**INPUTS:**
-- Market Signals (competitor moves, trends - *Simulated for now*)
-- Client Backlog (what they ARE doing)
+        let opportunity;
+        try {
+            const jsonStr = cardJson.replace(/```json/g, '').replace(/```/g, '').trim();
+            opportunity = JSON.parse(jsonStr);
+        } catch (e) {
+            console.error("Failed to parse Card JSON", e);
+            return { success: false, error: "Failed to parse AI output" };
+        }
 
-**TASK:**
-Identify 3 critical categories where the client is under-investing compared to the market.
+        // ATOMIC PERSISTENCE: Retrieve current list, append, and save
+        const currentContext = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            // @ts-ignore - Field exists in schema and client, IDE cache issue
+            select: { intelligenceAnalysis: true }
+        });
 
-**OUTPUT JSON FORMAT:**
-[
-  {
-    "name": "Blind Spot Category",
-    "status": "CRITICAL" | "ALIGNED",
-    "evidence": "Why this is a risk. Cite a general market trend."
-  }
-]
-Return ONLY the raw JSON array.`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // @ts-ignore - Field exists in generated client
+        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+        const newOpportunities = [...(currentData.opportunities || []), opportunity];
 
-async function scanBlindspots(backlogContext: string): Promise<any[]> {
-    console.log(`[SupremeScout] Agent B: Market Scout (Parallel)...`);
-    const prompt = `${BLINDSPOT_PROMPT}
-
-CLIENT BACKLOG:
-${backlogContext}
-
-Generate Blindspot Radar now.`;
-
-    const { text } = await generateText({
-        model: AI_CONFIG.strategicModel,
-        prompt,
-    });
-
-    try {
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
-    } catch (e) {
-        console.error("Failed to parse Blindspot JSON", e);
-        return [];
-    }
-}
-
-// =============================================================================
-// AGENT C: OPPORTUNITY ARCHITECT (The Synthesizer)
-// Role: Chief Strategy Officer
-// Mission: Fill the gaps with viable ideas
-// =============================================================================
-
-const IDEATION_PROMPT = `You are the Chief Strategy Officer.
-Your goal is to synthesize the final "Strategic Opportunity Map".
-
-**INPUTS:**
-- Feasibility Report (Constraints)
-- Blindspot Radar (Market Gaps)
-
-**TASK:**
-Generate 3 clusters of opportunities:
-1. **FIX** (High Feasibility, Low Risk) - Quick wins.
-2. **WIN** (Medium Feasibility, High Market Value) - Core growth.
-3. **MOONSHOT** (Low Feasibility, High Market Value) - Long term disruption.
-
-**OUTPUT JSON FORMAT:**
-[
-  {
-    "strategy": "FIX" | "WIN" | "MOONSHOT",
-    "horizon": "NOW" | "NEXT" | "LATER",
-    "name": "Cluster Name",
-    "count": Number of distinct ideas inferred
-  }
-]
-Return ONLY the raw JSON array.`;
-
-async function synthesizeOpportunities(feasibility: any, blindspots: any): Promise<any[]> {
-    console.log(`[SupremeScout] Agent C: Synthesis (Dependent)...`);
-    const prompt = `${IDEATION_PROMPT}
-
-FEASIBILITY REPORT:
-${JSON.stringify(feasibility, null, 2)}
-
-BLINDSPOT RADAR:
-${JSON.stringify(blindspots, null, 2)}
-
-Generate Strategic Clusters now.`;
-
-    const { text } = await generateText({
-        model: AI_CONFIG.strategicModel,
-        prompt,
-    });
-
-    try {
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
-    } catch (e) {
-        console.error("Failed to parse Ideation JSON", e);
-        return [];
-    }
-}
-
-// =============================================================================
-// MULTI-AGENT ORCHESTRATOR
-// =============================================================================
-
-export async function generateIntelligence(workshopId: string) {
-    console.log(`[SupremeScout] ========== Starting Intelligence Triad for ${workshopId} ==========`);
-
-    try {
-        // 1. Get Context
-        const retrieval = await queryPinecone(workshopId, "Architecture and Strategy", { topK: 20 });
-        const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
-        const auditData = await technicalAudit(dossierContext, backlogContext); // Reuse existing audit logic for DNA
-
-        // 2. Parallel Execution (Agents A & B)
-        console.log(`[SupremeScout] Launching Parallel Agents...`);
-        const [feasibilityReport, blindspotReport] = await Promise.all([
-            analyzeFeasibility(auditData, backlogContext),
-            scanBlindspots(backlogContext)
-        ]);
-
-        // 3. Sequential Synthesis (Agent C)
-        console.log(`[SupremeScout] Synthesizing Intelligence...`);
-        const ideasReport = await synthesizeOpportunities(feasibilityReport, blindspotReport);
-
-        // 4. Save/Return
-        return {
-            success: true,
+        await prisma.workshopContext.update({
+            where: { workshopId },
             data: {
-                feasibility: feasibilityReport,
-                blindspots: blindspotReport,
-                clusters: ideasReport
+                // @ts-ignore - Field exists in schema and client, IDE cache issue
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: newOpportunities
+                }
             }
-        };
+        });
+
+        return { success: true, opportunity };
 
     } catch (error) {
-        console.error("[SupremeScout] Intelligence Pipeline Failed:", error);
+        console.error(`[DeepChain] Failed to analyze item ${item.id}`, error);
+        return { success: false, error: "Analysis failed" };
+    }
+}
+
+// =============================================================================
+// MAIN ORCHESTRATOR FOR RESEARCH BRIEFS
+// =============================================================================
+
+const BACKLOG_EXTRACTION_PROMPT = `You are a Technical Project Manager.
+Task: Extract a clean list of discrete features/stories from the raw backlog text.
+Rules:
+1. Ignore fluff. Return only actionable items.
+2. If the text is unstructured, infer logical items.
+3. Max 12-15 items.
+
+OUTPUT JSON:
+[
+  { "id": "1", "title": "Feature Name", "description": "Short summary" }
+]`;
+
+export async function fetchAnalysisContext(workshopId: string) {
+    try {
+        const workshopContext = await prisma.workshopContext.findUnique({
+            where: { workshopId }
+        });
+
+        // 1. Get DNA & Research
+        const retrieval = await queryPinecone(workshopId, "Architecture and Strategy", { topK: 20 });
+        const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
+
+        const dna = await technicalAudit(dossierContext, backlogContext); // Or cache this too?
+        // Ideally verify if we have cached constraints, but re-generating is safer for now.
+
+        const research = workshopContext?.researchBrief || "No research briefs found.";
+
+        // 2. Get Backlog Items (Discrete)
+        let items: any[] = [];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawBacklog = workshopContext?.rawBacklog as any;
+
+        if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
+            items = rawBacklog;
+        } else {
+            // AUTO-EXTRACT
+            console.log("[SupremeScout] parsing raw backlog from text...");
+            const { text } = await generateText({
+                model: AI_CONFIG.auditModel,
+                prompt: `${BACKLOG_EXTRACTION_PROMPT}\n\nRAW BACKLOG:\n${backlogContext}`
+            });
+
+            try {
+                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                items = JSON.parse(jsonStr);
+
+                // Cache it
+                await prisma.workshopContext.update({
+                    where: { workshopId },
+                    data: { rawBacklog: items }
+                });
+            } catch (e) {
+                console.error("Failed to parse backlog extraction", e);
+            }
+        }
+
         return {
-            success: false,
-            error: error instanceof Error ? error.message : "Intelligence Pipeline failed."
+            success: true,
+            context: { dna, research },
+            items: items.map((i: any) => ({
+                id: i.id || Math.random().toString(36).substring(7),
+                title: i.title || "Untitled",
+                description: i.description || ""
+            }))
         };
+
+    } catch (e) {
+        console.error("fetchAnalysisContext failed", e);
+        return { success: false, error: "Failed to load context" };
     }
 }
 

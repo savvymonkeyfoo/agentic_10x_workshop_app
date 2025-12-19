@@ -128,6 +128,7 @@ model WorkshopContext {
   // Supreme Scout Pipeline Outputs
   researchBriefs     Json?    // Array of discrete research briefs
   reasoningSignature String?  @db.Text // Thought signature for Research Team handoff
+  intelligenceAnalysis Json?  // Deep-Chain Analysis Results (Opportunity Cards)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
