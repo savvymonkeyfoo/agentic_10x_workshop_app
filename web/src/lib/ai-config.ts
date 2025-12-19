@@ -5,20 +5,17 @@ import { google } from '@ai-sdk/google';
  * 
  * Purpose: Abstract model selection to enable zero-downtime model upgrades.
  * 
- * Usage:
- * - Update models via environment variables (no code changes required)
- * - Toggle features like Deep Think mode for strategic reasoning
- * - Swap between Flash (speed/cost) and Pro (reasoning depth)
+ * GEMINI 3 ARCHITECTURE:
+ * - Flash: PhD-level reasoning with 3x speed improvement
+ * - Pro: Deep Think mode for extended reasoning chains
+ * - Native multimodality: "Sees" architecture diagrams natively
  * 
  * Environment Variables:
- * - AI_MODEL_AUDIT: Model for Technical Audit (default: gemini-2.5-flash)
- * - AI_MODEL_STRATEGIC: Model for Gap Analysis & Briefs (default: gemini-2.5-pro)
- * - AI_MODEL_GENERAL: Model for general AI tasks (default: gemini-2.5-flash)
- * - AI_MODEL_EMBEDDING: Model for vector embeddings (default: text-embedding-004)
- * 
- * Recommended Settings:
- * - Development: gemini-2.5-flash for all (cost savings)
- * - Production: gemini-3-flash (audit/general) + gemini-3-pro (strategic)
+ * - AI_MODEL_AUDIT: Technical Audit (default: gemini-3-flash-preview)
+ * - AI_MODEL_STRATEGIC: Gap Analysis & Briefs (default: gemini-3-pro-preview)
+ * - AI_MODEL_GENERAL: Canvas/Workshop tasks (default: gemini-3-flash-preview)
+ * - AI_MODEL_EMBEDDING: Vector search (default: text-embedding-004)
+ * - AI_THINKING_LEVEL: Reasoning depth (default: high)
  */
 
 // =============================================================================
@@ -26,17 +23,41 @@ import { google } from '@ai-sdk/google';
 // =============================================================================
 
 export const MODEL_IDS = {
-    // Audit Layer: Optimized for extraction accuracy and speed
-    AUDIT: process.env.AI_MODEL_AUDIT || 'gemini-2.5-flash',
+    // Audit Layer: Gemini 3 Flash for reasoning-native extraction
+    AUDIT: process.env.AI_MODEL_AUDIT || 'gemini-3-flash-preview',
 
-    // Strategic Layer: Optimized for complex problem-solving
-    STRATEGIC: process.env.AI_MODEL_STRATEGIC || 'gemini-2.5-pro',
+    // Strategic Layer: Gemini 3 Pro for Deep Think reasoning
+    STRATEGIC: process.env.AI_MODEL_STRATEGIC || 'gemini-3-pro-preview',
 
-    // General Layer: For canvas optimization, workshop analysis, etc.
-    GENERAL: process.env.AI_MODEL_GENERAL || 'gemini-2.5-flash',
+    // General Layer: For canvas optimization, workshop analysis
+    GENERAL: process.env.AI_MODEL_GENERAL || 'gemini-3-flash-preview',
 
     // Embedding Layer: For vector search
     EMBEDDING: process.env.AI_MODEL_EMBEDDING || 'text-embedding-004',
+} as const;
+
+// =============================================================================
+// THINKING LEVEL CONFIGURATION
+// =============================================================================
+
+export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+
+export const THINKING_CONFIG = {
+    // Current thinking level from environment (default: high for strategic work)
+    level: (process.env.AI_THINKING_LEVEL || 'high') as ThinkingLevel,
+
+    // Budget presets for different thinking levels
+    budgets: {
+        minimal: 1000,
+        low: 3000,
+        medium: 6000,
+        high: 10000,
+    } as const,
+
+    // Get the thinking budget for current level
+    get budget() {
+        return this.budgets[this.level];
+    }
 } as const;
 
 // =============================================================================
@@ -45,26 +66,28 @@ export const MODEL_IDS = {
 
 export const AI_CONFIG = {
     /**
-     * Audit Model (gemini-3-flash or gemini-2.5-flash)
+     * Audit Model (gemini-3-flash-preview)
      * 
      * Used for: Technical Audit step in Supreme Scout
-     * Optimized for: Speed, accuracy, factual extraction
+     * Optimized for: PhD-level reasoning with Flash latency
+     * Thinking Level: Uses current AI_THINKING_LEVEL
      */
     auditModel: google(MODEL_IDS.AUDIT),
 
     /**
-     * Strategic Model (gemini-3-pro or gemini-2.5-pro)
+     * Strategic Model (gemini-3-pro-preview)
      * 
      * Used for: Gap Analysis, Brief Architecture
-     * Optimized for: Deep reasoning, complex problem-solving
+     * Optimized for: Deep Think extended reasoning chains
+     * Thinking Level: Uses current AI_THINKING_LEVEL
      */
     strategicModel: google(MODEL_IDS.STRATEGIC),
 
     /**
-     * General Model (gemini-2.5-flash or gemini-3-flash)
+     * General Model (gemini-3-flash-preview)
      * 
      * Used for: Canvas optimization, workshop analysis, recommendations
-     * Optimized for: Speed, cost efficiency
+     * Optimized for: Speed, cost efficiency with reasoning capability
      */
     generalModel: google(MODEL_IDS.GENERAL),
 
@@ -77,7 +100,12 @@ export const AI_CONFIG = {
     embeddingModel: google.textEmbeddingModel(MODEL_IDS.EMBEDDING),
 
     /**
-     * Raw model identifiers (for logging/debugging or custom google() calls)
+     * Thinking configuration for strategic reasoning
+     */
+    thinking: THINKING_CONFIG,
+
+    /**
+     * Raw model identifiers (for logging/debugging)
      */
     identifiers: MODEL_IDS,
 } as const;

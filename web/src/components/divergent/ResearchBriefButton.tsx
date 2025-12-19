@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText } from "lucide-react";
+import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 export type PipelineStep = 'idle' | 'auditing' | 'analysing' | 'architecting';
+export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
 
 interface ResearchBriefButtonProps {
     onClick: () => void;
@@ -14,6 +15,7 @@ interface ResearchBriefButtonProps {
     isLoading: boolean;
     dossierCount: number;
     backlogCount: number;
+    thinkingLevel?: ThinkingLevel;
 }
 
 const STEP_CONFIG: Record<PipelineStep, { icon: React.ReactNode; text: string; description: string }> = {
@@ -21,12 +23,12 @@ const STEP_CONFIG: Record<PipelineStep, { icon: React.ReactNode; text: string; d
     auditing: {
         icon: <FileSearch className="mr-2 h-5 w-5 animate-pulse" />,
         text: 'Extracting Enterprise DNA...',
-        description: 'Technical Audit in progress'
+        description: 'Gemini 3 Flash analyzing documents'
     },
     analysing: {
         icon: <GitCompare className="mr-2 h-5 w-5 animate-pulse" />,
         text: 'Stress-Testing Strategy...',
-        description: 'Identifying strategic gaps'
+        description: 'Gemini 3 Pro Deep Think active'
     },
     architecting: {
         icon: <FileText className="mr-2 h-5 w-5 animate-pulse" />,
@@ -35,15 +37,23 @@ const STEP_CONFIG: Record<PipelineStep, { icon: React.ReactNode; text: string; d
     },
 };
 
+const THINKING_LABELS: Record<ThinkingLevel, { label: string; color: string }> = {
+    minimal: { label: 'Fast', color: 'text-yellow-500' },
+    low: { label: 'Standard', color: 'text-blue-400' },
+    medium: { label: 'Deep', color: 'text-indigo-500' },
+    high: { label: 'Maximum', color: 'text-purple-500' },
+};
+
 // Step progression timing (approximate LLM call duration)
-const STEP_DURATION_MS = 6000;
+const STEP_DURATION_MS = 8000; // Increased for Gemini 3 Pro Deep Think
 
 export function ResearchBriefButton({
     onClick,
     isDisabled,
     isLoading,
     dossierCount,
-    backlogCount
+    backlogCount,
+    thinkingLevel = 'high'
 }: ResearchBriefButtonProps) {
     const [currentStep, setCurrentStep] = useState<PipelineStep>('idle');
 
@@ -66,6 +76,7 @@ export function ResearchBriefButton({
     }, [isLoading]);
 
     const stepInfo = STEP_CONFIG[currentStep];
+    const thinkingInfo = THINKING_LABELS[thinkingLevel];
 
     return (
         <TooltipProvider>
@@ -87,7 +98,15 @@ export function ResearchBriefButton({
                             {isLoading ? (
                                 <div className="flex items-center">
                                     {stepInfo.icon || <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                                    <span className="text-sm">{stepInfo.text}</span>
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-sm">{stepInfo.text}</span>
+                                        {currentStep === 'architecting' && (
+                                            <span className="text-xs opacity-75 flex items-center gap-1">
+                                                <Zap className="h-3 w-3" />
+                                                Thinking: {thinkingInfo.label}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -116,7 +135,10 @@ export function ResearchBriefButton({
                 )}
                 {isLoading && (
                     <TooltipContent side="bottom" className="max-w-xs text-center p-3">
-                        <p className="font-semibold text-indigo-600 mb-2">Supreme Scout Pipeline</p>
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                            <Brain className="h-4 w-4 text-indigo-600" />
+                            <span className="font-semibold text-indigo-600">Gemini 3 Supreme Scout</span>
+                        </div>
                         <div className="text-xs space-y-1.5">
                             <div className={cn(
                                 "flex items-center gap-2 px-2 py-1 rounded",
@@ -124,8 +146,9 @@ export function ResearchBriefButton({
                             )}>
                                 <span className="w-4">1.</span>
                                 <span>Technical Audit</span>
+                                <span className="ml-auto text-xs opacity-60">Flash</span>
                                 {(currentStep === 'analysing' || currentStep === 'architecting') &&
-                                    <span className="ml-auto text-green-500">✓</span>}
+                                    <span className="text-green-500">✓</span>}
                             </div>
                             <div className={cn(
                                 "flex items-center gap-2 px-2 py-1 rounded",
@@ -133,8 +156,9 @@ export function ResearchBriefButton({
                             )}>
                                 <span className="w-4">2.</span>
                                 <span>Strategic Gap Analysis</span>
+                                <span className="ml-auto text-xs opacity-60">Pro</span>
                                 {currentStep === 'architecting' &&
-                                    <span className="ml-auto text-green-500">✓</span>}
+                                    <span className="text-green-500">✓</span>}
                             </div>
                             <div className={cn(
                                 "flex items-center gap-2 px-2 py-1 rounded",
@@ -142,7 +166,13 @@ export function ResearchBriefButton({
                             )}>
                                 <span className="w-4">3.</span>
                                 <span>Research Brief Generation</span>
+                                <span className="ml-auto text-xs opacity-60">Pro</span>
                             </div>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-center gap-1.5 text-xs">
+                            <Zap className={cn("h-3 w-3", thinkingInfo.color)} />
+                            <span className="text-muted-foreground">Thinking:</span>
+                            <span className={cn("font-medium", thinkingInfo.color)}>{thinkingInfo.label}</span>
                         </div>
                     </TooltipContent>
                 )}
