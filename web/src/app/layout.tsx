@@ -4,6 +4,8 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Link from 'next/link';
 import Image from 'next/image';
 import "./globals.css";
+import logoLight from '@/assets/images/logo_transparent.png';
+import logoDark from '@/assets/images/logo_dark_transparent.png';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,21 +26,17 @@ export default function RootLayout({
           <Link href="/" className="flex items-center">
             {/* Light mode logo */}
             <Image
-              src="/logo_transparent.png"
+              src={logoLight}
               alt="Agentic 10x Workshop"
-              width={2702}
-              height={647}
               className="h-8 w-auto object-contain dark:hidden"
-              unoptimized
+              priority
             />
             {/* Dark mode logo */}
             <Image
-              src="/logo_dark_transparent.png"
+              src={logoDark}
               alt="Agentic 10x Workshop"
-              width={2648}
-              height={656}
               className="h-8 w-auto object-contain hidden dark:block"
-              unoptimized
+              priority
             />
           </Link>
           <div className="flex items-center gap-4">
