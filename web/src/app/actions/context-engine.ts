@@ -274,11 +274,16 @@ ${BRIEF_SEPARATOR}
 
 5. **Word Count**: Each brief should be 150-200 words.`;
 
+interface ArchitectResult {
+    briefs: string[];
+    signature: string | null;
+}
+
 async function architectResearchBriefs(
     auditData: string,
     gapHypotheses: string,
     sources: string[]
-): Promise<string[]> {
+): Promise<ArchitectResult> {
     console.log(`[SupremeScout] Step 3: Architecting Research Briefs (Gemini 3 Pro, Thinking: High)...`);
 
     const prompt = `${RESEARCH_BRIEFS_PROMPT}
@@ -300,20 +305,42 @@ ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
 Generate the Strategic Research Briefs now. Remember to separate each brief with ${BRIEF_SEPARATOR}`;
 
-    const { text } = await generateText({
+    const result = await generateText({
         model: AI_CONFIG.strategicModel,
         prompt,
-        providerOptions: AI_CONFIG.thinkingOptions.strategic,
+        providerOptions: {
+            ...AI_CONFIG.thinkingOptions.strategic,
+            google: {
+                ...AI_CONFIG.thinkingOptions.strategic.google,
+                // Request thought summarization for handoff
+                thinkingConfig: {
+                    ...AI_CONFIG.thinkingOptions.strategic.google.thinkingConfig,
+                    includeThoughts: true,
+                },
+            },
+        },
     });
 
+    // FUTURE PROOFING: Capture reasoning signature for Research Team handoff
+    // The thought_signature allows downstream agents to inherit mental context
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const experimentalOutput = (result as any).experimental_output;
+    const signature = experimentalOutput?.thoughtSummary ||
+        experimentalOutput?.reasoning ||
+        null;
+
     // Split the single string into a cleaned array of briefs
-    const briefArray = text
+    const briefArray = result.text
         .split(BRIEF_SEPARATOR)
         .map(b => b.trim())
         .filter(b => b.length > 0);
 
     console.log(`[SupremeScout] Step 3 Complete: ${briefArray.length} Research Briefs architected`);
-    return briefArray;
+    if (signature) {
+        console.log(`[SupremeScout] Reasoning Signature captured for Research Team handoff`);
+    }
+
+    return { briefs: briefArray, signature };
 }
 
 // =============================================================================
@@ -364,18 +391,29 @@ export async function generateBrief(workshopId: string) {
 
         // STEP 3: ARCHITECT RESEARCH BRIEFS
         // Dynamic inference of 4-6 professional, self-contained briefs
-        const researchBriefs = await architectResearchBriefs(auditData, gapHypotheses, sources);
+        const { briefs: researchBriefs, signature } = await architectResearchBriefs(auditData, gapHypotheses, sources);
 
-        // Save to WorkshopContext (store as JSON array)
-        const briefsJson = JSON.stringify(researchBriefs);
+        // Save to WorkshopContext with new schema fields
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: briefsJson },
-            create: { workshopId, researchBrief: briefsJson },
+            update: {
+                researchBrief: researchBriefs.join('\n\n---\n\n'), // Legacy string format
+                researchBriefs: researchBriefs, // New: JSON array for card-based UI
+                reasoningSignature: signature, // Thought signature for Research Team handoff
+            },
+            create: {
+                workshopId,
+                researchBrief: researchBriefs.join('\n\n---\n\n'),
+                researchBriefs: researchBriefs,
+                reasoningSignature: signature,
+            },
         });
 
         console.log(`[SupremeScout] ========== Pipeline Complete ==========`);
         console.log(`[SupremeScout] Generated ${researchBriefs.length} Strategic Research Briefs`);
+        if (signature) {
+            console.log(`[SupremeScout] Reasoning Signature stored for downstream agents`);
+        }
         revalidatePath(`/workshop/${workshopId}`);
 
         return {
@@ -384,6 +422,7 @@ export async function generateBrief(workshopId: string) {
             brief: researchBriefs.join('\n\n---\n\n'), // Legacy: combined string for backward compatibility
             documentCount: retrieval.documentCount,
             sources,
+            hasSignature: !!signature,
         };
 
     } catch (error) {

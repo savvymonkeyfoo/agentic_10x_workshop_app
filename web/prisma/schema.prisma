@@ -124,6 +124,10 @@ model WorkshopContext {
   rawBacklog      Json?
   researchBrief   String?  @db.Text
   extractedConstraints Json?
+  
+  // Supreme Scout Pipeline Outputs
+  researchBriefs     Json?    // Array of discrete research briefs
+  reasoningSignature String?  @db.Text // Thought signature for Research Team handoff
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
