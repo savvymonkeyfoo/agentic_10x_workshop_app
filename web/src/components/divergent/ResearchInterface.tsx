@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -16,7 +16,7 @@ import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntellige
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { AlertTriangle } from 'lucide-react';
+
 
 
 interface ResearchInterfaceProps {
@@ -95,29 +95,34 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         else if (stageParam === '2') setActiveTab('research');
     }, [searchParams]);
 
-    // 0. AUTO-HYDRATION (The Persistence Fix)
+    // 0. AUTO-HYDRATION (The Persistence Fix - Simplified)
     useEffect(() => {
-        if (activeTab === 'intelligence' && intelligenceState === 'idle') {
-            const rehydrate = async () => {
+        if (activeTab === 'intelligence') {
+            const checkSavedData = async () => {
+                // Don't re-fetch if we already have data in memory
+                if (completedCards.length > 0) return;
+
+                console.log("Checking for saved intelligence...");
                 const saved = await getWorkshopIntelligence(workshopId);
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if (saved.success && saved.opportunities && (saved.opportunities as any[]).length > 0) {
+                    console.log(`Restored ${(saved.opportunities as any[]).length} cards.`);
                     setCompletedCards(saved.opportunities as OpportunityCard[]);
-                    setIntelligenceState('complete'); // Skip directly to Complete
+                    setIntelligenceState('complete');
 
-                    // Also populate queue as "Complete" so the tracker looks right
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setQueue(saved.opportunities.map((op: any) => ({
-                        id: op.originalId,
+                        id: op.originalId || 'restored',
                         title: op.title,
                         description: op.description,
                         status: 'COMPLETE'
                     })));
                 }
             };
-            rehydrate();
+            checkSavedData();
         }
-    }, [activeTab, workshopId, intelligenceState]);
+    }, [activeTab, workshopId, completedCards.length]);
 
     // 1. DAISY CHAIN PROCESSORATOR
     useEffect(() => {
@@ -351,7 +356,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const Tabs = [
         { id: 'context', label: 'CONTEXT', disabled: false },
         { id: 'research', label: 'RESEARCH', disabled: generatedBriefs.length === 0 && !isReadyForResearch },
-        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasMarket } // Using existing flag logic
+        { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasBacklog } // Using existing flag logic
     ];
 
     // =========================================================================
@@ -516,14 +521,18 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                                             >
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex gap-1">
-                                                        <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                                                        <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200">
                                                             {card.horizon}
                                                         </div>
-                                                        {card.source === 'MARKET_SIGNAL' && (
-                                                            <div className="text-[10px] font-bold px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full flex items-center gap-1">
-                                                                <Zap className="w-3 h-3" /> Signal
-                                                            </div>
-                                                        )}
+                                                        <div className={cn(
+                                                            "text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border",
+                                                            card.source === 'MARKET_SIGNAL'
+                                                                ? "bg-purple-50 text-purple-700 border-purple-100"
+                                                                : "bg-blue-50 text-blue-700 border-blue-100"
+                                                        )}>
+                                                            {card.source === 'MARKET_SIGNAL' ? <Zap className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                                                            {card.source === 'MARKET_SIGNAL' ? 'Signal' : 'Backlog'}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-emerald-700 transition-colors">
@@ -622,9 +631,12 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 text-slate-400 p-4 rounded-lg text-xs font-mono">
-                        <span className="text-slate-500 uppercase font-bold mr-2">Provenance:</span>
-                        {selectedCard?.provenance || "AI Generated"}
+                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                        <span className="font-mono bg-slate-100 px-2 py-1 rounded">ID: {selectedCard?.originalId?.slice(0, 8) || 'N/A'}</span>
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-3 h-3 text-purple-400" />
+                            <span className="italic">{selectedCard?.provenance || "AI Generated via Deep-Chain"}</span>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

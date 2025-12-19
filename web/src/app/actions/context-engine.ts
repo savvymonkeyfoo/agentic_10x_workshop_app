@@ -378,31 +378,39 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
 // =============================================================================
 
 // =============================================================================
-// PROMPT UPGRADE: AGENTIC WORKFLOWS
+// PROMPT REFINEMENT: SPECIFICITY & COMPLETENESS
 // =============================================================================
+
+const BACKLOG_EXTRACTION_PROMPT = `You are a Technical Project Manager.
+Task: Extract the FULL list of backlog items from the raw text.
+CRITICAL RULE: Do not summarize. Do not skip items. If there are 10 items in the text, extract 10 items.
+Return them as a clean JSON array.`;
 
 const AUDITOR_PROMPT = `You are a Forensic Systems Architect.
 Task: Audit this specific Backlog Item against the Technical DNA.
-Constraint: You must quote the specific system/legacy constraint from the DNA that makes this difficult.
+Constraint: You must quote the specific system/legacy constraint from the DNA (e.g. "Batch SAP", "On-prem Oracle").
 Output: A 'Friction Report' (1-2 sentences).`;
 
 const ENHANCER_PROMPT = `You are the Head of Agentic Automation.
-Task: Stop thinking about 'features' or 'tools'. Start thinking about **Autonomous Workflows**.
-Input: A legacy backlog item.
-Goal: Re-imagine this as a self-driving, end-to-end workflow.
-- Don't build: An Address Cleaner Bot.
-- Build: The 'Zero-Touch Order Fulfillment Workflow' (where address hygiene is just Step 1 of 5).
-Constraint: Identify the 'Human-in-the-Loop' trigger and the 'Autonomous' actions.`;
+Task: Re-imagine this feature as an **Autonomous Workflow**.
+Input: Legacy backlog item.
+Goal: Transform "Human doing X" into "Agent doing X".
+Constraint: Identify the specific 'Human-in-the-Loop' trigger and the 'Autonomous' actions.`;
 
 const WRITER_PROMPT = `You are a Product Strategist.
-Task: Synthesize the Workflow.
+Task: Synthesize the final Opportunity Card.
+
+CRITICAL INSTRUCTION - NO GENERIC FLUFF:
+- **Friction Point**: MUST cite a specific system, cost, or delay. (Bad: "Improves efficiency". Good: "Eliminates 24hr SAP batch latency").
+- **Tech Alignment**: MUST cite a specific tool from the Tech DNA. (Bad: "Modern architecture". Good: "Leverages Kong Gateway & Event Mesh").
+
 OUTPUT JSON FORMAT:
 {
   "title": "The Workflow Name (Action-Oriented)",
   "description": "2-sentence summary of the end-to-end automation.",
-  "friction": "The specific operational pain point this eliminates (1 sentence).",
-  "techAlignment": "How this leverages the Tech DNA or Research (1 sentence).",
-  "source": "CLIENT_BACKLOG",
+  "friction": "Specific technical/process bottleneck (e.g. 'Manual PII redaction adds 4h delay').",
+  "techAlignment": "Specific architectural fit (e.g. 'Aligns with Post26 Event-Driven Architecture').",
+  "source": "CLIENT_BACKLOG", 
   "provenance": "Derived from Client Backlog item and enhanced by Research.",
   "status": "READY" | "RISKY" | "BLOCKED",
   "horizon": "NOW" | "NEXT" | "LATER",
@@ -504,17 +512,7 @@ export async function analyzeBacklogItem(
 // MAIN ORCHESTRATOR FOR RESEARCH BRIEFS
 // =============================================================================
 
-const BACKLOG_EXTRACTION_PROMPT = `You are a Technical Project Manager.
-Task: Extract a clean list of discrete features/stories from the raw backlog text.
-Rules:
-1. Ignore fluff. Return only actionable items.
-2. If the text is unstructured, infer logical items.
-3. Max 12-15 items.
 
-OUTPUT JSON:
-[
-  { "id": "1", "title": "Feature Name", "description": "Short summary" }
-]`;
 
 export async function hydrateBacklog(workshopId: string) {
     console.log(`[SupremeScout] Hydrating Backlog for ${workshopId}...`);
