@@ -26,22 +26,18 @@ export default function RootLayout({
             <Image
               src="/logo_transparent.png"
               alt="Agentic 10x Workshop"
-              width={0}
-              height={0}
-              sizes="100vw"
+              width={2702}
+              height={647}
               className="h-8 w-auto object-contain dark:hidden"
-              style={{ width: 'auto' }}
               unoptimized
             />
             {/* Dark mode logo */}
             <Image
               src="/logo_dark_transparent.png"
               alt="Agentic 10x Workshop"
-              width={0}
-              height={0}
-              sizes="100vw"
+              width={2648}
+              height={656}
               className="h-8 w-auto object-contain hidden dark:block"
-              style={{ width: 'auto' }}
               unoptimized
             />
           </Link>

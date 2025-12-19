@@ -17,13 +17,15 @@ import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
 import { generateBrief } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
+import { ResearchBriefList } from './ResearchBriefList';
 
 interface ResearchInterfaceProps {
     workshopId: string;
     assets: Asset[];
+    initialBriefs?: string[];
 }
 
-export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps) {
+export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: ResearchInterfaceProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -45,7 +47,7 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [briefCopied, setBriefCopied] = useState(false);
-    const [generatedBrief, setGeneratedBrief] = useState<string | null>(null);
+    const [generatedBriefs, setGeneratedBriefs] = useState<string[]>(initialBriefs);
 
     // Use URL param or default to "context"
     const stageParam = searchParams.get('stage');
@@ -57,11 +59,21 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
     }, [stageParam]);
 
     const handleGenerateBrief = async () => {
+        if (generatedBriefs.length > 0) {
+            const confirmed = window.confirm(
+                "⚠️ WARNING: This will overwrite your existing Research Briefs.\n\nAre you sure you want to generate new ones?"
+            );
+            if (!confirmed) return;
+        }
+
         setIsAnalyzing(true);
         try {
             const result = await generateBrief(workshopId);
             if (result.success && result.brief) {
-                setGeneratedBrief(result.brief);
+                // The current action returns a single string, wrap it in array for now or split if feasible
+                // Assuming it returns one markdown blob which is the "brief"
+                // Ideally backend should return array, but if string, treating as one card
+                setGeneratedBriefs([result.brief]);
                 setActiveTab('research');
                 toast.success('Research Brief Generated');
             } else {
@@ -84,7 +96,7 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
     };
 
     const handleCopyBrief = () => {
-        navigator.clipboard.writeText(generatedBrief || MOCK_RESEARCH_BRIEF);
+        navigator.clipboard.writeText(generatedBriefs[0] || MOCK_RESEARCH_BRIEF);
         setBriefCopied(true);
         setTimeout(() => setBriefCopied(false), 2000);
     };
@@ -92,7 +104,7 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
     // Tab definitions
     const tabs = [
         { id: 'context', label: 'CONTEXT', disabled: false },
-        { id: 'research', label: 'RESEARCH', disabled: !generatedBrief && !isReadyForResearch },
+        { id: 'research', label: 'RESEARCH', disabled: generatedBriefs.length === 0 && !isReadyForResearch },
         { id: 'intelligence', label: 'INTELLIGENCE', disabled: !hasMarket }
     ];
 
@@ -109,6 +121,8 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
             </p>
         </div>
     );
+
+
 
     return (
         <WorkshopPageShell header={header}>
@@ -167,21 +181,30 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
                 )}
 
                 {/* TAB 2: Research Loop */}
+                {/* TAB 2: Research Loop */}
                 {activeTab === 'research' && (
                     <div className="grid grid-cols-2 gap-6 min-h-[600px]">
-                        <Card className="bg-slate-900 border-slate-800 text-slate-100 flex flex-col h-full">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-green-400 font-mono flex items-center gap-2">
-                                    <Search className="h-4 w-4" /> AI Research Brief
+                        <Card className="bg-slate-50 border-slate-200 text-slate-900 flex flex-col h-full shadow-inner">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-indigo-600 font-mono flex items-center gap-2 text-sm uppercase tracking-wider">
+                                    <Search className="h-4 w-4" /> AI Research Briefs
                                 </CardTitle>
-                                <Button variant="ghost" size="sm" onClick={handleCopyBrief} className="text-slate-400 hover:text-white">
-                                    {briefCopied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                                </Button>
+                                <Badge variant="outline" className="text-xs bg-white">
+                                    {generatedBriefs.length} Briefs Generated
+                                </Badge>
                             </CardHeader>
-                            <CardContent className="overflow-y-auto flex-1 font-mono text-sm leading-relaxed">
-                                <div className="prose prose-invert max-w-none">
-                                    <ReactMarkdown>{generatedBrief || MOCK_RESEARCH_BRIEF}</ReactMarkdown>
-                                </div>
+                            <CardContent className="overflow-y-auto flex-1 font-mono text-sm leading-relaxed p-0">
+                                {generatedBriefs.length > 0 ? (
+                                    <div className="p-4">
+                                        <ResearchBriefList briefs={generatedBriefs} />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
+                                        <Search className="h-12 w-12 mb-4 opacity-20" />
+                                        <p>No research generated yet.</p>
+                                        <p className="text-xs mt-2">Click "Generate" to analyze your assets.</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -198,7 +221,7 @@ export function ResearchInterface({ workshopId, assets }: ResearchInterfaceProps
                                 <CardContent className="p-6">
                                     <Button
                                         size="lg"
-                                        className="w-full h-14 text-lg"
+                                        className="w-full h-14 text-lg bg-slate-900 hover:bg-slate-800 text-white"
                                         disabled={!hasMarket || isAnalyzing}
                                         onClick={handleSynthesize}
                                     >

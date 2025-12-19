@@ -14,7 +14,14 @@ async function ResearchDataLoader({ workshopId }: { workshopId: string }) {
         notFound();
     }
 
-    return <ResearchInterface workshopId={workshopId} assets={workshop.assets} />;
+    const context = await prisma.workshopContext.findUnique({
+        where: { workshopId },
+        select: { researchBriefs: true }
+    });
+
+    const initialBriefs = (context?.researchBriefs as string[]) || [];
+
+    return <ResearchInterface workshopId={workshopId} assets={workshop.assets} initialBriefs={initialBriefs} />;
 }
 
 export default function ResearchPage({ params }: { params: { id: string } }) {
