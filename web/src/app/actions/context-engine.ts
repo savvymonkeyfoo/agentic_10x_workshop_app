@@ -308,13 +308,27 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
     const result = await generateText({
         model: AI_CONFIG.strategicModel,
         prompt,
-        providerOptions: AI_CONFIG.thinkingOptions.strategic,
+        providerOptions: {
+            google: {
+                thinkingConfig: {
+                    thinkingLevel: AI_CONFIG.thinking.strategicLevel,
+                    includeThoughts: true, // Required to get reasoning text
+                },
+            },
+        },
     });
 
-    // FUTURE PROOFING: Thought signature capture for Research Team handoff
-    // Note: The AI SDK doesn't yet expose thought summaries in the response.
-    // When it does, this can be updated to capture the reasoning signature.
-    const signature: string | null = null;
+    // REASONING CAPTURE: Handoff for Research Team
+    // 1. result.reasoning - PhD-level reasoning text (Gemini 3 first-class property)
+    // 2. providerMetadata.google.thoughtSignature - Handoff signature for multi-turn
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const googleMetadata = result.providerMetadata?.google as any;
+    const thoughtSignature = googleMetadata?.thoughtSignature;
+    const reasoning = result.reasoning;
+
+    // Use signature if available, fallback to reasoning summary
+    const signature = thoughtSignature ||
+        (reasoning ? `Reasoning captured (${reasoning.length} chars)` : null);
 
     // Split the single string into a cleaned array of briefs
     const briefArray = result.text
@@ -325,6 +339,9 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
     console.log(`[SupremeScout] Step 3 Complete: ${briefArray.length} Research Briefs architected`);
     if (signature) {
         console.log(`[SupremeScout] Reasoning Signature captured for Research Team handoff`);
+    }
+    if (reasoning) {
+        console.log(`[SupremeScout] Reasoning text: ${reasoning.slice(0, 100)}...`);
     }
 
     return { briefs: briefArray, signature };
