@@ -7,6 +7,22 @@ import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 
 // =============================================================================
+// GEMINI 3 MODEL CONFIGURATION
+// Hybrid deployment: Flash for speed, Pro for strategic reasoning
+// =============================================================================
+
+// Model identifiers for the Supreme Scout Pipeline
+const MODELS = {
+    // Gemini 3 Flash: Pro-level intelligence with Flash latency
+    // Used for Technical Audit where speed and accuracy matter
+    AUDIT: 'gemini-3-flash',
+
+    // Gemini 3 Pro: Deep reasoning capabilities
+    // Used for Strategic Gap Analysis and Brief Architecture
+    STRATEGIC: 'gemini-3-pro',
+} as const;
+
+// =============================================================================
 // TYPES
 // =============================================================================
 
@@ -149,7 +165,7 @@ ${backlogContext}
 Conduct the Technical Audit now.`;
 
     const { text } = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google(MODELS.AUDIT),
         prompt,
     });
 
@@ -207,7 +223,7 @@ ${backlogContext}
 Identify the Strategic Collision Points now.`;
 
     const { text } = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google(MODELS.STRATEGIC),
         prompt,
     });
 
@@ -288,7 +304,7 @@ ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 Generate the Strategic Research Briefs now.`;
 
     const { text } = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google(MODELS.STRATEGIC),
         prompt,
     });
 
