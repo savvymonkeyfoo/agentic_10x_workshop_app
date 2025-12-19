@@ -4,7 +4,7 @@
 
 *Trigger:* On_Blur of 'Agent Directive' fields (Tab B).
 
-#### **Variable: `RISK_ANALYSIS_PROMPT`**
+### **Variable: `RISK_ANALYSIS_PROMPT`**
 
 **System Prompt:**
 
@@ -32,7 +32,7 @@ JSON SCHEMA:
 }
 ```
 
-#### **Variable: `NARRATIVE_GENERATION_PROMPT`**
+### **Variable: `NARRATIVE_GENERATION_PROMPT`**
 
 ```text
 ROLE: You are a Strategy Partner at a top-tier consulting firm.
