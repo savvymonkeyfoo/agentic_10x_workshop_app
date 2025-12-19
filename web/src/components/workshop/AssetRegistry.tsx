@@ -187,7 +187,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                     </div>
                 ) : (
                     <div className="overflow-y-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full text-sm text-left table-fixed">
                             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100 sticky top-0">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">Name</th>
@@ -199,9 +199,9 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                                 {items.map((asset) => (
                                     <tr key={asset.id} className="group hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center space-x-3">
-                                                <FileText className="w-4 h-4 text-slate-400" />
-                                                <span className="font-medium text-slate-700 truncate max-w-[180px]" title={asset.name}>
+                                            <div className="flex items-center space-x-3 w-full">
+                                                <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                                <span className="font-medium text-slate-700 truncate flex-1 min-w-0" title={asset.name}>
                                                     {asset.name}
                                                 </span>
                                             </div>
