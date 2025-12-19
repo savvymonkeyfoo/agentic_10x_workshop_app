@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Brain, Sparkles, Loader2, Search, Shield, FileSearch } from "lucide-react";
+import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
-export type PipelineStep = 'idle' | 'auditing' | 'detecting' | 'architecting';
+export type PipelineStep = 'idle' | 'auditing' | 'analysing' | 'architecting';
 
 interface ResearchBriefButtonProps {
     onClick: () => void;
@@ -16,24 +16,27 @@ interface ResearchBriefButtonProps {
     backlogCount: number;
 }
 
-const STEP_MESSAGES: Record<PipelineStep, { icon: React.ReactNode; text: string }> = {
-    idle: { icon: null, text: '' },
+const STEP_CONFIG: Record<PipelineStep, { icon: React.ReactNode; text: string; description: string }> = {
+    idle: { icon: null, text: '', description: '' },
     auditing: {
         icon: <FileSearch className="mr-2 h-5 w-5 animate-pulse" />,
-        text: 'Auditing Enterprise DNA...'
+        text: 'Extracting Enterprise DNA...',
+        description: 'Technical Audit in progress'
     },
-    detecting: {
-        icon: <Search className="mr-2 h-5 w-5 animate-pulse" />,
-        text: 'Detecting Strategic Blind Spots...'
+    analysing: {
+        icon: <GitCompare className="mr-2 h-5 w-5 animate-pulse" />,
+        text: 'Stress-Testing Strategy...',
+        description: 'Identifying strategic gaps'
     },
     architecting: {
-        icon: <Shield className="mr-2 h-5 w-5 animate-pulse" />,
-        text: 'Architecting Research Mandate...'
+        icon: <FileText className="mr-2 h-5 w-5 animate-pulse" />,
+        text: 'Architecting Strategic Briefs...',
+        description: 'Generating research mandates'
     },
 };
 
-// Simulated step progression for UI feedback
-const STEP_DURATION_MS = 5000;
+// Step progression timing (approximate LLM call duration)
+const STEP_DURATION_MS = 6000;
 
 export function ResearchBriefButton({
     onClick,
@@ -44,17 +47,16 @@ export function ResearchBriefButton({
 }: ResearchBriefButtonProps) {
     const [currentStep, setCurrentStep] = useState<PipelineStep>('idle');
 
-    // Simulate step progression when loading
+    // Progress through pipeline steps when loading
     useEffect(() => {
         if (!isLoading) {
             setCurrentStep('idle');
             return;
         }
 
-        // Step through the pipeline phases
         setCurrentStep('auditing');
 
-        const timer1 = setTimeout(() => setCurrentStep('detecting'), STEP_DURATION_MS);
+        const timer1 = setTimeout(() => setCurrentStep('analysing'), STEP_DURATION_MS);
         const timer2 = setTimeout(() => setCurrentStep('architecting'), STEP_DURATION_MS * 2);
 
         return () => {
@@ -63,13 +65,13 @@ export function ResearchBriefButton({
         };
     }, [isLoading]);
 
-    const stepInfo = STEP_MESSAGES[currentStep];
+    const stepInfo = STEP_CONFIG[currentStep];
 
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <span tabIndex={0} className={cn("inline-block w-72", isDisabled && "cursor-not-allowed")}>
+                    <span tabIndex={0} className={cn("inline-block w-80", isDisabled && "cursor-not-allowed")}>
                         <Button
                             size="lg"
                             className={cn(
@@ -89,7 +91,7 @@ export function ResearchBriefButton({
                                 </div>
                             ) : (
                                 <>
-                                    Generate Research Brief
+                                    Generate Strategic Research Briefs
                                     <div className="relative ml-2">
                                         <Brain className="h-5 w-5" />
                                         <Sparkles className="h-3 w-3 absolute -top-1 -right-1 text-yellow-300 animate-pulse" />
@@ -101,7 +103,7 @@ export function ResearchBriefButton({
                 </TooltipTrigger>
                 {isDisabled && (
                     <TooltipContent side="bottom" className="max-w-xs text-center">
-                        <p>Upload and index at least one <strong>Dossier</strong> and one <strong>Backlog</strong> to unlock AI Research.</p>
+                        <p>Upload and index at least one <strong>Dossier</strong> and one <strong>Backlog</strong> to unlock Strategic Research.</p>
                         <div className="text-xs text-muted-foreground mt-1 flex justify-center gap-2">
                             <span className={dossierCount > 0 ? "text-green-500" : "text-red-400"}>
                                 Dossier: {dossierCount}
@@ -113,22 +115,33 @@ export function ResearchBriefButton({
                     </TooltipContent>
                 )}
                 {isLoading && (
-                    <TooltipContent side="bottom" className="max-w-xs text-center">
-                        <p className="font-semibold text-indigo-600">Supreme Scout Pipeline</p>
-                        <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                            <div className={cn("flex items-center gap-2", currentStep === 'auditing' && "text-indigo-600 font-medium")}>
-                                <span className={currentStep === 'auditing' ? "animate-pulse" : ""}>1.</span>
-                                Technical Audit
-                                {currentStep !== 'auditing' && currentStep !== 'idle' && <span className="text-green-500">✓</span>}
+                    <TooltipContent side="bottom" className="max-w-xs text-center p-3">
+                        <p className="font-semibold text-indigo-600 mb-2">Supreme Scout Pipeline</p>
+                        <div className="text-xs space-y-1.5">
+                            <div className={cn(
+                                "flex items-center gap-2 px-2 py-1 rounded",
+                                currentStep === 'auditing' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                            )}>
+                                <span className="w-4">1.</span>
+                                <span>Technical Audit</span>
+                                {(currentStep === 'analysing' || currentStep === 'architecting') &&
+                                    <span className="ml-auto text-green-500">✓</span>}
                             </div>
-                            <div className={cn("flex items-center gap-2", currentStep === 'detecting' && "text-indigo-600 font-medium")}>
-                                <span className={currentStep === 'detecting' ? "animate-pulse" : ""}>2.</span>
-                                Gap Detection
-                                {currentStep === 'architecting' && <span className="text-green-500">✓</span>}
+                            <div className={cn(
+                                "flex items-center gap-2 px-2 py-1 rounded",
+                                currentStep === 'analysing' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                            )}>
+                                <span className="w-4">2.</span>
+                                <span>Strategic Gap Analysis</span>
+                                {currentStep === 'architecting' &&
+                                    <span className="ml-auto text-green-500">✓</span>}
                             </div>
-                            <div className={cn("flex items-center gap-2", currentStep === 'architecting' && "text-indigo-600 font-medium")}>
-                                <span className={currentStep === 'architecting' ? "animate-pulse" : ""}>3.</span>
-                                Mandate Architect
+                            <div className={cn(
+                                "flex items-center gap-2 px-2 py-1 rounded",
+                                currentStep === 'architecting' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                            )}>
+                                <span className="w-4">3.</span>
+                                <span>Research Brief Generation</span>
                             </div>
                         </div>
                     </TooltipContent>

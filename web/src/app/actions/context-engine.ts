@@ -86,236 +86,213 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// STEP 1: THE TECHNICAL AUDITOR
-// Persona: Cold, Precise Systems Architect
-// Mission: Extract "Inside-Out" DNA without bias
+// STEP 1: TECHNICAL AUDIT
+// Role: Forensic Systems Architect
+// Mission: Extract factual Tech DNA with zero interpretation
 // =============================================================================
 
-const AUDITOR_PROMPT = `### ROLE
-You are the Technical Auditor — a cold, precise Systems Architect.
-Extract the "As-Is" DNA of the enterprise with 100% factual accuracy.
+const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect conducting a Technical Audit.
 
-### EXTRACT THESE CATEGORIES
-- [TECH_DNA]: Cloud services, ERP systems, integration layers, deployment practices
-- [GEO_COORDINATES]: Jurisdictions, markets, regulatory environments
-- [SECURITY_POSTURE]: Compliance frameworks, security tools, risk posture
-- [STRATEGIC_BETS]: Top priorities, transformation programs, stated ambitions
-- [OPERATIONAL_METRICS]: Scale numbers, transaction volumes, delivery metrics
+Your task is to extract ONLY hard data points from the enterprise documents. Map the following categories with precision:
 
-### RULES
-- Extract ONLY explicit facts. No interpretation.
-- If missing, mark [UNKNOWN].
-- Quote exact phrases when possible.
+**[TECH_DNA]**
+- Cloud services (specific providers and services, e.g., AWS EKS, GCP BigQuery)
+- Programming languages and frameworks
+- ERP and legacy systems (with versions if stated)
+- Integration layers and middleware
+- Deployment and DevOps practices
 
-### OUTPUT
-Provide a bullet-point extraction for each category.
-`;
+**[GEO_COORDINATES]**
+- Primary operating regions and markets
+- International presence and logistics reach
+- Regulatory jurisdictions
 
-async function runTechnicalAudit(dossierContext: string, backlogContext: string): Promise<string> {
+**[SECURITY_GUARDRAILS]**
+- Compliance standards (Essential Eight, SOC2, ISO 27001, PCI-DSS)
+- Security tools and practices
+- Acknowledged risk areas
+
+**[STRATEGIC_POSTURE]**
+- Stated strategic priorities
+- Transformation programs and investments
+- Growth ambitions and timelines
+
+**[OPERATIONAL_METRICS]**
+- Scale indicators (volumes, transactions, workforce)
+- Delivery and deployment frequency
+- Performance benchmarks
+
+**RULES:**
+- Extract only explicitly stated facts
+- If information is not present, mark as [UNKNOWN]
+- Quote exact phrases where possible
+- No interpretation, inference, or recommendations
+
+**OUTPUT FORMAT:**
+Provide a structured extraction using bullet points under each category heading.`;
+
+async function technicalAudit(dossierContext: string, backlogContext: string): Promise<string> {
     console.log(`[SupremeScout] Step 1: Technical Audit...`);
 
-    const prompt = `${AUDITOR_PROMPT}
+    const prompt = `${TECHNICAL_AUDIT_PROMPT}
 
 ══════════════════════════════════════════════════════════════
-📁 ENTERPRISE DOSSIER
+ENTERPRISE DOSSIER
 ══════════════════════════════════════════════════════════════
 ${dossierContext}
 
 ══════════════════════════════════════════════════════════════
-📋 CLIENT BACKLOG
+CLIENT BACKLOG
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
-Extract the DNA now. Be forensic.`;
+Conduct the Technical Audit now.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
         prompt,
     });
 
-    console.log(`[SupremeScout] Step 1 Complete`);
+    console.log(`[SupremeScout] Step 1 Complete: Technical Audit extracted`);
     return text;
 }
 
 // =============================================================================
-// STEP 2: THE GAP DETECTIVE
-// Persona: Hostile Skeptic
-// Mission: Formulate 3 "Outside-In" Hypotheses for research
+// STEP 2: IDENTIFY STRATEGIC GAPS
+// Role: Strategic Disruption Analyst
+// Mission: Generate 3-5 disruption hypotheses
 // =============================================================================
 
-const DETECTIVE_PROMPT = `### ROLE
-You are the Gap Detective — a Hostile Skeptic hired by their board.
-Your job: Find the 3 "Outside-In" Hypotheses that could break their strategy.
+const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst retained by the Board.
 
-### YOUR MINDSET
-You are NOT here to summarize problems. You are here to formulate RESEARCH HYPOTHESES.
-Each hypothesis is something that MIGHT be true in the market—and if true, destroys their current plan.
+Your task is to compare the Technical DNA against the Client Backlog and identify 3-5 "Strategic Collision Points" — areas where the organisation's internal architecture is too slow, too rigid, or too blind to survive 2026 market velocity.
 
-### TASK: FORMULATE 3 OUTSIDE-IN HYPOTHESES
+**YOUR ANALYTICAL LENS:**
+- Where does stated ambition exceed architectural capability?
+- Where does operational friction indicate systemic constraints?
+- Where are emerging market forces not being addressed?
+- Where could a well-funded competitor exploit rigidity?
 
-For each hypothesis:
-1. **THE BET THEY'RE MAKING**: What strategic assumption are they betting on?
-2. **THE COUNTER-SIGNAL**: What market evidence would prove this bet is wrong?
-3. **THE RESEARCH QUESTION**: What specific question must the research team answer?
+**FOR EACH COLLISION POINT, PROVIDE:**
 
-### EXAMPLE
-BET: "Centralized mega-hubs are the future of logistics."
-COUNTER-SIGNAL: "Mobile micro-sorting on autonomous vehicles achieves lower cost-per-parcel."
-RESEARCH QUESTION: "Find 3 pilots of sorting-on-wheels in Scandinavia or Asia."
+1. **Collision Point Title**: A professional, descriptive title
+2. **Internal Constraint**: The specific architectural or operational limitation
+3. **External Pressure**: The market force or competitor threat this enables
+4. **Disruption Hypothesis**: A single sentence framing what could go wrong
 
-### OUTPUT FORMAT
-## HYPOTHESIS 1: [Title]
-- **The Bet**: [Their assumption]
-- **The Counter-Signal**: [What would break it]
-- **The Research Question**: [Specific question to answer]
+**EXAMPLE:**
+**Collision Point: Real-Time Intelligence Gap**
+- **Internal Constraint**: Batch-processed data pipelines with 24-hour latency
+- **External Pressure**: Competitors deploying real-time predictive logistics
+- **Disruption Hypothesis**: "The organisation's AI/ML ambitions will fail to materialise without streaming data infrastructure, leaving them 18 months behind market leaders."
 
-## HYPOTHESIS 2: [Title]
-[Same format]
+**OUTPUT:**
+Provide 3-5 Collision Points in the format above. Be specific. Be hostile. Be professional.`;
 
-## HYPOTHESIS 3: [Title]
-[Same format]
-`;
+async function identifyStrategicGaps(auditData: string, backlogContext: string): Promise<string> {
+    console.log(`[SupremeScout] Step 2: Identifying Strategic Gaps...`);
 
-async function runGapAnalysis(auditResult: string, backlogContext: string): Promise<string> {
-    console.log(`[SupremeScout] Step 2: Gap Analysis...`);
-
-    const prompt = `${DETECTIVE_PROMPT}
+    const prompt = `${STRATEGIC_GAPS_PROMPT}
 
 ══════════════════════════════════════════════════════════════
-🔬 TECHNICAL DNA
+TECHNICAL DNA (From Audit)
 ══════════════════════════════════════════════════════════════
-${auditResult}
+${auditData}
 
 ══════════════════════════════════════════════════════════════
-📋 BACKLOG (Internal Friction)
+CLIENT BACKLOG (Operational Friction)
 ══════════════════════════════════════════════════════════════
 ${backlogContext}
 
-Formulate the 3 hypotheses now. Be hostile and specific.`;
+Identify the Strategic Collision Points now.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
         prompt,
     });
 
-    console.log(`[SupremeScout] Step 2 Complete`);
+    console.log(`[SupremeScout] Step 2 Complete: Strategic Gaps identified`);
     return text;
 }
 
 // =============================================================================
-// STEP 3: THE MISSION DESIGNER
-// Persona: Lead Research Director
-// Mission: Create actionable Search Missions, not reports
+// STEP 3: ARCHITECT RESEARCH BRIEFS
+// Role: Strategic Research Director
+// Mission: Transform hypotheses into professional, self-contained briefs
 // =============================================================================
 
-const MISSION_PROMPT = `### ROLE
-You are the Research Director — the Mission Designer.
-Your job is NOT to write a report. Your job is to design THE HUNT.
+const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director preparing briefs for an executive workshop.
 
-The next agent (or human) who reads this must say:
-"I have 3 targets to hit and 1 wildcard to find. I'm going in."
+For each Disruption Hypothesis, generate a standalone **Strategic Research Brief**. Each brief must be professional, self-contained, and suitable for presentation to a Board of Directors.
 
-### THE MISSION BRIEF STRUCTURE
-
-## 🎯 THE CORE MISSION
-[ONE SENTENCE: The strategic "wall" we are trying to break through]
+**BRIEF STRUCTURE:**
 
 ---
 
-## 🔍 SEARCH MISSION 1: [Evocative Title, e.g., "The Death of the Sorting Center"]
+## Strategic Research Brief [N]: [Professional Title]
 
-**THE DEAD END**: [Why the client's current approach is a dead end—1-2 sentences max]
+### Strategic Objective
+A 2-3 sentence statement of the high-level "Why" of this research. What strategic question are we answering? What decision will this inform?
 
-**THE HUNT**: [Specific command for the researcher. Be concrete:
-- "Find 3 companies doing X in Y region"
-- "Locate a patent for Z filed in the last 18 months"
-- "Identify the cost-per-unit for approach X vs Y"]
+### Contextual Anchor
+The specific internal facts (from the Technical DNA) that make this a priority. Ground the research in the organisation's reality.
 
-**STIMULUS SIGNAL**: [What "weird" or "extreme" evidence should trigger excitement?
-- Not "best practices"
-- Look for: startups doing impossible things, failed experiments with lessons, cost breakdowns that defy logic]
+### Scope of Investigation
+2-3 precise areas for the research team to explore. Be specific about:
+- Geographic focus (if applicable)
+- Industry segments to examine
+- Technology domains to investigate
 
----
+### Desired Intelligence
+The "Gold Standard" evidence required to provoke the workshop. Examples:
+- Specific competitor capabilities or announcements
+- Patent filings or technical documentation
+- Unit economics or cost structure comparisons
+- Case studies of success or failure
 
-## 🔍 SEARCH MISSION 2: [Title]
-
-**THE DEAD END**: [1-2 sentences]
-
-**THE HUNT**: [Specific command]
-
-**STIMULUS SIGNAL**: [What weird evidence to find]
-
----
-
-## 🔍 SEARCH MISSION 3: [Title]
-
-**THE DEAD END**: [1-2 sentences]
-
-**THE HUNT**: [Specific command]
-
-**STIMULUS SIGNAL**: [What weird evidence to find]
+### Provocation Potential
+How will this research challenge current executive thinking? What assumption does it test? What decision could it force?
 
 ---
 
-## 🌀 SERENDIPITY WILDCARD
+**MANDATORY INCLUSION:**
+Include one brief designated as **"Serendipity Brief"** — research into a completely unrelated industry (e.g., Gaming, Biotech, Aerospace, Hospitality) that could provide unexpected strategic stimulus.
 
-**THE ADJACENT INDUSTRY**: [Pick a COMPLETELY DIFFERENT industry: gaming, biotech, aerospace, hospitality, entertainment]
+**CONSTRAINTS:**
+- Use professional terminology only
+- Each brief should be independently actionable
+- Avoid jargon, acronyms without explanation, or casual language
+- Total output: 4-6 briefs, each 150-200 words
+- Tone: Strategic Partner preparing for Board presentation`;
 
-**THE HUNT**: [What technology, model, or approach from that industry could apply here? Be specific.]
+async function architectResearchBriefs(auditData: string, gapHypotheses: string, sources: string[]): Promise<string> {
+    console.log(`[SupremeScout] Step 3: Architecting Research Briefs...`);
 
-**WHY THIS MATTERS**: [How could this break the ideation board wide open?]
-
----
-
-## ⚡ HUNTING RULES FOR THE RESEARCH AGENT
-
-1. **NO BEST PRACTICES** — Look for "Disruptive Deviations"
-2. **EXTREME SUCCESSES** — Find the 10x examples, not the 10% improvements
-3. **CATASTROPHIC FAILURES** — Find the $100M mistakes we can learn from
-4. **WEIRD IS GOOD** — If it sounds impossible, investigate deeper
-5. **SPECIFIC IS SUPREME** — Names, numbers, patents, GitHub repos, funding rounds
-
----
-
-### CONSTRAINTS
-- Total output: 400-500 words MAX
-- No long paragraphs — use bullets and commands
-- Every sentence should be actionable
-- Tone: Military briefing, not McKinsey memo
-`;
-
-async function writeResearchMission(
-    auditResult: string,
-    gapResult: string,
-    sources: string[]
-): Promise<string> {
-    console.log(`[SupremeScout] Step 3: Mission Design...`);
-
-    const prompt = `${MISSION_PROMPT}
+    const prompt = `${RESEARCH_BRIEFS_PROMPT}
 
 ══════════════════════════════════════════════════════════════
-🔬 TECHNICAL DNA
+TECHNICAL DNA
 ══════════════════════════════════════════════════════════════
-${auditResult}
+${auditData}
 
 ══════════════════════════════════════════════════════════════
-⚡ RESEARCH HYPOTHESES
+STRATEGIC COLLISION POINTS & DISRUPTION HYPOTHESES
 ══════════════════════════════════════════════════════════════
-${gapResult}
+${gapHypotheses}
 
 ══════════════════════════════════════════════════════════════
-📖 SOURCE DOCUMENTS
+SOURCE DOCUMENTS ANALYSED
 ══════════════════════════════════════════════════════════════
 ${sources.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-Design the Mission Brief now. Make it actionable. Make it Supreme.`;
+Generate the Strategic Research Briefs now.`;
 
     const { text } = await generateText({
         model: google('gemini-2.5-flash'),
         prompt,
     });
 
-    console.log(`[SupremeScout] Step 3 Complete`);
+    console.log(`[SupremeScout] Step 3 Complete: Research Briefs architected`);
     return text;
 }
 
@@ -324,24 +301,24 @@ Design the Mission Brief now. Make it actionable. Make it Supreme.`;
 // =============================================================================
 
 /**
- * Generate Research Mission using the Supreme Scout 3-Step Pipeline.
+ * Generate Strategic Research Briefs using the Supreme Scout Pipeline.
  * 
- * Pipeline:
- * 1. Technical Auditor → Extract DNA
- * 2. Gap Detective → Formulate Hypotheses
- * 3. Mission Designer → Create Search Missions
+ * Pipeline Architecture:
+ * 1. technicalAudit() → Extract factual Tech DNA
+ * 2. identifyStrategicGaps() → Generate disruption hypotheses  
+ * 3. architectResearchBriefs() → Transform into professional briefs
  * 
- * Output: A Mission Brief with 3 targets + 1 wildcard.
- * NOT a report. A HUNT.
+ * Output: An array of standalone Strategic Research Briefs suitable for
+ * Board presentation or distribution to specialist research teams.
  */
 export async function generateBrief(workshopId: string) {
     console.log(`[SupremeScout] ========== Starting Pipeline for ${workshopId} ==========`);
 
     try {
         // 0. Retrieve context from Pinecone
-        const query = "Analyze enterprise architecture, technology, operations, strategy, transformation, scale, and competitive positioning";
+        const query = "Analyse enterprise architecture, technology, operations, strategy, transformation, compliance, and competitive positioning";
         const retrieval = await queryPinecone(workshopId, query, {
-            topK: 30,
+            topK: 25,
             filterType: ['DOSSIER', 'BACKLOG'],
         });
 
@@ -355,20 +332,23 @@ export async function generateBrief(workshopId: string) {
 
         const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
 
-        // STEP 1: THE TECHNICAL AUDITOR
-        const auditResult = await runTechnicalAudit(dossierContext, backlogContext);
+        // STEP 1: TECHNICAL AUDIT
+        // Extract the factual DNA with zero interpretation
+        const auditData = await technicalAudit(dossierContext, backlogContext);
 
-        // STEP 2: THE GAP DETECTIVE
-        const gapResult = await runGapAnalysis(auditResult, backlogContext);
+        // STEP 2: IDENTIFY STRATEGIC GAPS
+        // Generate 3-5 disruption hypotheses
+        const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
 
-        // STEP 3: THE MISSION DESIGNER
-        const mission = await writeResearchMission(auditResult, gapResult, sources);
+        // STEP 3: ARCHITECT RESEARCH BRIEFS
+        // Transform hypotheses into professional, self-contained briefs
+        const researchBriefs = await architectResearchBriefs(auditData, gapHypotheses, sources);
 
         // Save to WorkshopContext
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: mission },
-            create: { workshopId, researchBrief: mission },
+            update: { researchBrief: researchBriefs },
+            create: { workshopId, researchBrief: researchBriefs },
         });
 
         console.log(`[SupremeScout] ========== Pipeline Complete ==========`);
@@ -376,7 +356,7 @@ export async function generateBrief(workshopId: string) {
 
         return {
             success: true,
-            brief: mission,
+            brief: researchBriefs,
             documentCount: retrieval.documentCount,
             sources,
         };
