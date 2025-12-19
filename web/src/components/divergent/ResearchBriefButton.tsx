@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 
 export type PipelineStep = 'idle' | 'auditing' | 'analysing' | 'architecting';
 export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
@@ -56,6 +57,7 @@ export function ResearchBriefButton({
     thinkingLevel = 'high'
 }: ResearchBriefButtonProps) {
     const [currentStep, setCurrentStep] = useState<PipelineStep>('idle');
+    const [showWarning, setShowWarning] = useState(false);
 
     // Progress through pipeline steps when loading
     useEffect(() => {
@@ -78,6 +80,23 @@ export function ResearchBriefButton({
     const stepInfo = STEP_CONFIG[currentStep];
     const thinkingInfo = THINKING_LABELS[thinkingLevel];
 
+    const startGeneration = () => {
+        onClick();
+    };
+
+    const handleGenerateClick = () => {
+        if (isDisabled || isLoading) return;
+
+        // Guardrail: If briefs exist, warn user before overwriting
+        if (dossierCount > 0) {
+            setShowWarning(true);
+            return;
+        }
+
+        // Proceed if no data
+        startGeneration();
+    };
+
     return (
         <TooltipProvider>
             <Tooltip>
@@ -93,7 +112,7 @@ export function ResearchBriefButton({
                                 isLoading && "animate-pulse"
                             )}
                             disabled={isDisabled || isLoading}
-                            onClick={onClick}
+                            onClick={handleGenerateClick}
                         >
                             {isLoading ? (
                                 <div className="flex items-center">

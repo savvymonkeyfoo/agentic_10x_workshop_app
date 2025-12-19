@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check, UploadCloud } from 'lucide-react';
+import { FileText, ArrowRight, CheckCircle, Search, AlertTriangle, Copy, Check, UploadCloud, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { MOCK_RESEARCH_BRIEF, MOCK_BLIND_SPOTS, MOCK_CLUSTERS, MOCK_FEASIBILITY } from '@/mocks/research-data';
@@ -87,12 +87,10 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     };
 
-    const handleSynthesize = () => {
-        setIsAnalyzing(true);
-        setTimeout(() => {
-            setIsAnalyzing(false);
-            setActiveTab('intelligence');
-        }, 1500);
+    const handleProcessSignals = () => {
+        console.log("Processing Signals...");
+        // Trigger switch to Intelligence tab
+        setActiveTab('intelligence');
     };
 
     const handleCopyBrief = () => {
@@ -163,12 +161,16 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
                     {activeTab === 'research' && (
                         <Button
-                            onClick={handleSynthesize}
-                            disabled={!hasMarket || isAnalyzing}
-                            className="bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center gap-2"
+                            onClick={handleProcessSignals}
+                            disabled={!hasMarket}
+                            className={`
+                                bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all 
+                                flex items-center gap-2 px-4 py-2 rounded-md font-medium
+                                ${!hasMarket ? 'opacity-50 cursor-not-allowed' : ''}
+                            `}
                         >
-                            <UploadCloud className="w-4 h-4" />
-                            {isAnalyzing ? "Synthesizing..." : "Process Market Signals"}
+                            Process Market Signals
+                            <Zap className="w-4 h-4 ml-1" />
                         </Button>
                     )}
                 </div>
@@ -225,7 +227,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         </Card>
 
                         {/* Right Column: Market Signals Registry + Action */}
-                        <div className="flex flex-col h-full gap-6">
+                        <div className="flex flex-col h-fit min-h-[300px] gap-6">
                             <AssetRegistry
                                 workshopId={workshopId}
                                 type="MARKET_SIGNAL"
