@@ -267,7 +267,7 @@ How will this challenge current executive thinking? What assumption does it test
 
 **STRICT EXTERNAL-FACING RULES:**
 
-1. **No Internal Jargon**: DO NOT use terms like "Post26", "POST+", or "CXT". Translate them (e.g., "The 2026 Strategic Transformation Program").
+1. **No Internal Jargon**: You must replace any internal project code-name with its functional description (e.g., 'The 2026 Logistics Strategy' or 'The Enterprise Point-of-Sale Modernization'). DO NOT use terms like "Post26", "POST+", or "CXT".
 
 2. **Self-Contained**: Assume the researcher has never heard of the company. Define the industry and the scale of the challenge.
 
@@ -279,7 +279,9 @@ How will this challenge current executive thinking? What assumption does it test
 
 6. **Tone**: Senior Strategic Partner to a Board of Directors. No jargon, no acronyms without explanation, no casual language.
 
-7. **Word Count**: Each brief should be 150-200 words.`;
+7. **Word Count**: Each brief should be 150-200 words.
+
+8. **Post-Processing Rule**: Final check: Read your own output. If you see a capitalized code-name that does not exist in the public domain, replace it.`;
 
 interface ArchitectResult {
     briefs: string[];
