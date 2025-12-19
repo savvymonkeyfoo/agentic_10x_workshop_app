@@ -308,26 +308,13 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
     const result = await generateText({
         model: AI_CONFIG.strategicModel,
         prompt,
-        providerOptions: {
-            ...AI_CONFIG.thinkingOptions.strategic,
-            google: {
-                ...AI_CONFIG.thinkingOptions.strategic.google,
-                // Request thought summarization for handoff
-                thinkingConfig: {
-                    ...AI_CONFIG.thinkingOptions.strategic.google.thinkingConfig,
-                    includeThoughts: true,
-                },
-            },
-        },
+        providerOptions: AI_CONFIG.thinkingOptions.strategic,
     });
 
-    // FUTURE PROOFING: Capture reasoning signature for Research Team handoff
-    // The thought_signature allows downstream agents to inherit mental context
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const experimentalOutput = (result as any).experimental_output;
-    const signature = experimentalOutput?.thoughtSummary ||
-        experimentalOutput?.reasoning ||
-        null;
+    // FUTURE PROOFING: Thought signature capture for Research Team handoff
+    // Note: The AI SDK doesn't yet expose thought summaries in the response.
+    // When it does, this can be updated to capture the reasoning signature.
+    const signature: string | null = null;
 
     // Split the single string into a cleaned array of briefs
     const briefArray = result.text
