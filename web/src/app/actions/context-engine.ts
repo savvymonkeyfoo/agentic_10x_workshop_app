@@ -6,9 +6,7 @@ import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 
-// 1. TIMEOUT FIX: Allow this action to run for up to 5 minutes
-// This prevents Vercel from killing the process during the 66s extraction
-export const maxDuration = 300;
+// REMOVED: export const maxDuration = 300; (Moved to page.tsx)
 
 // =============================================================================
 // TYPES

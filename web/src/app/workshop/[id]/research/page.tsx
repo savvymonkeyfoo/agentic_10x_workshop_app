@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
+// 1. TIMEOUT CONFIG: Allow this route (and its actions) 5 minutes
+export const maxDuration = 300;
+
 async function ResearchDataLoader({ workshopId }: { workshopId: string }) {
     const workshop = await prisma.workshop.findUnique({
         where: { id: workshopId },
