@@ -1,4 +1,5 @@
-'use server';
+// ... keep existing imports ...
+import { Prisma } from '@prisma/client'; // <--- ENSURE THIS IMPORT EXISTS FOR DbNull
 
 import { prisma } from '@/lib/prisma';
 import { getWorkshopNamespace } from '@/lib/pinecone';
@@ -806,8 +807,12 @@ export async function resetWorkshopIntelligence(workshopId: string) {
         await prisma.workshopContext.update({
             where: { workshopId },
             data: {
-                // @ts-ignore - intelligenceAnalysis is valid in schema but inference is stale
-                intelligenceAnalysis: { opportunities: [] } // Clear the array
+                // 1. Clear the Output (Cards)
+                intelligenceAnalysis: { opportunities: [] },
+
+                // 2. Clear the Input Cache (CRITICAL FIX)
+                // This forces hydrateBacklog to re-run the "Verbatim" extraction prompt
+                rawBacklog: Prisma.DbNull
             }
         });
 
