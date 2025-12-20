@@ -202,7 +202,7 @@ export async function analyzeBacklogItem(
         // Atomic DB Update
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
         // @ts-ignore
-        const currentData = currentContext?.intelligenceAnalysis || { opportunities: [] };
+        const currentData = (currentContext?.intelligenceAnalysis || { opportunities: [] }) as any;
         // @ts-ignore
         const cleanOpportunities = (currentData.opportunities || []).filter(o => o.originalId !== item.id);
 
@@ -282,7 +282,7 @@ export async function fetchAnalysisContext(workshopId: string) {
     const research = workshopContext?.researchBrief || "No research briefs found.";
 
     // @ts-ignore
-    const items = workshopContext?.rawBacklog || [];
+    const items = (workshopContext?.rawBacklog as any[]) || [];
 
     return {
         success: true,
@@ -303,7 +303,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             select: { intelligenceAnalysis: true }
         });
         // @ts-ignore
-        const data = context?.intelligenceAnalysis;
+        const data = context?.intelligenceAnalysis as any;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
         return { success: false, error: "Failed to load" };
@@ -311,21 +311,26 @@ export async function getWorkshopIntelligence(workshopId: string) {
 }
 
 export async function generateBrief(workshopId: string) {
-    const workshop = await prisma.workshop.findUnique({ where: { id: workshopId }, select: { clientName: true } });
-    const clientName = workshop?.clientName || "The Client";
-    const retrieval = await queryPinecone(workshopId, "Analyse enterprise architecture...", { topK: 25, filterType: ['DOSSIER', 'BACKLOG'] });
-    const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
-    const auditData = await technicalAudit(dossierContext, backlogContext);
-    const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
-    const { briefs, signature } = await architectResearchBriefs(auditData, gapHypotheses, sources, clientName);
+    try {
+        const workshop = await prisma.workshop.findUnique({ where: { id: workshopId }, select: { clientName: true } });
+        const clientName = workshop?.clientName || "The Client";
+        const retrieval = await queryPinecone(workshopId, "Analyse enterprise architecture...", { topK: 25, filterType: ['DOSSIER', 'BACKLOG'] });
+        const { dossierContext, backlogContext, sources } = formatContext(retrieval.chunks);
+        const auditData = await technicalAudit(dossierContext, backlogContext);
+        const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
+        const { briefs, signature } = await architectResearchBriefs(auditData, gapHypotheses, sources, clientName);
 
-    await prisma.workshopContext.upsert({
-        where: { workshopId },
-        update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
-        create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
-    });
-    revalidatePath(`/workshop/${workshopId}`);
-    return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
+        await prisma.workshopContext.upsert({
+            where: { workshopId },
+            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as any },
+            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as any },
+        });
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
+    } catch (error) {
+        console.error("Brief Generation Failed", error);
+        return { success: false, error: "Failed to generate brief" };
+    }
 }
 
 export async function queryContext(workshopId: string, query: string, assetType?: AssetType) {
