@@ -198,7 +198,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     })));
                 }
             };
-            checkSavedData();
+            loadDataAndPreWarm();
         }
     }, [activeTab, workshopId, completedCards.length]);
 
