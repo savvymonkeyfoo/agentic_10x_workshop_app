@@ -1,18 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    // 1. Keep Pinecone external for the server build
     serverComponentsExternalPackages: ['pdf-parse', '@pinecone-database/pinecone'],
   },
   webpack: (config, { isServer }) => {
-    // 1. Keep your existing canvas fix
+    // 2. Existing fix for canvas
     config.resolve.alias.canvas = false;
 
-    // 2. ADD THIS BLOCK: Ignore Node.js modules on the client
+    // 3. CRITICAL FIX: Ignore Node.js modules on the client side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        "node:stream": false,
-        fs: false,
+        "node:stream": false, // Fixes the Pinecone/Webpack error
+        fs: false,            // Fixes file system access errors
         net: false,
         tls: false
       };
@@ -20,7 +21,6 @@ const nextConfig = {
 
     return config;
   },
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -38,4 +38,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
