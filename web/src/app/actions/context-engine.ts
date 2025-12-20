@@ -2,7 +2,7 @@
 import { Prisma } from '@prisma/client'; // <--- ENSURE THIS IMPORT EXISTS FOR DbNull
 
 import { prisma } from '@/lib/prisma';
-import { getWorkshopNamespace } from '@/lib/pinecone';
+// REMOVED STATIC IMPORT: import { getWorkshopNamespace } from '@/lib/pinecone';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
@@ -42,6 +42,9 @@ async function queryPinecone(
     const { topK = 15, filterType } = options;
 
     console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
+
+    // DYNAMIC IMPORT: Hides Pinecone from the Client Bundle
+    const { getWorkshopNamespace } = await import('@/lib/pinecone');
 
     const { embedding } = await embed({
         model: AI_CONFIG.embeddingModel,
