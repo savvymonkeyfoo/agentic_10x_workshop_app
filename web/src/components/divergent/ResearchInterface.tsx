@@ -356,8 +356,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
     const DualStreamTracker = () => {
         // 1. Split the Queue
-        const backlogQueue = queue.filter(q => !q.id.startsWith('seed-'));
-        const researchQueue = queue.filter(q => q.id.startsWith('seed-'));
+        const backlogQueue = queue.filter(q => !q.id || !q.id.startsWith('seed-'));
+        const researchQueue = queue.filter(q => q.id && q.id.startsWith('seed-'));
 
         // 2. Calculate Stats
         const backlogComplete = completedCards.filter(c => c.source === 'CLIENT_BACKLOG').length;
