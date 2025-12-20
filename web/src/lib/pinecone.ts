@@ -1,4 +1,3 @@
-import 'server-only';
 import { Pinecone } from '@pinecone-database/pinecone';
 
 // Singleton pattern for Pinecone client to prevent connection exhaustion
