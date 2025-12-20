@@ -6,8 +6,9 @@ import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 
-// NOTE: Static import of Pinecone removed to prevent Client Bundle pollution.
-// We now use dynamic import inside queryPinecone().
+// 1. TIMEOUT FIX: Allow this action to run for up to 5 minutes
+// This prevents Vercel from killing the process during the 66s extraction
+export const maxDuration = 300;
 
 // =============================================================================
 // TYPES
@@ -32,7 +33,29 @@ interface RetrievalResult {
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
-// PINECONE RETRIEVAL (DYNAMIC / LAZY LOAD)
+// PRE-WARM (RESTORES "SERVER START" CONNECTION)
+// =============================================================================
+
+export async function preWarmContext(workshopId: string) {
+    try {
+        console.log(`[SupremeScout] Pre-warming connection for ${workshopId}...`);
+        // This forces the "Lazy Import" to execute NOW, not later.
+        const { getWorkshopNamespace } = await import('@/lib/pinecone');
+
+        // This forces the SSL Handshake with Pinecone
+        const namespace = getWorkshopNamespace(workshopId);
+        // Lightweight stats call to verify connection is alive
+        await namespace.describeIndexStats();
+
+        return { success: true };
+    } catch (error) {
+        console.error("[SupremeScout] Warmup failed (non-fatal)", error);
+        return { success: false };
+    }
+}
+
+// =============================================================================
+// PINECONE RETRIEVAL (DYNAMIC IMPORT)
 // =============================================================================
 
 async function queryPinecone(
@@ -44,7 +67,7 @@ async function queryPinecone(
 
     console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
 
-    // DYNAMIC IMPORT: This breaks the dependency chain for the Client Bundle
+    // Dynamic import ensures Client Bundle safety
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
 
     const { embedding } = await embed({
@@ -158,9 +181,10 @@ export async function analyzeBacklogItem(
 ) {
     try {
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        // @ts-ignore
-        let techDNA = context?.dna || dbContext?.extractedConstraints as string;
-        let research = context?.research || dbContext?.researchBrief || "No specific research briefs.";
+
+        // CASTING TO STRING TO AVOID TS WARNINGS
+        let techDNA = context?.dna || (dbContext?.extractedConstraints as string);
+        let research = context?.research || (dbContext?.researchBrief as string) || "No specific research briefs.";
 
         // Lazy load context if missing
         if (!techDNA) {
@@ -201,14 +225,20 @@ export async function analyzeBacklogItem(
 
         // Atomic DB Update
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        // @ts-ignore
-        const currentData = (currentContext?.intelligenceAnalysis || { opportunities: [] }) as any;
-        // @ts-ignore
-        const cleanOpportunities = (currentData.opportunities || []).filter(o => o.originalId !== item.id);
+
+        // --- CRITICAL FIX: EXPLICIT CASTING TO ANY TO FIX SPREAD ERROR ---
+        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+
+        const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
 
         await prisma.workshopContext.update({
             where: { workshopId },
-            data: { intelligenceAnalysis: { ...currentData, opportunities: [...cleanOpportunities, opportunity] } }
+            data: {
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: [...cleanOpportunities, opportunity]
+                }
+            }
         });
 
         return { success: true, opportunity };
@@ -222,8 +252,9 @@ export async function analyzeBacklogItem(
 export async function hydrateBacklog(workshopId: string) {
     try {
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        // @ts-ignore
-        const rawBacklog = context?.rawBacklog;
+
+        // --- CRITICAL FIX: CAST TO ANY[] ---
+        const rawBacklog = context?.rawBacklog as any[];
 
         // RETURN CACHED IF EXISTS
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
@@ -281,7 +312,7 @@ export async function fetchAnalysisContext(workshopId: string) {
     const dna = await technicalAudit(dossierContext, backlogContext);
     const research = workshopContext?.researchBrief || "No research briefs found.";
 
-    // @ts-ignore
+    // --- CRITICAL FIX: CAST TO ANY[] ---
     const items = (workshopContext?.rawBacklog as any[]) || [];
 
     return {
@@ -302,7 +333,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             where: { workshopId },
             select: { intelligenceAnalysis: true }
         });
-        // @ts-ignore
+        // --- CRITICAL FIX: CAST TO ANY ---
         const data = context?.intelligenceAnalysis as any;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
@@ -326,6 +357,7 @@ export async function generateBrief(workshopId: string) {
             create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as any },
         });
         revalidatePath(`/workshop/${workshopId}`);
+        // FORCE RETURN SUCCESS
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
     } catch (error) {
         console.error("Brief Generation Failed", error);

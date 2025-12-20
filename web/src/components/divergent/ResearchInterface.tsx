@@ -12,7 +12,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
@@ -171,8 +171,12 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
     // 0. AUTO-HYDRATION (The Persistence Fix - Simplified)
     useEffect(() => {
-        if (activeTab === 'intelligence') {
-            const checkSavedData = async () => {
+        if (workshopId && activeTab === 'intelligence') {
+            const loadDataAndPreWarm = async () => {
+                // PRE-WARM CONNECTION
+                console.log("Pre-warming Deep-Chain engines...");
+                preWarmContext(workshopId).catch(err => console.error("Warmup silent fail", err));
+
                 // Don't re-fetch if we already have data in memory
                 if (completedCards.length > 0) return;
 
