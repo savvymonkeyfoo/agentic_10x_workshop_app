@@ -381,9 +381,10 @@ Generate the Strategic Research Briefs now. Remember to separate each brief with
 // PROMPT REFINEMENT: SPECIFICITY & COMPLETENESS
 // =============================================================================
 
-const BACKLOG_EXTRACTION_PROMPT = `You are a Technical Project Manager.
-Task: Extract the FULL list of backlog items from the raw text.
-CRITICAL RULE: Do not summarize. Do not skip items. If there are 10 items in the text, extract 10 items.
+const BACKLOG_EXTRACTION_PROMPT = `You are a Data Entry Clerk.
+Task: Extract the backlog items VERBATIM from the text.
+CRITICAL RULE: Do not summarize. Do not reword. Do not fix typos.
+Copy the 'Title' and 'Description' EXACTLY as they appear in the source text.
 Return them as a clean JSON array.`;
 
 const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
