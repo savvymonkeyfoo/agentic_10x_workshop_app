@@ -204,14 +204,20 @@ export async function analyzeBacklogItem(
         opportunity.originalId = item.id;
 
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        // @ts-ignore
-        const currentData = currentContext?.intelligenceAnalysis || { opportunities: [] };
-        // @ts-ignore
-        const cleanOpportunities = (currentData.opportunities || []).filter(o => o.originalId !== item.id);
+
+        // --- CRITICAL FIX: EXPLICIT CASTING TO ANY TO FIX SPREAD ERROR ---
+        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+
+        const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
 
         await prisma.workshopContext.update({
             where: { workshopId },
-            data: { intelligenceAnalysis: { ...currentData, opportunities: [...cleanOpportunities, opportunity] } }
+            data: {
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: [...cleanOpportunities, opportunity]
+                }
+            }
         });
 
         return { success: true, opportunity };
