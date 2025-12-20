@@ -15,6 +15,7 @@ import { ResearchBriefButton } from './ResearchBriefButton';
 import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
+import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { RotateCcw, AlertCircle, Sparkles as SparklesIcon } from 'lucide-react';
@@ -389,8 +390,16 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-3 h-3 rounded-full animate-pulse", intelligenceState === 'analyzing' ? "bg-emerald-500" : "bg-slate-300")} />
-                        <h3 className="font-bold text-slate-900">Deep-Chain Analysis Engine</h3>
+                        <div className={cn(
+                            "w-3 h-3 rounded-full",
+                            intelligenceState === 'analyzing' ? "bg-emerald-500 animate-pulse" : "bg-slate-300"
+                        )} />
+                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                            Deep-Chain Analysis Engine
+                            {intelligenceState === 'analyzing' && (
+                                <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />
+                            )}
+                        </h3>
                     </div>
                     <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
                         {currentLog || "Ready to Initialize"}
@@ -639,57 +648,13 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 )}
 
             </div>
-            {/* ================================================================= */}
-            {/* NEW: OPPORTUNITY DETAIL MODAL */}
-            {/* ================================================================= */}
-            <Dialog open={!!selectedCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline">{selectedCard?.horizon}</Badge>
-                            <Badge className={cn(
-                                "text-white",
-                                selectedCard?.category === 'MOONSHOT' ? "bg-purple-600" : "bg-blue-600"
-                            )}>
-                                {selectedCard?.category}
-                            </Badge>
-                        </div>
-                        <DialogTitle className="text-2xl font-black text-slate-900">
-                            {selectedCard?.title}
-                        </DialogTitle>
-                        <DialogDescription className="text-lg text-slate-600 mt-2">
-                            {selectedCard?.description}
-                        </DialogDescription>
-                    </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-4 my-6">
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                                <AlertTriangle className="w-3 h-3" /> Friction Point
-                            </h4>
-                            <p className="text-sm text-slate-700 font-medium">
-                                {selectedCard?.friction || "Resolves operational bottlenecks."}
-                            </p>
-                        </div>
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <h4 className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
-                                <BrainCircuit className="w-3 h-3" /> Tech Alignment
-                            </h4>
-                            <p className="text-sm text-blue-800 font-medium">
-                                {selectedCard?.techAlignment || "Leverages existing architecture."}
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                        <span className="font-mono bg-slate-100 px-2 py-1 rounded">ID: {selectedCard?.originalId?.slice(0, 8) || 'N/A'}</span>
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-3 h-3 text-purple-400" />
-                            <span className="italic">{selectedCard?.provenance || "AI Generated via Deep-Chain"}</span>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <OpportunityModal
+                card={selectedCard}
+                isOpen={!!selectedCard}
+                onClose={() => setSelectedCard(null)}
+            />
 
         </WorkshopPageShell>
     );
