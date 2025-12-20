@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['pdf-parse', '@pinecone-database/pinecone'],
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse', '@pinecone-database/pinecone'],
+  },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
