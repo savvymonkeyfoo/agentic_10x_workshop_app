@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { RotateCcw, AlertCircle } from 'lucide-react';
+import { RotateCcw, AlertCircle, Sparkles as SparklesIcon } from 'lucide-react';
 
 
 
@@ -49,6 +49,8 @@ type OpportunityCard = {
     category: "EFFICIENCY" | "GROWTH" | "MOONSHOT";
     originalId: string;
 };
+
+
 
 export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: ResearchInterfaceProps) {
     const router = useRouter();
@@ -88,6 +90,55 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
     // Context Cache REMOVED - Handled Lazy-Load on Server
     // const contextCache = useRef<{ dna: string; research: string } | null>(null);
+
+    // 1. DEFINE UNIFIED CARD COMPONENT
+    const KanbanCard = ({ card }: { card: OpportunityCard }) => (
+        <Card
+            onClick={() => setSelectedCard(card)}
+            className="border-l-4 shadow-sm hover:shadow-md cursor-pointer transition-all group mb-4 bg-white hover:border-l-8 animate-in fade-in slide-in-from-bottom-3"
+            style={{
+                borderLeftColor: card.category === 'EFFICIENCY' ? '#10b981' :
+                    card.category === 'GROWTH' ? '#3b82f6' :
+                        '#9333ea'
+            }}
+        >
+            <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                    {/* Source Pill */}
+                    <Badge variant="outline" className={cn(
+                        "text-[10px] border-none px-2 py-0.5 font-bold tracking-wide",
+                        card.source === 'MARKET_SIGNAL'
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-slate-100 text-slate-700"
+                    )}>
+                        {card.source === 'MARKET_SIGNAL'
+                            ? <><Zap className="w-3 h-3 mr-1" /> Research</>
+                            : <><CheckCircle className="w-3 h-3 mr-1" /> Backlog</>
+                        }
+                    </Badge>
+                    {/* Status Pill */}
+                    <Badge variant="outline" className="text-[10px] uppercase bg-white text-slate-500 border-slate-200">
+                        {card.status}
+                    </Badge>
+                </div>
+
+                <h4 className="font-bold text-slate-900 text-sm mb-2 leading-tight">
+                    {card.title}
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                    {card.description}
+                </p>
+
+                {/* Footer Horizon Tag */}
+                <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase">
+                        {card.horizon} Horizon
+                    </span>
+                    <ArrowRight className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1" />
+                </div>
+            </CardContent>
+        </Card>
+    );
 
     // =========================================================================
     // EFFECTS
@@ -547,80 +598,38 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
 
                                 {/* KANBAN BOARD */}
-                                <div className="grid grid-cols-3 gap-6">
-                                    {/* COL 1: EFFICIENCY */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                            Efficiency (Now)
-                                        </h3>
+                                {/* COL 1: EFFICIENCY */}
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500" /> Efficiency (Now)
+                                    </h3>
+                                    <div>
                                         {completedCards.filter(c => c.category === 'EFFICIENCY').map((card, i) => (
-                                            <Card
-                                                key={i}
-                                                onClick={() => setSelectedCard(card)} // TRIGGER MODAL
-                                                className="p-4 border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md cursor-pointer transition-all group relative"
-                                            >
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex gap-1">
-                                                        <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-                                                            {card.horizon}
-                                                        </div>
-                                                        <div className={cn(
-                                                            "text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border",
-                                                            card.source === 'MARKET_SIGNAL'
-                                                                ? "bg-purple-50 text-purple-700 border-purple-100"
-                                                                : "bg-blue-50 text-blue-700 border-blue-100"
-                                                        )}>
-                                                            {card.source === 'MARKET_SIGNAL' ? <Zap className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
-                                                            {card.source === 'MARKET_SIGNAL' ? 'Signal' : 'Backlog'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-emerald-700 transition-colors">
-                                                    {card.title}
-                                                </h4>
-                                                <p className="text-xs text-slate-500 line-clamp-2">
-                                                    {card.description}
-                                                </p>
-                                            </Card>
+                                            <KanbanCard key={i} card={card} />
                                         ))}
                                     </div>
+                                </div>
 
-                                    {/* COL 2: GROWTH */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                            Growth (Next)
-                                        </h3>
+                                {/* COL 2: GROWTH */}
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500" /> Growth (Next)
+                                    </h3>
+                                    <div>
                                         {completedCards.filter(c => c.category === 'GROWTH').map((card, i) => (
-                                            <Card key={i} className="border-l-4 border-l-blue-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
-                                                <CardContent className="p-4">
-                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
-                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
-                                                    <Badge variant="outline" className="text-[10px] text-blue-700 bg-blue-50 border-blue-100">
-                                                        {card.status}
-                                                    </Badge>
-                                                </CardContent>
-                                            </Card>
+                                            <KanbanCard key={i} card={card} />
                                         ))}
                                     </div>
+                                </div>
 
-                                    {/* COL 3: MOONSHOT */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-purple-500" />
-                                            Moonshot (Later)
-                                        </h3>
+                                {/* COL 3: MOONSHOT */}
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                        <div className="w-2 h-2 rounded-full bg-purple-500" /> Moonshot (Later)
+                                    </h3>
+                                    <div>
                                         {completedCards.filter(c => c.category === 'MOONSHOT').map((card, i) => (
-                                            <Card key={i} className="border-l-4 border-l-purple-500 shadow-sm animate-in slide-in-from-bottom-2 fade-in hover:shadow-md transition-all">
-                                                <CardContent className="p-4">
-                                                    <h4 className="font-bold text-slate-800 text-sm mb-2">{card.title}</h4>
-                                                    <p className="text-xs text-slate-500 leading-relaxed mb-3">{card.description}</p>
-                                                    <Badge variant="outline" className="text-[10px] text-purple-700 bg-purple-50 border-purple-100">
-                                                        {card.status}
-                                                    </Badge>
-                                                </CardContent>
-                                            </Card>
+                                            <KanbanCard key={i} card={card} />
                                         ))}
                                     </div>
                                 </div>

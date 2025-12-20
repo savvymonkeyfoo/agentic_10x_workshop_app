@@ -429,11 +429,9 @@ OUTPUT JSON FORMAT:
 export async function analyzeBacklogItem(
     workshopId: string,
     item: { id: string; title: string; description: string; isSeed?: boolean },
-    context?: { dna: string; research: string } // Optional Context Override
+    context?: { dna: string; research: string }
 ) {
     try {
-        console.log(`[DeepChain] Analyzing item: ${item.title} (Seed: ${item.isSeed})`);
-
         // 0. LOAD DB CONTEXT (Required for Backlog Summary & Fallbacks)
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
 
@@ -456,32 +454,26 @@ export async function analyzeBacklogItem(
             });
         }
 
-        // Load Raw Backlog for Summary
-        // @ts-ignore
-        const rawBacklog = dbContext?.rawBacklog as any[];
-        const backlogSummary = rawBacklog ? rawBacklog.map(b => b.title).join(", ") : "None";
+        let prompt;
 
-        let prompt, source;
-
+        // 1. SELECT PROMPT MODE
         if (item.isSeed) {
-            // MODE A: GENERATION (The "New Stuff")
-            console.log(`[DeepChain] 🔵 MODE: GENERATION (Seed ${item.id})`);
-            prompt = `${GENERATION_PROMPT}\n\nRESEARCH BRIEFS:\n${research}\n\nEXISTING BACKLOG TO AVOID:\n${backlogSummary}\n\nTECHNICAL DNA:\n${techDNA}`;
-            source = 'MARKET_SIGNAL';
+            console.log(`[DeepChain] Generating New Idea for Seed ${item.id}...`);
+            prompt = `${GENERATION_PROMPT}\n\nRESEARCH BRIEFS: ${research}\n\n(Avoid duplicates of existing backlog)`;
         } else {
-            // MODE B: PRESERVATION (The "Respect" Mode)
-            console.log(`[DeepChain] 🔵 MODE: ENRICHMENT (Item ${item.title})`);
-            prompt = `${ENRICHMENT_PROMPT}\n\nITEM TITLE: ${item.title}\nITEM DESC: ${item.description}\n\nTECHNICAL DNA:\n${techDNA}`;
-            source = 'CLIENT_BACKLOG';
+            console.log(`[DeepChain] Enriching Backlog Item: ${item.title}...`);
+            prompt = `${ENRICHMENT_PROMPT}\n\nITEM: ${item.title}\nDESC: ${item.description}\nDNA: ${techDNA}`;
         }
 
-        // EXECUTE AI
+        // 2. RUN AI GENERATION
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
-            prompt: prompt
+            prompt,
+            // @ts-ignore
+            response_format: { type: "json_object" } // Ensure JSON output
         });
 
-        // PARSE OUTPUT
+        // 3. PARSE AI OUTPUT
         let opportunity;
         try {
             const jsonStr = cardJson.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -491,32 +483,37 @@ export async function analyzeBacklogItem(
             return { success: false, error: "Failed to parse AI output" };
         }
 
-        // CRITICAL: Force Original Title/Desc for Backlog Items
-        if (source === 'CLIENT_BACKLOG') {
+        // =====================================================================
+        // CRITICAL FIX: FORCE BACKLOG FIDELITY & SOURCE TRUTH
+        // =====================================================================
+        if (!item.isSeed) {
+            // BACKLOG MODE: Reject AI rewrites for Title/Desc
             opportunity.title = item.title;
             opportunity.description = item.description;
-            opportunity.source = 'CLIENT_BACKLOG'; // Enhance safety
-            opportunity.originalId = item.id;
+            opportunity.source = 'CLIENT_BACKLOG';
         } else {
+            // INNOVATION MODE: Accept AI creativity
             opportunity.source = 'MARKET_SIGNAL';
-            opportunity.originalId = item.id; // seed-X
         }
 
-        // ATOMIC PERSISTENCE
+        // Always pass through the ID
+        opportunity.originalId = item.id;
+
+        // 4. ATOMIC DB UPDATE
         const currentContext = await prisma.workshopContext.findUnique({
             where: { workshopId },
-            // @ts-ignore
             select: { intelligenceAnalysis: true }
         });
 
-        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
-        const newOpportunities = [...(currentData.opportunities || []), opportunity];
+        // Remove old entry with same ID if exists (to avoid duplicates on re-runs)
+        const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
+        const newOpportunities = [...cleanOpportunities, opportunity];
 
         await prisma.workshopContext.update({
             where: { workshopId },
             data: {
-                // @ts-ignore
                 intelligenceAnalysis: {
                     ...currentData,
                     opportunities: newOpportunities
