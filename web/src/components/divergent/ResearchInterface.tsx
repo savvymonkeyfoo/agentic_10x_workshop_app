@@ -291,7 +291,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
         setIsGeneratingBriefs(true);
         try {
-            const result = await generateBrief(workshopId);
+            const result = await generateBrief(workshopId) as any;
             if (result.success && result.brief) {
                 setGeneratedBriefs(result.briefs || [result.brief]); // Handle array vs string
                 setActiveTab('research');
