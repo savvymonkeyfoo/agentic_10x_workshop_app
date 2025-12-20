@@ -1,5 +1,14 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -14,53 +23,31 @@ interface ConfirmationModalProps {
 
 export function ConfirmationModal({
     isOpen, onClose, onConfirm, title, description,
-    confirmLabel = "Yes, Overwrite",
+    confirmLabel = "Yes, Continue",
     cancelLabel = "Cancel",
     isLoading
 }: ConfirmationModalProps) {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
-
-                <div className="flex gap-4">
-                    {/* Icon Container */}
-                    <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-purple-600" />
-                        </div>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader className="gap-2">
+                    <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="h-5 w-5" />
+                        <DialogTitle>{title}</DialogTitle>
                     </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">
-                            {title}
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed mb-6">
-                            {description}
-                        </p>
-
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={onClose}
-                                disabled={isLoading}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                            >
-                                {cancelLabel}
-                            </button>
-                            <button
-                                onClick={onConfirm}
-                                disabled={isLoading}
-                                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 shadow-sm"
-                            >
-                                {isLoading ? 'Processing...' : confirmLabel}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <DialogDescription className="pt-2">
+                        {description}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="mt-4">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        {cancelLabel}
+                    </Button>
+                    <Button onClick={onConfirm} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700">
+                        {isLoading ? 'Processing...' : confirmLabel}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
