@@ -1,5 +1,6 @@
 'use server';
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getWorkshopNamespace } from '@/lib/pinecone';
 import { AI_CONFIG } from '@/lib/ai-config';
@@ -537,70 +538,73 @@ export async function analyzeBacklogItem(
 
 
 export async function hydrateBacklog(workshopId: string) {
-    console.log(`[SupremeScout] Hydrating Backlog for ${workshopId}...`);
     try {
+        // 1. Check Cache
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
-
-        // 1. Fast Path: Return Cached
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawBacklog = context?.rawBacklog as any;
+        // @ts-ignore
+        const rawBacklog = context?.rawBacklog;
 
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
-            // INJECT RESEARCH SEEDS (AGI-02)
             const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
                 id: `seed-${i}`,
                 title: `Strategic Opportunity Discovery ${i + 1}`,
-                description: "Analyzing market signals to generate a net-new opportunity...",
+                description: "Analyzing market signals...",
                 isSeed: true
             }));
-
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
-        // 2. Slow Path: Extract from Text
-        const retrieval = await queryContext(workshopId, "backlog features requirements", 'BACKLOG');
+        // 2. Fetch Context
+        const retrieval = await queryContext(workshopId, "backlog features", 'BACKLOG');
         const { backlogContext } = formatContext(retrieval.chunks);
 
-        if (!backlogContext) return { success: false, error: "No backlog content found" };
+        if (!backlogContext) return { success: false, error: "No backlog found" };
 
+        // 3. Generate (Verbatim)
         const { text } = await generateText({
-            model: AI_CONFIG.auditModel, // Flash is fast
+            model: AI_CONFIG.auditModel,
             prompt: `${BACKLOG_EXTRACTION_PROMPT}\n\nRAW BACKLOG:\n${backlogContext}`,
         });
 
-        let items;
+        // 4. Safe Parse & ID Enforcement
+        let items = [];
         try {
-            // Handle potential backticks or plain json
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            items = JSON.parse(jsonStr);
-            if (items.items) items = items.items; // Handle wrapped object
+            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanJson);
+            const parsedItems = parsed.items ? parsed.items : parsed;
+
+            // CRITICAL FIX: Ensure every item has an ID to prevent Frontend Crash
+            items = parsedItems.map((item: any, index: number) => ({
+                ...item,
+                id: item.id || `backlog-${Date.now()}-${index}`, // Fallback ID
+                title: item.title || "Untitled Item",
+                description: item.description || "",
+                isSeed: false
+            }));
         } catch (e) {
-            console.error("Failed to parse backlog extraction", e);
-            return { success: false, error: "Failed to parse backlog JSON" };
+            console.error("JSON Extraction Failed", text);
+            return { success: false, error: "JSON Extraction Failed" };
         }
 
-        // Save Cache
+        // 5. Save to DB
         await prisma.workshopContext.upsert({
             where: { workshopId },
             update: { rawBacklog: items },
             create: { workshopId, rawBacklog: items }
         });
 
-        // 3. INJECT RESEARCH SEEDS (AGI-02 Hybrid Pipeline)
         const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
             id: `seed-${i}`,
             title: `Strategic Opportunity Discovery ${i + 1}`,
-            description: "Analyzing market signals to generate a net-new opportunity...",
+            description: "Analyzing market signals...",
             isSeed: true
         }));
 
-        const finalQueue = [...items, ...researchSeeds];
-
-        return { success: true, items: finalQueue };
+        return { success: true, items: [...items, ...researchSeeds] };
 
     } catch (e) {
-        console.error("Backlog Hydration Failed", e);
-        return { success: false, error: "Failed to parse backlog" };
+        console.error("Hydration Failed", e);
+        return { success: false, error: "Failed to hydrate" };
     }
 }
 
@@ -806,8 +810,9 @@ export async function resetWorkshopIntelligence(workshopId: string) {
         await prisma.workshopContext.update({
             where: { workshopId },
             data: {
-                // @ts-ignore - intelligenceAnalysis is valid in schema but inference is stale
-                intelligenceAnalysis: { opportunities: [] } // Clear the array
+                intelligenceAnalysis: { opportunities: [] },
+                // CRITICAL FIX: Wipes the cached backlog so it re-extracts on next run
+                rawBacklog: Prisma.DbNull
             }
         });
 
