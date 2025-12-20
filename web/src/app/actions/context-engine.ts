@@ -276,10 +276,20 @@ export async function hydrateBacklog(workshopId: string) {
             prompt: `${BACKLOG_EXTRACTION_PROMPT}\n\nRAW BACKLOG:\n${backlogContext}`,
         });
 
-        let items;
+        let items = [];
         try {
             const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
-            items = parsed.items ? parsed.items : parsed;
+            const parsedItems = parsed.items ? parsed.items : parsed;
+
+            // CRITICAL FIX: ENSURE EVERY ITEM HAS AN ID
+            // The frontend crashes if 'id' is missing because it checks .startsWith()
+            items = parsedItems.map((item: any, index: number) => ({
+                ...item,
+                id: item.id || `backlog-${Date.now()}-${index}`, // Guarantee ID
+                title: item.title || "Untitled Item",
+                description: item.description || ""
+            }));
+
         } catch (e) { return { success: false, error: "JSON Extraction Failed" }; }
 
         await prisma.workshopContext.upsert({
@@ -317,7 +327,7 @@ export async function fetchAnalysisContext(workshopId: string) {
         success: true,
         context: { dna, research },
         items: items.map((i: any) => ({
-            id: i.id || Math.random().toString(36).substring(7),
+            id: i.id || `backlog-restored-${Math.random().toString(36).substr(2, 9)}`, // Safety Fallback
             title: i.title || "Untitled",
             description: i.description || "",
             isSeed: i.isSeed
