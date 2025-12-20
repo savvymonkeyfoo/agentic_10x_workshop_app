@@ -183,7 +183,13 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 // Context is now Lazy-Loaded on the Server
                 const result = await analyzeBacklogItem(
                     workshopId,
-                    { id: currentItem.id, title: currentItem.title, description: currentItem.description }
+                    {
+                        id: currentItem.id,
+                        title: currentItem.title,
+                        description: currentItem.description,
+                        isSeed: currentItem.isSeed
+                    },
+                    // Used to pass contextCache.current here but now lazy loading on server
                 );
 
                 if (result.success && result.opportunity) {
@@ -275,7 +281,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 id: i.id,
                 title: i.title,
                 description: i.description,
-                status: 'PENDING'
+                status: 'PENDING',
+                isSeed: i.isSeed
             }));
 
             setQueue(initialQueue);

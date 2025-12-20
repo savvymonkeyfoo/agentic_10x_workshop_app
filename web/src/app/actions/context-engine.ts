@@ -428,17 +428,23 @@ OUTPUT JSON FORMAT:
 
 export async function analyzeBacklogItem(
     workshopId: string,
-    item: { id: string; title: string; description: string; isSeed?: boolean }
+    item: { id: string; title: string; description: string; isSeed?: boolean },
+    context?: { dna: string; research: string } // Optional Context Override
 ) {
     try {
         console.log(`[DeepChain] Analyzing item: ${item.title} (Seed: ${item.isSeed})`);
 
-        // 0. LAZY LOAD CONTEXT
+        // 0. LOAD DB CONTEXT (Required for Backlog Summary & Fallbacks)
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
 
-        // Load DNA
+        let techDNA = context?.dna;
         // @ts-ignore
-        let techDNA = dbContext?.extractedConstraints as string;
+        if (!techDNA) techDNA = dbContext?.extractedConstraints as string;
+
+        let research = context?.research;
+        if (!research) research = dbContext?.researchBrief || "No specific research briefs available.";
+
+        // JIT DNA Generation if still missing
         if (!techDNA) {
             console.log(`[DeepChain] DNA missing. Running Just-in-Time Audit...`);
             const retrieval = await queryContext(workshopId, "technical architecture legacy systems", 'DOSSIER');
@@ -450,10 +456,7 @@ export async function analyzeBacklogItem(
             });
         }
 
-        // Load Research
-        const research = dbContext?.researchBrief || "No specific research briefs available.";
-
-        // Load Raw Backlog for Summary (to avoid duplicates in Generation Mode)
+        // Load Raw Backlog for Summary
         // @ts-ignore
         const rawBacklog = dbContext?.rawBacklog as any[];
         const backlogSummary = rawBacklog ? rawBacklog.map(b => b.title).join(", ") : "None";
