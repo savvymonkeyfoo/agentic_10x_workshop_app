@@ -32,25 +32,29 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Refs for auto-growing standard textareas
     const titleRef = useRef<HTMLTextAreaElement>(null);
     const descRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        setLocalCard(card);
+        if (card) {
+            // SANITIZE: Strip markdown bolding (**) from description on load
+            const cleanDescription = (card.description || '').replace(/\*\*/g, '');
+            setLocalCard({ ...card, description: cleanDescription });
+        }
     }, [card]);
 
-    // Auto-resize Title on open/change
+    // AUTO-RESIZE LOGIC
+    const adjustHeight = (ref: HTMLTextAreaElement | null) => {
+        if (ref) {
+            ref.style.height = 'auto'; // Reset to calculate true height
+            ref.style.height = ref.scrollHeight + 'px';
+        }
+    };
+
+    // Trigger resize on open and when content changes
     useLayoutEffect(() => {
-        if (titleRef.current) {
-            titleRef.current.style.height = 'auto';
-            titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
-        }
-        // We do NOT force description height here to allow the max-h CSS to work
-        if (descRef.current) {
-            descRef.current.style.height = 'auto';
-            descRef.current.style.height = descRef.current.scrollHeight + 'px';
-        }
+        adjustHeight(titleRef.current);
+        adjustHeight(descRef.current);
     }, [localCard?.title, localCard?.description, isOpen]);
 
     if (!localCard) return null;
@@ -73,7 +77,6 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    {/* ACCESSIBILITY FIX */}
                     <DialogTitle className="sr-only">Edit Opportunity</DialogTitle>
 
                     {/* SOURCE BADGE */}
@@ -92,37 +95,25 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
 
-                    {/* HEADER SECTION */}
                     <div className="space-y-3 pb-2">
-                        {/* H1 TITLE: Massive, Black, Tight Tracking */}
+                        {/* H1 TITLE: Forced text size with !important classes to override defaults */}
                         <Textarea
                             ref={titleRef}
                             rows={1}
-                            className="text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
+                            className="!text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
                             placeholder="Opportunity Title"
                             value={localCard.title}
-                            onChange={(e) => {
-                                handleChange('title', e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                            }}
+                            onChange={(e) => handleChange('title', e.target.value)}
                         />
 
-                        {/* DESCRIPTION: Limited Height + Resize Handle */}
+                        {/* DESCRIPTION: Auto-grow up to max-h-[12rem] (approx 8 lines) */}
                         <Textarea
                             ref={descRef}
-                            rows={3}
-                            className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[80px] max-h-[12rem] resize-y overflow-y-auto"
+                            rows={1}
+                            className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
                             placeholder="Add a description..."
                             value={localCard.description}
-                            onChange={(e) => {
-                                handleChange('description', e.target.value);
-                                // Only auto-grow if under max-height threshold
-                                if (e.target.scrollHeight < 192) { // ~12rem
-                                    e.target.style.height = 'auto';
-                                    e.target.style.height = e.target.scrollHeight + 'px';
-                                }
-                            }}
+                            onChange={(e) => handleChange('description', e.target.value)}
                         />
                     </div>
                 </DialogHeader>
