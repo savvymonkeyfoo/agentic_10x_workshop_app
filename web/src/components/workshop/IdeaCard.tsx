@@ -63,7 +63,7 @@ export function IdeaCard({ card, onClick, onDelete }: IdeaCardProps) {
 
     // 3. Determine Category Styling (Intelligence Phase)
     // Overrides tier border if present, to show "Board" colors
-    let borderColor = tierConfig.cardClass; // Default to Tier
+    let borderColor: string = tierConfig.cardClass; // Default to Tier
     let borderStyle = {};
 
     if (card.category) {
