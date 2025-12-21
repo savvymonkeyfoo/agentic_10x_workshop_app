@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
@@ -32,9 +31,11 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Refs for auto-growing standard textareas
     const titleRef = useRef<HTMLTextAreaElement>(null);
     const descRef = useRef<HTMLTextAreaElement>(null);
 
+    // 1. SYNC STATE
     useEffect(() => {
         if (card) {
             // SANITIZE: Strip markdown bolding (**) from description on load
@@ -43,19 +44,25 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         }
     }, [card]);
 
-    // AUTO-RESIZE LOGIC
-    const adjustHeight = (ref: HTMLTextAreaElement | null) => {
-        if (ref) {
-            ref.style.height = 'auto'; // Reset to calculate true height
-            ref.style.height = ref.scrollHeight + 'px';
-        }
+    // 2. ROBUST AUTO-RESIZE LOGIC
+    const adjustHeight = (el: HTMLTextAreaElement | null) => {
+        if (!el) return;
+        // Reset to auto to allow shrinkage, then set to scrollHeight
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
     };
 
-    // Trigger resize on open and when content changes
-    useLayoutEffect(() => {
-        adjustHeight(titleRef.current);
-        adjustHeight(descRef.current);
-    }, [localCard?.title, localCard?.description, isOpen]);
+    // 3. FORCE RESIZE ON OPEN & CHANGE
+    useEffect(() => {
+        if (isOpen && localCard) {
+            // Slight delay ensures DOM is painted before we measure height
+            const timer = setTimeout(() => {
+                adjustHeight(titleRef.current);
+                adjustHeight(descRef.current);
+            }, 10);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, localCard?.title, localCard?.description]);
 
     if (!localCard) return null;
 
@@ -77,6 +84,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
+                    {/* ACCESSIBILITY FIX */}
                     <DialogTitle className="sr-only">Edit Opportunity</DialogTitle>
 
                     {/* SOURCE BADGE */}
@@ -96,7 +104,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                     </div>
 
                     <div className="space-y-3 pb-2">
-                        {/* H1 TITLE: Forced text size with !important classes to override defaults */}
+                        {/* H1 TITLE: Infinite Auto-Grow (No Scrollbar) */}
                         <Textarea
                             ref={titleRef}
                             rows={1}
@@ -106,7 +114,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                             onChange={(e) => handleChange('title', e.target.value)}
                         />
 
-                        {/* DESCRIPTION: Auto-grow up to max-h-[12rem] (approx 8 lines) */}
+                        {/* DESCRIPTION: Grow to max 8 lines, then scroll */}
                         <Textarea
                             ref={descRef}
                             rows={1}
