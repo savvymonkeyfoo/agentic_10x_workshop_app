@@ -136,17 +136,37 @@ const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect. Extract ON
 const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst. Identify 3-5 Strategic Collision Points.`;
 const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director. Architect 4-6 Research Briefs.`;
 
+// UPDATED: REMOVED HORIZON/CATEGORY, ADDED STRATEGY ALIGNMENT
 const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
-Task: Enrich this Client Backlog Item without changing its core identity.
+Task: Enrich this Client Backlog Item.
 1. Title/Description: KEEP EXACTLY AS PROVIDED.
 2. Friction: Analyze operational pain points.
 3. Tech Alignment: Map to Technical DNA.
-OUTPUT JSON: { "title", "description", "friction", "techAlignment", "source": "CLIENT_BACKLOG", "status", "horizon", "category", "originalId" }`;
+4. Strategy Alignment: Explain how this supports the core business goals/narrative.
+
+OUTPUT JSON: { 
+    "title": "string", 
+    "description": "string", 
+    "friction": "string", 
+    "techAlignment": "string", 
+    "strategyAlignment": "string", 
+    "source": "CLIENT_BACKLOG", 
+    "originalId": "string" 
+}`;
 
 const GENERATION_PROMPT = `You are a Chief Innovation Officer.
 Task: Generate a BRAND NEW Strategic Opportunity based on Research.
 Constraint: Must be totally different from Backlog.
-OUTPUT JSON: { "title", "description", "friction", "techAlignment", "source": "MARKET_SIGNAL", "status", "horizon", "category", "originalId" }`;
+
+OUTPUT JSON: { 
+    "title": "string", 
+    "description": "string", 
+    "friction": "string", 
+    "techAlignment": "string", 
+    "strategyAlignment": "string", 
+    "source": "MARKET_SIGNAL", 
+    "originalId": "string" 
+}`;
 
 // =============================================================================
 // ANALYSIS FUNCTIONS
@@ -225,9 +245,11 @@ export async function analyzeBacklogItem(
         }
         opportunity.originalId = item.id;
 
+        // Ensure new field exists even if AI misses it
+        opportunity.strategyAlignment = opportunity.strategyAlignment || "Aligns with core modernization goals.";
+
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
 
-        // EXPLICIT CASTING TO ANY TO FIX SPREAD ERROR
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
         const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
 
