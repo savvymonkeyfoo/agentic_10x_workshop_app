@@ -361,8 +361,10 @@ export async function fetchAnalysisContext(workshopId: string) {
     const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
     const dna = await technicalAudit(dossierContext, backlogContext);
     const research = workshopContext?.researchBrief || "No research briefs found.";
-    // @ts-ignore
-    const items = workshopContext?.rawBacklog || [];
+
+    // TYPE FIX: Cast rawBacklog to any[]
+    const items = (workshopContext?.rawBacklog as any[]) || [];
+
     return {
         success: true,
         context: { dna, research },
@@ -381,8 +383,8 @@ export async function getWorkshopIntelligence(workshopId: string) {
             where: { workshopId },
             select: { intelligenceAnalysis: true }
         });
-        // @ts-ignore
-        const data = context?.intelligenceAnalysis;
+        // TYPE FIX: Cast intelligenceAnalysis to any
+        const data = context?.intelligenceAnalysis as any;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
         return { success: false, error: "Failed to load" };
@@ -399,10 +401,20 @@ export async function generateBrief(workshopId: string): Promise<GenerationResul
         const gapHypotheses = await identifyStrategicGaps(auditData, backlogContext);
         const { briefs, signature } = await architectResearchBriefs(auditData, gapHypotheses, sources, clientName);
 
+        // TYPE FIX: Cast signature to string (Prisma limitation) and briefs to any
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
-            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
+            update: {
+                researchBrief: briefs.join('\n\n---\n\n'),
+                researchBriefs: briefs as any,
+                reasoningSignature: signature as string
+            },
+            create: {
+                workshopId,
+                researchBrief: briefs.join('\n\n---\n\n'),
+                researchBriefs: briefs as any,
+                reasoningSignature: signature as string
+            },
         });
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
