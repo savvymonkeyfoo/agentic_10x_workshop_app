@@ -1,15 +1,15 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, BrainCircuit, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
+import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor"; // NEW COMPONENT
 
-// UPDATED: Strategic Analysis Data Shape
 export type OpportunityCardData = {
     title: string;
     description: string;
@@ -32,24 +32,21 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Sync state when card opens
     useEffect(() => {
         setLocalCard(card);
     }, [card]);
 
     if (!localCard) return null;
 
-    // AUTO-SAVE HANDLER (Debounced logic would be in parent, or we trigger here)
     const handleChange = (field: keyof OpportunityCardData, value: string) => {
         const updated = { ...localCard, [field]: value };
         setLocalCard(updated);
 
-        // Trigger Save (Parent handles API call)
         setIsSaving(true);
         const timer = setTimeout(() => {
             onSave(updated);
             setIsSaving(false);
-        }, 800); // 800ms debounce
+        }, 800);
         return () => clearTimeout(timer);
     };
 
@@ -59,7 +56,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    {/* READ-ONLY SOURCE BADGE */}
+                    {/* SOURCE BADGE */}
                     <div className="flex items-center justify-between mb-4">
                         <Badge variant="outline" className={cn(
                             "px-3 py-1 text-xs font-bold tracking-wide border",
@@ -75,15 +72,13 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
 
-                    {/* EDITABLE TITLE */}
+                    {/* TITLE & DESCRIPTION */}
                     <div className="space-y-4">
                         <Input
                             className="text-2xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 h-auto py-2 shadow-none"
                             value={localCard.title}
                             onChange={(e) => handleChange('title', e.target.value)}
                         />
-
-                        {/* EDITABLE DESCRIPTION */}
                         <Textarea
                             className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none min-h-[80px]"
                             value={localCard.description}
@@ -93,39 +88,42 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                 </DialogHeader>
 
                 <div className="space-y-6 mt-4">
-                    {/* 1. Friction (Red) */}
+                    {/* 1. FRICTION (RED) */}
                     <div className="bg-red-50/50 p-4 rounded-xl border border-red-100/50 hover:border-red-200 transition-colors group">
                         <Label className="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4" /> Operational Friction
                         </Label>
-                        <Textarea
-                            className="bg-transparent border-none focus-visible:ring-0 text-red-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
-                            value={localCard.friction || "- No friction identified."}
-                            onChange={(e) => handleChange('friction', e.target.value)}
+                        <SmartBulletEditor
+                            value={localCard.friction || ""}
+                            onChange={(val) => handleChange('friction', val)}
+                            colorClass="text-red-900/80"
+                            placeholder="Add friction point..."
                         />
                     </div>
 
-                    {/* 2. Tech (Blue) */}
+                    {/* 2. TECH (BLUE) */}
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-colors group">
                         <Label className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2">
                             <ShieldCheck className="w-4 h-4" /> Technical DNA
                         </Label>
-                        <Textarea
-                            className="bg-transparent border-none focus-visible:ring-0 text-blue-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
-                            value={localCard.techAlignment || "- No tech alignment identified."}
-                            onChange={(e) => handleChange('techAlignment', e.target.value)}
+                        <SmartBulletEditor
+                            value={localCard.techAlignment || ""}
+                            onChange={(val) => handleChange('techAlignment', val)}
+                            colorClass="text-blue-900/80"
+                            placeholder="Add tech detail..."
                         />
                     </div>
 
-                    {/* 3. Strategy (Amber) */}
+                    {/* 3. STRATEGY (AMBER) */}
                     <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 hover:border-amber-200 transition-colors group">
                         <Label className="text-xs font-bold text-amber-700 uppercase mb-3 flex items-center gap-2">
                             <Target className="w-4 h-4" /> Strategy Alignment
                         </Label>
-                        <Textarea
-                            className="bg-transparent border-none focus-visible:ring-0 text-amber-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
-                            value={localCard.strategyAlignment || "- No strategy alignment identified."}
-                            onChange={(e) => handleChange('strategyAlignment', e.target.value)}
+                        <SmartBulletEditor
+                            value={localCard.strategyAlignment || ""}
+                            onChange={(val) => handleChange('strategyAlignment', val)}
+                            colorClass="text-amber-900/80"
+                            placeholder="Add strategic goal..."
                         />
                     </div>
                 </div>

@@ -7,7 +7,7 @@ import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
 
 // =============================================================================
-// TYPES
+// TYPES & INTERFACES
 // =============================================================================
 
 type AssetType = 'DOSSIER' | 'BACKLOG' | 'MARKET_SIGNAL';
@@ -26,7 +26,6 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
-// DEFINED RETURN TYPE FOR BRIEF GENERATION
 interface GenerationResult {
     success: boolean;
     briefs: string[];
@@ -37,8 +36,19 @@ interface GenerationResult {
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
-// PINECONE RETRIEVAL
+// PINECONE & PRE-WARM
 // =============================================================================
+
+export async function preWarmContext(workshopId: string) {
+    try {
+        const { getWorkshopNamespace } = await import('@/lib/pinecone');
+        const namespace = getWorkshopNamespace(workshopId);
+        await namespace.describeIndexStats();
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
 
 async function queryPinecone(
     workshopId: string,
@@ -46,30 +56,16 @@ async function queryPinecone(
     options: { topK?: number; filterType?: AssetType | AssetType[] } = {}
 ): Promise<RetrievalResult> {
     const { topK = 15, filterType } = options;
-
-    console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
-
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
-
-    const { embedding } = await embed({
-        model: AI_CONFIG.embeddingModel,
-        value: query,
-    });
+    const { embedding } = await embed({ model: AI_CONFIG.embeddingModel, value: query });
 
     let filter: Record<string, unknown> | undefined;
     if (filterType) {
-        filter = Array.isArray(filterType)
-            ? { type: { "$in": filterType } }
-            : { type: { "$eq": filterType } };
+        filter = Array.isArray(filterType) ? { type: { "$in": filterType } } : { type: { "$eq": filterType } };
     }
 
     const namespace = getWorkshopNamespace(workshopId);
-    const results = await namespace.query({
-        vector: embedding,
-        topK,
-        filter,
-        includeMetadata: true,
-    });
+    const results = await namespace.query({ vector: embedding, topK, filter, includeMetadata: true });
 
     const chunks: RetrievedChunk[] = results.matches.map(match => ({
         id: match.id,
@@ -80,16 +76,13 @@ async function queryPinecone(
     }));
 
     const uniqueFiles = new Set(chunks.map(c => c.filename));
-    console.log(`[SupremeScout] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
-
     return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
 
 function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; backlogContext: string; sources: string[] } {
     const dossierChunks = chunks.filter(c => c.type === 'DOSSIER');
     const backlogChunks = chunks.filter(c => c.type === 'BACKLOG');
-    const formatChunks = (arr: RetrievedChunk[]) =>
-        arr.map(c => `[Source: ${c.filename}]\n${c.content}`).join('\n\n---\n\n');
+    const formatChunks = (arr: RetrievedChunk[]) => arr.map(c => `[Source: ${c.filename}]\n${c.content}`).join('\n\n---\n\n');
     return {
         dossierContext: formatChunks(dossierChunks) || 'No enterprise context available.',
         backlogContext: formatChunks(backlogChunks) || 'No backlog items available.',
@@ -98,39 +91,27 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// PROMPTS (AUSTRALIAN SPELLING + BULLET POINTS)
+// PROMPTS (AGGRESSIVE AUSTRALIAN LOCALISATION)
 // =============================================================================
 
 const BACKLOG_EXTRACTION_PROMPT = `You are a Senior Business Analyst.
-Task: Extract a structured backlog from the raw document text provided below.
+Task: Extract a structured backlog from the raw text.
+Output JSON Array: [{"title": "...", "description": "..."}]`;
 
-INSTRUCTIONS:
-1. Identify items: Look for bullet points, numbered lists, or sections that describe features, tasks, or user stories.
-2. Extract Content: For each item, capture a clear 'Title' and a 'Description'.
-   - If the title is not explicit, summarize the first sentence as the title.
-   - If the description is missing, infer it from the context.
-   - DO NOT return empty strings. If an item has no content, skip it.
+const TECHNICAL_AUDIT_PROMPT = `You are a Systems Architect. Extract hard data points.`;
+const STRATEGIC_GAPS_PROMPT = `You are a Strategy Analyst. Identify strategic collision points.`;
+const RESEARCH_BRIEFS_PROMPT = `You are a Research Director. Architect 4-6 Research Briefs.`;
 
-OUTPUT FORMAT:
-Return a clean JSON array of objects.
-Example: [{"title": "Login Page", "description": "Allow users to log in via SSO."}]`;
-
-const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect. Extract ONLY hard data points.`;
-const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst. Identify 3-5 Strategic Collision Points.`;
-const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director. Architect 4-6 Research Briefs.`;
-
-const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
+const ENRICHMENT_PROMPT = `You are a Strategy Consultant in Australia.
 Task: Enrich this Client Backlog Item.
 
 STRICT RULES:
-1. Language: Use Australian English spelling (e.g., 'optimise', 'centre', 'programme').
-2. Title/Description: KEEP EXACTLY AS PROVIDED. Do not rewrite.
-3. Formatting: 'Friction', 'Tech Alignment', and 'Strategy Alignment' MUST be formatted as Markdown Bullet Points.
-
-ANALYSIS FIELDS:
-- Friction: Analyze operational pain points (Bullet points).
-- Tech Alignment: Map to Technical DNA (Bullet points).
-- Strategy Alignment: Explain how this supports business goals (Bullet points).
+1. LOCALE: Use Australian English (en-AU). 
+   - Use 's' instead of 'z' (e.g. 'analyse', 'optimise', 'prioritise').
+   - Use 're' (e.g. 'centre', 'theatre').
+   - Use 'programme' over 'program'.
+2. TITLE/DESC: Keep VERBATIM. Do not rewrite.
+3. FORMATTING: Friction, Tech, and Strategy MUST be Markdown Bullet Points.
 
 OUTPUT JSON: { 
     "title": "string", 
@@ -142,13 +123,13 @@ OUTPUT JSON: {
     "originalId": "string" 
 }`;
 
-const GENERATION_PROMPT = `You are a Chief Innovation Officer.
-Task: Generate a BRAND NEW Strategic Opportunity based on Research.
+const GENERATION_PROMPT = `You are a Chief Innovation Officer in Australia.
+Task: Generate a BRAND NEW Strategic Opportunity.
 Constraint: Must be totally different from Backlog.
 
 STRICT RULES:
-1. Language: Use Australian English spelling (e.g., 'optimise', 'centre').
-2. Formatting: Output analysis fields as Markdown Bullet Points.
+1. LOCALE: Use Australian English (en-AU). 'analyse', 'optimise', 'colour'.
+2. FORMATTING: Output fields as Markdown Bullet Points.
 
 OUTPUT JSON: { 
     "title": "string", 
@@ -161,7 +142,7 @@ OUTPUT JSON: {
 }`;
 
 // =============================================================================
-// ANALYSIS FUNCTIONS
+// ANALYSIS
 // =============================================================================
 
 async function technicalAudit(dossierContext: string, backlogContext: string): Promise<string> {
@@ -229,8 +210,6 @@ export async function analyzeBacklogItem(
         const opportunity = JSON.parse(cardJson.replace(/```json/g, '').replace(/```/g, '').trim());
 
         // FORCE VERBATIM FIDELITY
-        // We purposefully overwrite whatever description the AI generated 
-        // with the original one from the file to prevent rewriting/hallucination.
         if (!item.isSeed) {
             opportunity.title = item.title;
             opportunity.description = item.description;
@@ -239,12 +218,9 @@ export async function analyzeBacklogItem(
             opportunity.source = 'MARKET_SIGNAL';
         }
         opportunity.originalId = item.id;
-
-        // Ensure defaults
         opportunity.strategyAlignment = opportunity.strategyAlignment || "- Aligns with core modernisation goals.";
 
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
         const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
 
@@ -266,16 +242,11 @@ export async function analyzeBacklogItem(
     }
 }
 
-// =============================================================================
-// MANUAL UPDATE (AUTO-SAVE HANDLER)
-// =============================================================================
-
 export async function updateOpportunity(workshopId: string, opportunity: any) {
     try {
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
 
-        // Remove old version, add new version
         const otherOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== opportunity.originalId);
 
         await prisma.workshopContext.update({
@@ -288,7 +259,6 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
             }
         });
 
-        // Silent revalidate
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true };
     } catch (error) {
@@ -297,10 +267,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
     }
 }
 
-// =============================================================================
-// HYDRATION, ETC. (Keep remaining functions exactly as they were)
-// =============================================================================
-
+// ... (Hydrate/Fetch/Brief/Reset functions remain unchanged) ...
 export async function hydrateBacklog(workshopId: string) {
     try {
         console.log(`[SupremeScout] Hydrating backlog for ${workshopId}...`);
@@ -378,10 +345,8 @@ export async function fetchAnalysisContext(workshopId: string) {
     const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
     const dna = await technicalAudit(dossierContext, backlogContext);
     const research = workshopContext?.researchBrief || "No research briefs found.";
-
     // @ts-ignore
     const items = (workshopContext?.rawBacklog as any[]) || [];
-
     return {
         success: true,
         context: { dna, research },
@@ -427,11 +392,7 @@ export async function generateBrief(workshopId: string): Promise<GenerationResul
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
     } catch (error) {
         console.error("Brief Generation Failed", error);
-        return {
-            success: false,
-            briefs: [],
-            error: "Failed to generate brief"
-        };
+        return { success: false, briefs: [], error: "Failed to generate brief" };
     }
 }
 
@@ -449,21 +410,10 @@ export async function resetWorkshopIntelligence(workshopId: string) {
                 rawBacklog: Prisma.DbNull
             }
         });
-
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true };
     } catch (error) {
         console.error("Failed to reset intelligence", error);
         return { success: false, error: "Failed to reset data" };
-    }
-}
-
-export async function preWarmContext(workshopId: string) {
-    // Simply ensure connection is alive
-    try {
-        await prisma.workshopContext.findUnique({ where: { workshopId }, select: { id: true } });
-        return { success: true };
-    } catch (e) {
-        return { success: false };
     }
 }
