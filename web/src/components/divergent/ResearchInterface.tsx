@@ -12,10 +12,10 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext, updateOpportunity } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
-import { OpportunityModal } from '@/components/workshop/OpportunityModal';
+import { OpportunityModal, OpportunityCardData } from '@/components/workshop/OpportunityModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { RotateCcw, AlertCircle, Sparkles as SparklesIcon } from 'lucide-react';
@@ -36,25 +36,26 @@ type QueueItem = {
     isSeed?: boolean;
 };
 
-// OPPORTUNITY CARD TYPE (Matches Updated Prompt)
+// OPPORTUNITY CARD TYPE
 type OpportunityCard = {
     title: string;
     description: string;
     friction?: string;
     techAlignment?: string;
-    strategyAlignment?: string; // NEW
+    strategyAlignment?: string;
     source?: string;
     provenance?: string;
     originalId: string;
+    // Legacy fields for compat
+    category?: string;
+    horizon?: string;
 };
 
 export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: ResearchInterfaceProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // =========================================================================
     // ASSET DATA
-    // =========================================================================
     const dossierAssets = assets.filter(a => a.type === 'DOSSIER');
     const backlogAssets = assets.filter(a => a.type === 'BACKLOG');
     const marketAssets = assets.filter(a => a.type === 'MARKET_SIGNAL');
@@ -64,9 +65,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const isReadyForResearch = dossierReadyCount > 0 && backlogReadyCount > 0;
     const hasBacklog = backlogAssets.length > 0;
 
-    // =========================================================================
     // STATE
-    // =========================================================================
     const [activeTab, setActiveTab] = useState('context');
     const [generatedBriefs, setGeneratedBriefs] = useState<string[]>(initialBriefs);
     const [isGeneratingBriefs, setIsGeneratingBriefs] = useState(false);
@@ -80,10 +79,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
 
-    // =========================================================================
     // EFFECTS
-    // =========================================================================
-
     useEffect(() => {
         const stageParam = searchParams.get('stage');
         if (stageParam === '1') setActiveTab('context');
@@ -93,11 +89,11 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
     useEffect(() => {
         if (activeTab === 'intelligence') {
-            preWarmContext(workshopId).catch(err => console.error("Warmup silent fail", err));
+            preWarmContext(workshopId).catch((err: any) => console.error("Warmup silent fail", err));
         }
     }, [activeTab, workshopId]);
 
-    // RESET HANDLER
+    // HANDLERS
     const handleResetAnalysis = async () => {
         setIsResetting(true);
         await resetWorkshopIntelligence(workshopId);
@@ -106,6 +102,15 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         setIntelligenceState('idle');
         setIsResetting(false);
         setIsResetModalOpen(false);
+    };
+
+    const handleCardUpdate = async (updatedCard: OpportunityCardData) => {
+        // 1. Optimistic Update (UI)
+        setCompletedCards(prev => prev.map(c => c.originalId === updatedCard.originalId ? { ...c, ...updatedCard } : c));
+
+        // 2. Server Update (DB)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateOpportunity(workshopId, updatedCard as any);
     };
 
     // AUTO-HYDRATION
@@ -131,16 +136,14 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     }, [activeTab, workshopId, completedCards.length]);
 
-    // DAISY CHAIN PROCESSOR
+    // DAISY CHAIN
     useEffect(() => {
         const processNextItem = async () => {
             if (intelligenceState !== 'analyzing') return;
-
             const isBusy = queue.some(i => i.status === 'PROCESSING');
             if (isBusy) return;
 
             const nextIdx = queue.findIndex(i => i.status === 'PENDING');
-
             if (nextIdx === -1) {
                 if (queue.length > 0) {
                     setTimeout(() => {
@@ -152,7 +155,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             }
 
             const currentItem = queue[nextIdx];
-
             setQueue(prev => {
                 const updated = [...prev];
                 updated[nextIdx] = { ...updated[nextIdx], status: 'PROCESSING' };
@@ -182,7 +184,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         updated[nextIdx] = { ...updated[nextIdx], status: 'FAILED' };
                         return updated;
                     });
-                    setCurrentLog(`Failed to analyze ${currentItem.title}`);
+                    setCurrentLog(`Failed to analyse ${currentItem.title}`);
                 }
             } catch (error) {
                 console.error("Daisy Chain Error", error);
@@ -194,14 +196,11 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             }
         };
 
-        const timer = setTimeout(() => {
-            processNextItem();
-        }, 100);
-
+        const timer = setTimeout(() => { processNextItem(); }, 100);
         return () => clearTimeout(timer);
     }, [queue, intelligenceState, workshopId]);
 
-    // HANDLERS (Same as before)
+    // GENERATE BRIEF
     const handleGenerateBrief = async () => {
         if (generatedBriefs.length > 0) {
             const confirmed = window.confirm("Overwrite existing Research Briefs?");
@@ -224,9 +223,10 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     };
 
+    // START ANALYSIS
     const handleStartAnalysis = async () => {
         if (backlogAssets.length === 0) {
-            toast.error("No backlog items to analyze");
+            toast.error("No backlog items to analyse");
             return;
         }
         setIntelligenceState('initializing');
@@ -257,7 +257,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     };
 
-    // TRACKER (Simplified)
+    // TRACKER
     const DualStreamTracker = () => {
         const backlogQueue = queue.filter(q => !q.id || !q.id.startsWith('seed-'));
         const researchQueue = queue.filter(q => q.id && q.id.startsWith('seed-'));
@@ -399,7 +399,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             <div className="flex flex-col items-center justify-center h-[500px] border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                                 <div className="text-center max-w-lg space-y-6">
                                     <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto text-purple-600"><Sparkles className="w-8 h-8" /></div>
-                                    <h2 className="text-2xl font-black text-slate-800">Ready to Analyze Backlog?</h2>
+                                    <h2 className="text-2xl font-black text-slate-800">Ready to Analyse Backlog?</h2>
                                     <p className="text-slate-500">The Deep-Chain Engine will forensically audit each item, cross-reference it with our research, and generate strategic opportunity cards.</p>
                                     <Button size="lg" onClick={handleStartAnalysis} className="h-14 px-8 text-lg bg-purple-600 hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all hover:scale-105">
                                         <Zap className="mr-2 h-5 w-5" /> Initialize Deep-Chain Sequence
@@ -419,7 +419,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             <div className="space-y-8 animate-in fade-in duration-500">
                                 <DualStreamTracker />
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* RENDER ALL CARDS IN A FLAT GRID */}
                                     {completedCards.map((card, i) => (
                                         <IdeaCard
                                             key={i}
@@ -438,7 +437,12 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 )}
             </div>
 
-            <OpportunityModal card={selectedCard} isOpen={!!selectedCard} onClose={() => setSelectedCard(null)} />
+            <OpportunityModal
+                card={selectedCard}
+                isOpen={!!selectedCard}
+                onClose={() => setSelectedCard(null)}
+                onSave={handleCardUpdate}
+            />
         </WorkshopPageShell>
     );
 }

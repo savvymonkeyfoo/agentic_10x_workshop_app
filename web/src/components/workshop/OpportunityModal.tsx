@@ -1,9 +1,13 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, BrainCircuit, Sparkles, Target } from "lucide-react";
+import { AlertTriangle, BrainCircuit, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // UPDATED: Strategic Analysis Data Shape
 export type OpportunityCardData = {
@@ -11,7 +15,7 @@ export type OpportunityCardData = {
     description: string;
     friction?: string;
     techAlignment?: string;
-    strategyAlignment?: string; // NEW
+    strategyAlignment?: string;
     source?: string;
     provenance?: string;
     originalId: string;
@@ -21,70 +25,119 @@ interface OpportunityModalProps {
     card: OpportunityCardData | null;
     isOpen: boolean;
     onClose: () => void;
+    onSave: (updatedCard: OpportunityCardData) => void;
 }
 
-export function OpportunityModal({ card, isOpen, onClose }: OpportunityModalProps) {
-    if (!card) return null;
+export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityModalProps) {
+    const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Sync state when card opens
+    useEffect(() => {
+        setLocalCard(card);
+    }, [card]);
+
+    if (!localCard) return null;
+
+    // AUTO-SAVE HANDLER (Debounced logic would be in parent, or we trigger here)
+    const handleChange = (field: keyof OpportunityCardData, value: string) => {
+        const updated = { ...localCard, [field]: value };
+        setLocalCard(updated);
+
+        // Trigger Save (Parent handles API call)
+        setIsSaving(true);
+        const timer = setTimeout(() => {
+            onSave(updated);
+            setIsSaving(false);
+        }, 800); // 800ms debounce
+        return () => clearTimeout(timer);
+    };
+
+    const isMarketSignal = localCard.source === 'MARKET_SIGNAL';
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    {/* Source Badge only - Horizon/Category removed */}
-                    <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-slate-500 border-slate-300">
-                            {card.source || "Opportunity"}
+                    {/* READ-ONLY SOURCE BADGE */}
+                    <div className="flex items-center justify-between mb-4">
+                        <Badge variant="outline" className={cn(
+                            "px-3 py-1 text-xs font-bold tracking-wide border",
+                            isMarketSignal
+                                ? "bg-purple-100 text-purple-700 border-purple-200"
+                                : "bg-slate-100 text-slate-700 border-slate-200"
+                        )}>
+                            {isMarketSignal
+                                ? <><Zap className="w-3 h-3 mr-2" /> Market Signal</>
+                                : <><CheckCircle className="w-3 h-3 mr-2" /> Backlog Item</>
+                            }
                         </Badge>
+                        {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
-                    <DialogTitle className="text-2xl font-black text-slate-900">
-                        {card.title}
-                    </DialogTitle>
-                    <DialogDescription className="text-lg text-slate-600 mt-2">
-                        {card.description}
-                    </DialogDescription>
+
+                    {/* EDITABLE TITLE */}
+                    <div className="space-y-4">
+                        <Input
+                            className="text-2xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 h-auto py-2 shadow-none"
+                            value={localCard.title}
+                            onChange={(e) => handleChange('title', e.target.value)}
+                        />
+
+                        {/* EDITABLE DESCRIPTION */}
+                        <Textarea
+                            className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none min-h-[80px]"
+                            value={localCard.description}
+                            onChange={(e) => handleChange('description', e.target.value)}
+                        />
+                    </div>
                 </DialogHeader>
 
-                {/* THE STRATEGIC TRIAD */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-                    {/* 1. Friction */}
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-                        <h4 className="text-xs font-bold text-red-700 uppercase mb-2 flex items-center gap-2">
-                            <AlertTriangle className="w-3 h-3" /> Friction
-                        </h4>
-                        <p className="text-sm text-red-900 font-medium leading-relaxed">
-                            {card.friction || "Resolves operational bottlenecks."}
-                        </p>
+                <div className="space-y-6 mt-4">
+                    {/* 1. Friction (Red) */}
+                    <div className="bg-red-50/50 p-4 rounded-xl border border-red-100/50 hover:border-red-200 transition-colors group">
+                        <Label className="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" /> Operational Friction
+                        </Label>
+                        <Textarea
+                            className="bg-transparent border-none focus-visible:ring-0 text-red-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
+                            value={localCard.friction || "- No friction identified."}
+                            onChange={(e) => handleChange('friction', e.target.value)}
+                        />
                     </div>
 
-                    {/* 2. Tech Alignment */}
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <h4 className="text-xs font-bold text-blue-700 uppercase mb-2 flex items-center gap-2">
-                            <BrainCircuit className="w-3 h-3" /> Tech DNA
-                        </h4>
-                        <p className="text-sm text-blue-900 font-medium leading-relaxed">
-                            {card.techAlignment || "Leverages existing architecture."}
-                        </p>
+                    {/* 2. Tech (Blue) */}
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-colors group">
+                        <Label className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4" /> Technical DNA
+                        </Label>
+                        <Textarea
+                            className="bg-transparent border-none focus-visible:ring-0 text-blue-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
+                            value={localCard.techAlignment || "- No tech alignment identified."}
+                            onChange={(e) => handleChange('techAlignment', e.target.value)}
+                        />
                     </div>
 
-                    {/* 3. Strategy Alignment (NEW) */}
-                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-                        <h4 className="text-xs font-bold text-amber-700 uppercase mb-2 flex items-center gap-2">
-                            <Target className="w-3 h-3" /> Strategy
-                        </h4>
-                        <p className="text-sm text-amber-900 font-medium leading-relaxed">
-                            {card.strategyAlignment || "Aligns with core business goals."}
-                        </p>
+                    {/* 3. Strategy (Amber) */}
+                    <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 hover:border-amber-200 transition-colors group">
+                        <Label className="text-xs font-bold text-amber-700 uppercase mb-3 flex items-center gap-2">
+                            <Target className="w-4 h-4" /> Strategy Alignment
+                        </Label>
+                        <Textarea
+                            className="bg-transparent border-none focus-visible:ring-0 text-amber-900/80 text-sm leading-relaxed min-h-[100px] p-0 shadow-none -ml-1"
+                            value={localCard.strategyAlignment || "- No strategy alignment identified."}
+                            onChange={(e) => handleChange('strategyAlignment', e.target.value)}
+                        />
                     </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono bg-slate-100 px-2 py-1 rounded">
-                        ID: {card.originalId?.slice(0, 8) || 'N/A'}
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-mono bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                        ID: {localCard.originalId || 'UNKNOWN_ID'}
                     </span>
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-3 h-3 text-purple-400" />
                         <span className="italic">
-                            {card.provenance || "AI Generated via Deep-Chain"}
+                            {localCard.provenance || "AI Generated via Deep-Chain"}
                         </span>
                     </div>
                 </div>

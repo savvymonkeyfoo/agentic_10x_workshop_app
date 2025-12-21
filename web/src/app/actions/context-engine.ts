@@ -30,31 +30,14 @@ interface RetrievalResult {
 interface GenerationResult {
     success: boolean;
     briefs: string[];
-    brief?: string; // Optional because error case won't have it
-    error?: string; // Optional because success case won't have it
+    brief?: string;
+    error?: string;
 }
 
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
-// PRE-WARM (CONNECTION KEEPALIVE)
-// =============================================================================
-
-export async function preWarmContext(workshopId: string) {
-    try {
-        console.log(`[SupremeScout] Pre-warming connection for ${workshopId}...`);
-        const { getWorkshopNamespace } = await import('@/lib/pinecone');
-        const namespace = getWorkshopNamespace(workshopId);
-        await namespace.describeIndexStats();
-        return { success: true };
-    } catch (error) {
-        console.error("[SupremeScout] Warmup failed (non-fatal)", error);
-        return { success: false };
-    }
-}
-
-// =============================================================================
-// PINECONE RETRIEVAL (DYNAMIC / LAZY LOAD)
+// PINECONE RETRIEVAL
 // =============================================================================
 
 async function queryPinecone(
@@ -115,7 +98,7 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// PROMPTS (SMART EXTRACTION)
+// PROMPTS (AUSTRALIAN SPELLING + BULLET POINTS)
 // =============================================================================
 
 const BACKLOG_EXTRACTION_PROMPT = `You are a Senior Business Analyst.
@@ -136,13 +119,18 @@ const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect. Extract ON
 const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst. Identify 3-5 Strategic Collision Points.`;
 const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director. Architect 4-6 Research Briefs.`;
 
-// UPDATED: REMOVED HORIZON/CATEGORY, ADDED STRATEGY ALIGNMENT
 const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
 Task: Enrich this Client Backlog Item.
-1. Title/Description: KEEP EXACTLY AS PROVIDED.
-2. Friction: Analyze operational pain points.
-3. Tech Alignment: Map to Technical DNA.
-4. Strategy Alignment: Explain how this supports the core business goals/narrative.
+
+STRICT RULES:
+1. Language: Use Australian English spelling (e.g., 'optimise', 'centre', 'programme').
+2. Title/Description: KEEP EXACTLY AS PROVIDED. Do not rewrite.
+3. Formatting: 'Friction', 'Tech Alignment', and 'Strategy Alignment' MUST be formatted as Markdown Bullet Points.
+
+ANALYSIS FIELDS:
+- Friction: Analyze operational pain points (Bullet points).
+- Tech Alignment: Map to Technical DNA (Bullet points).
+- Strategy Alignment: Explain how this supports business goals (Bullet points).
 
 OUTPUT JSON: { 
     "title": "string", 
@@ -157,6 +145,10 @@ OUTPUT JSON: {
 const GENERATION_PROMPT = `You are a Chief Innovation Officer.
 Task: Generate a BRAND NEW Strategic Opportunity based on Research.
 Constraint: Must be totally different from Backlog.
+
+STRICT RULES:
+1. Language: Use Australian English spelling (e.g., 'optimise', 'centre').
+2. Formatting: Output analysis fields as Markdown Bullet Points.
 
 OUTPUT JSON: { 
     "title": "string", 
@@ -236,6 +228,9 @@ export async function analyzeBacklogItem(
 
         const opportunity = JSON.parse(cardJson.replace(/```json/g, '').replace(/```/g, '').trim());
 
+        // FORCE VERBATIM FIDELITY
+        // We purposefully overwrite whatever description the AI generated 
+        // with the original one from the file to prevent rewriting/hallucination.
         if (!item.isSeed) {
             opportunity.title = item.title;
             opportunity.description = item.description;
@@ -245,8 +240,8 @@ export async function analyzeBacklogItem(
         }
         opportunity.originalId = item.id;
 
-        // Ensure new field exists even if AI misses it
-        opportunity.strategyAlignment = opportunity.strategyAlignment || "Aligns with core modernization goals.";
+        // Ensure defaults
+        opportunity.strategyAlignment = opportunity.strategyAlignment || "- Aligns with core modernisation goals.";
 
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
 
@@ -272,7 +267,38 @@ export async function analyzeBacklogItem(
 }
 
 // =============================================================================
-// HYDRATION (SMART + ROBUST)
+// MANUAL UPDATE (AUTO-SAVE HANDLER)
+// =============================================================================
+
+export async function updateOpportunity(workshopId: string, opportunity: any) {
+    try {
+        const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
+        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+
+        // Remove old version, add new version
+        const otherOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== opportunity.originalId);
+
+        await prisma.workshopContext.update({
+            where: { workshopId },
+            data: {
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: [...otherOpportunities, opportunity]
+                }
+            }
+        });
+
+        // Silent revalidate
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Update Failed", error);
+        return { success: false };
+    }
+}
+
+// =============================================================================
+// HYDRATION, ETC. (Keep remaining functions exactly as they were)
 // =============================================================================
 
 export async function hydrateBacklog(workshopId: string) {
@@ -287,7 +313,7 @@ export async function hydrateBacklog(workshopId: string) {
             const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
                 id: `seed-${i}`,
                 title: `Strategic Opportunity Discovery ${i + 1}`,
-                description: "Analyzing market signals...",
+                description: "Analysing market signals...",
                 isSeed: true
             }));
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
@@ -334,7 +360,7 @@ export async function hydrateBacklog(workshopId: string) {
         const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
             id: `seed-${i}`,
             title: `Strategic Opportunity Discovery ${i + 1}`,
-            description: "Analyzing market signals...",
+            description: "Analysing market signals...",
             isSeed: true
         }));
 
@@ -382,7 +408,6 @@ export async function getWorkshopIntelligence(workshopId: string) {
     }
 }
 
-// 4. FIX: EXPLICIT RETURN TYPE FOR GENERATE BRIEF
 export async function generateBrief(workshopId: string): Promise<GenerationResult> {
     try {
         const workshop = await prisma.workshop.findUnique({ where: { id: workshopId }, select: { clientName: true } });
@@ -395,8 +420,8 @@ export async function generateBrief(workshopId: string): Promise<GenerationResul
 
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
-            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
+            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature as string | null },
+            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature as string | null },
         });
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
@@ -430,5 +455,15 @@ export async function resetWorkshopIntelligence(workshopId: string) {
     } catch (error) {
         console.error("Failed to reset intelligence", error);
         return { success: false, error: "Failed to reset data" };
+    }
+}
+
+export async function preWarmContext(workshopId: string) {
+    // Simply ensure connection is alive
+    try {
+        await prisma.workshopContext.findUnique({ where: { workshopId }, select: { id: true } });
+        return { success: true };
+    } catch (e) {
+        return { success: false };
     }
 }
