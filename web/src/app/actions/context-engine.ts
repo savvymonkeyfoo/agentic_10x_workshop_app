@@ -321,7 +321,7 @@ export async function fetchAnalysisContext(workshopId: string) {
     const research = workshopContext?.researchBrief || "No research briefs found.";
 
     // @ts-ignore
-    const items = workshopContext?.rawBacklog || [];
+    const items = (workshopContext?.rawBacklog as any[]) || [];
 
     return {
         success: true,
@@ -342,7 +342,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             select: { intelligenceAnalysis: true }
         });
         // @ts-ignore
-        const data = context?.intelligenceAnalysis;
+        const data = context?.intelligenceAnalysis as any;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
         return { success: false, error: "Failed to load" };
@@ -360,8 +360,8 @@ export async function generateBrief(workshopId: string) {
 
     await prisma.workshopContext.upsert({
         where: { workshopId },
-        update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
-        create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
+        update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature },
+        create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature },
     });
     revalidatePath(`/workshop/${workshopId}`);
     return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
