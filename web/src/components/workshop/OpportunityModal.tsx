@@ -2,20 +2,18 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, BrainCircuit, Sparkles } from "lucide-react";
+import { AlertTriangle, BrainCircuit, Sparkles, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Define the shape of the card data expected by the modal
+// UPDATED: Strategic Analysis Data Shape
 export type OpportunityCardData = {
     title: string;
     description: string;
     friction?: string;
     techAlignment?: string;
+    strategyAlignment?: string; // NEW
     source?: string;
     provenance?: string;
-    status: string;
-    horizon: string;
-    category: string;
     originalId: string;
 };
 
@@ -32,13 +30,10 @@ export function OpportunityModal({ card, isOpen, onClose }: OpportunityModalProp
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
+                    {/* Source Badge only - Horizon/Category removed */}
                     <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{card.horizon}</Badge>
-                        <Badge className={cn(
-                            "text-white",
-                            card.category === 'MOONSHOT' ? "bg-purple-600" : "bg-blue-600"
-                        )}>
-                            {card.category}
+                        <Badge variant="outline" className="text-slate-500 border-slate-300">
+                            {card.source || "Opportunity"}
                         </Badge>
                     </div>
                     <DialogTitle className="text-2xl font-black text-slate-900">
@@ -49,26 +44,40 @@ export function OpportunityModal({ card, isOpen, onClose }: OpportunityModalProp
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid grid-cols-2 gap-4 my-6">
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                            <AlertTriangle className="w-3 h-3" /> Friction Point
+                {/* THE STRATEGIC TRIAD */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+                    {/* 1. Friction */}
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                        <h4 className="text-xs font-bold text-red-700 uppercase mb-2 flex items-center gap-2">
+                            <AlertTriangle className="w-3 h-3" /> Friction
                         </h4>
-                        <p className="text-sm text-slate-700 font-medium">
+                        <p className="text-sm text-red-900 font-medium leading-relaxed">
                             {card.friction || "Resolves operational bottlenecks."}
                         </p>
                     </div>
+
+                    {/* 2. Tech Alignment */}
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <h4 className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
-                            <BrainCircuit className="w-3 h-3" /> Tech Alignment
+                        <h4 className="text-xs font-bold text-blue-700 uppercase mb-2 flex items-center gap-2">
+                            <BrainCircuit className="w-3 h-3" /> Tech DNA
                         </h4>
-                        <p className="text-sm text-blue-800 font-medium">
+                        <p className="text-sm text-blue-900 font-medium leading-relaxed">
                             {card.techAlignment || "Leverages existing architecture."}
+                        </p>
+                    </div>
+
+                    {/* 3. Strategy Alignment (NEW) */}
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                        <h4 className="text-xs font-bold text-amber-700 uppercase mb-2 flex items-center gap-2">
+                            <Target className="w-3 h-3" /> Strategy
+                        </h4>
+                        <p className="text-sm text-amber-900 font-medium leading-relaxed">
+                            {card.strategyAlignment || "Aligns with core business goals."}
                         </p>
                     </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                     <span className="font-mono bg-slate-100 px-2 py-1 rounded">
                         ID: {card.originalId?.slice(0, 8) || 'N/A'}
                     </span>

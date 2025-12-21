@@ -1,12 +1,10 @@
 'use server';
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { generateText, embed } from 'ai';
 import { revalidatePath } from 'next/cache';
-import { Prisma } from '@prisma/client';
-
-// REMOVED: export const maxDuration = 300; (Moved to page.tsx)
 
 // =============================================================================
 // TYPES
@@ -28,23 +26,26 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
+// DEFINED RETURN TYPE FOR BRIEF GENERATION
+interface GenerationResult {
+    success: boolean;
+    briefs: string[];
+    brief?: string; // Optional because error case won't have it
+    error?: string; // Optional because success case won't have it
+}
+
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
-// PRE-WARM (RESTORES "SERVER START" CONNECTION)
+// PRE-WARM (CONNECTION KEEPALIVE)
 // =============================================================================
 
 export async function preWarmContext(workshopId: string) {
     try {
         console.log(`[SupremeScout] Pre-warming connection for ${workshopId}...`);
-        // This forces the "Lazy Import" to execute NOW, not later.
         const { getWorkshopNamespace } = await import('@/lib/pinecone');
-
-        // This forces the SSL Handshake with Pinecone
         const namespace = getWorkshopNamespace(workshopId);
-        // Lightweight stats call to verify connection is alive
         await namespace.describeIndexStats();
-
         return { success: true };
     } catch (error) {
         console.error("[SupremeScout] Warmup failed (non-fatal)", error);
@@ -53,7 +54,7 @@ export async function preWarmContext(workshopId: string) {
 }
 
 // =============================================================================
-// PINECONE RETRIEVAL (DYNAMIC IMPORT)
+// PINECONE RETRIEVAL (DYNAMIC / LAZY LOAD)
 // =============================================================================
 
 async function queryPinecone(
@@ -65,7 +66,6 @@ async function queryPinecone(
 
     console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
 
-    // Dynamic import ensures Client Bundle safety
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
 
     const { embedding } = await embed({
@@ -97,6 +97,8 @@ async function queryPinecone(
     }));
 
     const uniqueFiles = new Set(chunks.map(c => c.filename));
+    console.log(`[SupremeScout] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} documents`);
+
     return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
 
@@ -113,30 +115,58 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// PROMPTS (VERBATIM & STRICT)
+// PROMPTS (SMART EXTRACTION)
 // =============================================================================
 
-const BACKLOG_EXTRACTION_PROMPT = `You are a Data Entry Clerk.
-Task: Extract the backlog items VERBATIM from the text.
-CRITICAL RULE: Do not summarize. Do not reword. Do not fix typos.
-Copy the 'Title' and 'Description' EXACTLY as they appear in the source text.
-Return them as a clean JSON array.`;
+const BACKLOG_EXTRACTION_PROMPT = `You are a Senior Business Analyst.
+Task: Extract a structured backlog from the raw document text provided below.
+
+INSTRUCTIONS:
+1. Identify items: Look for bullet points, numbered lists, or sections that describe features, tasks, or user stories.
+2. Extract Content: For each item, capture a clear 'Title' and a 'Description'.
+   - If the title is not explicit, summarize the first sentence as the title.
+   - If the description is missing, infer it from the context.
+   - DO NOT return empty strings. If an item has no content, skip it.
+
+OUTPUT FORMAT:
+Return a clean JSON array of objects.
+Example: [{"title": "Login Page", "description": "Allow users to log in via SSO."}]`;
 
 const TECHNICAL_AUDIT_PROMPT = `You are a forensic Systems Architect. Extract ONLY hard data points.`;
 const STRATEGIC_GAPS_PROMPT = `You are a Strategic Disruption Analyst. Identify 3-5 Strategic Collision Points.`;
 const RESEARCH_BRIEFS_PROMPT = `You are a Strategic Research Director. Architect 4-6 Research Briefs.`;
 
+// UPDATED: REMOVED HORIZON/CATEGORY, ADDED STRATEGY ALIGNMENT
 const ENRICHMENT_PROMPT = `You are a Strategy Consultant.
-Task: Enrich this Client Backlog Item without changing its core identity.
+Task: Enrich this Client Backlog Item.
 1. Title/Description: KEEP EXACTLY AS PROVIDED.
 2. Friction: Analyze operational pain points.
 3. Tech Alignment: Map to Technical DNA.
-OUTPUT JSON: { "title", "description", "friction", "techAlignment", "source": "CLIENT_BACKLOG", "status", "horizon", "category", "originalId" }`;
+4. Strategy Alignment: Explain how this supports the core business goals/narrative.
+
+OUTPUT JSON: { 
+    "title": "string", 
+    "description": "string", 
+    "friction": "string", 
+    "techAlignment": "string", 
+    "strategyAlignment": "string", 
+    "source": "CLIENT_BACKLOG", 
+    "originalId": "string" 
+}`;
 
 const GENERATION_PROMPT = `You are a Chief Innovation Officer.
 Task: Generate a BRAND NEW Strategic Opportunity based on Research.
 Constraint: Must be totally different from Backlog.
-OUTPUT JSON: { "title", "description", "friction", "techAlignment", "source": "MARKET_SIGNAL", "status", "horizon", "category", "originalId" }`;
+
+OUTPUT JSON: { 
+    "title": "string", 
+    "description": "string", 
+    "friction": "string", 
+    "techAlignment": "string", 
+    "strategyAlignment": "string", 
+    "source": "MARKET_SIGNAL", 
+    "originalId": "string" 
+}`;
 
 // =============================================================================
 // ANALYSIS FUNCTIONS
@@ -179,12 +209,10 @@ export async function analyzeBacklogItem(
 ) {
     try {
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
+        // @ts-ignore
+        let techDNA = context?.dna || dbContext?.extractedConstraints as string;
+        let research = context?.research || dbContext?.researchBrief || "No specific research briefs.";
 
-        // CASTING TO STRING TO AVOID TS WARNINGS
-        let techDNA = context?.dna || (dbContext?.extractedConstraints as string);
-        let research = context?.research || (dbContext?.researchBrief as string) || "No specific research briefs.";
-
-        // Lazy load context if missing
         if (!techDNA) {
             const retrieval = await queryContext(workshopId, "technical architecture", 'DOSSIER');
             const { dossierContext, backlogContext } = formatContext(retrieval.chunks);
@@ -206,12 +234,8 @@ export async function analyzeBacklogItem(
             response_format: { type: "json_object" }
         });
 
-        let opportunity;
-        try {
-            opportunity = JSON.parse(cardJson.replace(/```json/g, '').replace(/```/g, '').trim());
-        } catch (e) { return { success: false, error: "JSON Parse Error" }; }
+        const opportunity = JSON.parse(cardJson.replace(/```json/g, '').replace(/```/g, '').trim());
 
-        // FORCE FIDELITY (BACKEND OVERWRITE)
         if (!item.isSeed) {
             opportunity.title = item.title;
             opportunity.description = item.description;
@@ -221,12 +245,12 @@ export async function analyzeBacklogItem(
         }
         opportunity.originalId = item.id;
 
-        // Atomic DB Update
+        // Ensure new field exists even if AI misses it
+        opportunity.strategyAlignment = opportunity.strategyAlignment || "Aligns with core modernization goals.";
+
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
 
-        // --- CRITICAL FIX: EXPLICIT CASTING TO ANY TO FIX SPREAD ERROR ---
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
-
         const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
 
         await prisma.workshopContext.update({
@@ -247,14 +271,18 @@ export async function analyzeBacklogItem(
     }
 }
 
+// =============================================================================
+// HYDRATION (SMART + ROBUST)
+// =============================================================================
+
 export async function hydrateBacklog(workshopId: string) {
     try {
+        console.log(`[SupremeScout] Hydrating backlog for ${workshopId}...`);
+
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
+        // @ts-ignore
+        const rawBacklog = context?.rawBacklog;
 
-        // --- CRITICAL FIX: CAST TO ANY[] ---
-        const rawBacklog = context?.rawBacklog as any[];
-
-        // RETURN CACHED IF EXISTS
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
             const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
                 id: `seed-${i}`,
@@ -265,11 +293,12 @@ export async function hydrateBacklog(workshopId: string) {
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
-        // FETCH & EXTRACT (VERBATIM)
         const retrieval = await queryContext(workshopId, "backlog features", 'BACKLOG');
         const { backlogContext } = formatContext(retrieval.chunks);
 
-        if (!backlogContext) return { success: false, error: "No backlog found" };
+        if (!backlogContext || backlogContext.length < 50) {
+            console.warn("[SupremeScout] Backlog context is empty or too short!");
+        }
 
         const { text } = await generateText({
             model: AI_CONFIG.auditModel,
@@ -278,19 +307,23 @@ export async function hydrateBacklog(workshopId: string) {
 
         let items = [];
         try {
-            const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
+            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanJson);
             const parsedItems = parsed.items ? parsed.items : parsed;
 
-            // CRITICAL FIX: ENSURE EVERY ITEM HAS AN ID
-            // The frontend crashes if 'id' is missing because it checks .startsWith()
+            if (!Array.isArray(parsedItems)) throw new Error("AI returned non-array");
+
             items = parsedItems.map((item: any, index: number) => ({
-                ...item,
-                id: item.id || `backlog-${Date.now()}-${index}`, // Guarantee ID
-                title: item.title || "Untitled Item",
-                description: item.description || ""
+                id: item.id || `backlog-${Date.now()}-${index}`,
+                title: item.title || item.feature || item.name || "Untitled Item",
+                description: item.description || item.details || item.summary || item.text || "No description provided",
+                isSeed: false
             }));
 
-        } catch (e) { return { success: false, error: "JSON Extraction Failed" }; }
+        } catch (e) {
+            console.error("[SupremeScout] JSON Parsing Failed:", text);
+            return { success: false, error: "JSON Extraction Failed" };
+        }
 
         await prisma.workshopContext.upsert({
             where: { workshopId },
@@ -320,14 +353,14 @@ export async function fetchAnalysisContext(workshopId: string) {
     const dna = await technicalAudit(dossierContext, backlogContext);
     const research = workshopContext?.researchBrief || "No research briefs found.";
 
-    // --- CRITICAL FIX: CAST TO ANY[] ---
+    // @ts-ignore
     const items = (workshopContext?.rawBacklog as any[]) || [];
 
     return {
         success: true,
         context: { dna, research },
         items: items.map((i: any) => ({
-            id: i.id || `backlog-restored-${Math.random().toString(36).substr(2, 9)}`, // Safety Fallback
+            id: i.id || Math.random().toString(36).substring(7),
             title: i.title || "Untitled",
             description: i.description || "",
             isSeed: i.isSeed
@@ -341,7 +374,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             where: { workshopId },
             select: { intelligenceAnalysis: true }
         });
-        // --- CRITICAL FIX: CAST TO ANY ---
+        // @ts-ignore
         const data = context?.intelligenceAnalysis as any;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
@@ -349,7 +382,8 @@ export async function getWorkshopIntelligence(workshopId: string) {
     }
 }
 
-export async function generateBrief(workshopId: string) {
+// 4. FIX: EXPLICIT RETURN TYPE FOR GENERATE BRIEF
+export async function generateBrief(workshopId: string): Promise<GenerationResult> {
     try {
         const workshop = await prisma.workshop.findUnique({ where: { id: workshopId }, select: { clientName: true } });
         const clientName = workshop?.clientName || "The Client";
@@ -361,25 +395,24 @@ export async function generateBrief(workshopId: string) {
 
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as any },
-            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as any },
+            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
+            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
         });
         revalidatePath(`/workshop/${workshopId}`);
-        // FORCE RETURN SUCCESS
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
     } catch (error) {
         console.error("Brief Generation Failed", error);
-        return { success: false, error: "Failed to generate brief" };
+        return {
+            success: false,
+            briefs: [],
+            error: "Failed to generate brief"
+        };
     }
 }
 
 export async function queryContext(workshopId: string, query: string, assetType?: AssetType) {
     return queryPinecone(workshopId, query, { topK: 10, filterType: assetType });
 }
-
-// =============================================================================
-// RESET WORKFLOW (NUCLEAR CACHE CLEAR)
-// =============================================================================
 
 export async function resetWorkshopIntelligence(workshopId: string) {
     try {
@@ -388,7 +421,6 @@ export async function resetWorkshopIntelligence(workshopId: string) {
             where: { workshopId },
             data: {
                 intelligenceAnalysis: { opportunities: [] },
-                // THIS FIXES THE GHOST CACHE & FORCES RE-EXTRACTION
                 rawBacklog: Prisma.DbNull
             }
         });
