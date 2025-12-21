@@ -360,8 +360,8 @@ export async function generateBrief(workshopId: string) {
 
     await prisma.workshopContext.upsert({
         where: { workshopId },
-        update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature },
-        create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature },
+        update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
+        create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs as any, reasoningSignature: signature as string | null },
     });
     revalidatePath(`/workshop/${workshopId}`);
     return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
