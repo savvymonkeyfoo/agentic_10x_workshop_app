@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
@@ -30,19 +31,26 @@ interface OpportunityModalProps {
 export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityModalProps) {
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Refs for auto-growing standard textareas
     const titleRef = useRef<HTMLTextAreaElement>(null);
+    const descRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         setLocalCard(card);
     }, [card]);
 
-    // Auto-resize Title on load
-    useEffect(() => {
+    // Auto-resize Title & Description on open/change
+    useLayoutEffect(() => {
         if (titleRef.current) {
             titleRef.current.style.height = 'auto';
             titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
         }
-    }, [localCard?.title, isOpen]);
+        if (descRef.current) {
+            descRef.current.style.height = 'auto';
+            descRef.current.style.height = descRef.current.scrollHeight + 'px';
+        }
+    }, [localCard?.title, localCard?.description, isOpen]);
 
     if (!localCard) return null;
 
@@ -64,10 +72,8 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    {/* ACCESSIBILITY FIX: Screen Reader Title */}
-                    <DialogTitle className="sr-only">
-                        Edit Opportunity: {localCard.title}
-                    </DialogTitle>
+                    {/* ACCESSIBILITY FIX */}
+                    <DialogTitle className="sr-only">Edit Opportunity</DialogTitle>
 
                     {/* SOURCE BADGE */}
                     <div className="flex items-center justify-between mb-4">
@@ -85,24 +91,30 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
 
-                    {/* EDITABLE TITLE - Styled as Heading, Auto-Wrapping */}
+                    {/* EDITABLE TITLE & DESCRIPTION */}
                     <div className="space-y-4">
                         <Textarea
                             ref={titleRef}
+                            rows={1}
                             className="text-3xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none overflow-hidden leading-tight min-h-[60px]"
                             value={localCard.title}
-                            rows={1}
                             onChange={(e) => {
+                                handleChange('title', e.target.value);
                                 e.target.style.height = 'auto';
                                 e.target.style.height = e.target.scrollHeight + 'px';
-                                handleChange('title', e.target.value);
                             }}
                         />
 
                         <Textarea
-                            className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none min-h-[80px]"
+                            ref={descRef}
+                            rows={1}
+                            className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none overflow-hidden min-h-[40px]"
                             value={localCard.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
+                            onChange={(e) => {
+                                handleChange('description', e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
                         />
                     </div>
                 </DialogHeader>

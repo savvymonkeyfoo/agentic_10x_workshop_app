@@ -46,9 +46,9 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
     const updateParent = (newItems: string[]) => {
         // Reconstruct Markdown: "- item"
         const cleanString = newItems
-            .map(i => i)
+            .map(i => i) // Keep whitespace
             .filter(i => i.trim() !== '')
-            .map(i => `- ${i}`) // We re-add the bullet structure for the DB
+            .map(i => `- ${i}`) // Re-add standard bullet for DB
             .join('\n');
         onChange(cleanString);
     };
@@ -67,19 +67,24 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
             const text = items[index];
             const firstPart = text.slice(0, cursor);
             const secondPart = text.slice(cursor);
+
             const newItems = [...items];
             newItems[index] = firstPart;
             newItems.splice(index + 1, 0, secondPart);
+
             setItems(newItems);
             updateParent(newItems);
         }
+
         if (e.key === 'Backspace' && e.currentTarget.selectionStart === 0 && index > 0) {
             e.preventDefault();
             const currentText = items[index];
             const prevText = items[index - 1];
+
             const newItems = [...items];
             newItems[index - 1] = prevText + currentText;
             newItems.splice(index, 1);
+
             setItems(newItems);
             updateParent(newItems);
         }
@@ -106,6 +111,7 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
                     />
                 </div>
             ))}
+
             <button
                 onClick={() => {
                     const newItems = [...items, ''];
