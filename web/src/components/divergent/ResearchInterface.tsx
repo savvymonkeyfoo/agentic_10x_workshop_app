@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit, AlertTriangle, Layers, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit, AlertTriangle, Layers, ShieldCheck, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -36,7 +36,7 @@ type QueueItem = {
     isSeed?: boolean;
 };
 
-// OPPORTUNITY CARD TYPE (Rich Ideation Schema)
+// OPPORTUNITY CARD TYPE
 type OpportunityCard = {
     title: string;
     description: string;
@@ -46,7 +46,7 @@ type OpportunityCard = {
     provenance?: string;
     status: "READY" | "RISKY" | "BLOCKED";
     horizon: "NOW" | "NEXT" | "LATER";
-    category: "EFFICIENCY" | "GROWTH" | "MOONSHOT";
+    category: "EFFICIENCY" | "GROWTH" | "MOONSHOT" | string; // Allow string for loose matching
     originalId: string;
 };
 
@@ -93,7 +93,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         else if (stageParam === '3') setActiveTab('intelligence');
     }, [searchParams]);
 
-    // PRE-WARM
     useEffect(() => {
         if (activeTab === 'intelligence') {
             preWarmContext(workshopId).catch(err => console.error("Warmup silent fail", err));
@@ -139,7 +138,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         const processNextItem = async () => {
             if (intelligenceState !== 'analyzing') return;
 
-            // STRICT SEQUENCE CHECK
             const isBusy = queue.some(i => i.status === 'PROCESSING');
             if (isBusy) return;
 
@@ -157,7 +155,6 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
             const currentItem = queue[nextIdx];
 
-            // UPDATE STATE: PROCESSING
             setQueue(prev => {
                 const updated = [...prev];
                 updated[nextIdx] = { ...updated[nextIdx], status: 'PROCESSING' };
@@ -180,7 +177,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         updated[nextIdx] = { ...updated[nextIdx], status: 'COMPLETE' };
                         return updated;
                     });
-                    setCurrentLog(`Insights Generated for ${currentItem.title}`);
+                    setCurrentLog(`Insights Generated: ${result.opportunity.category}`);
                 } else {
                     setQueue(prev => {
                         const updated = [...prev];
@@ -262,6 +259,22 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     };
 
+    // =========================================================================
+    // RENDER HELPERS (SAFE FILTERING)
+    // =========================================================================
+
+    const normalizeCategory = (cat?: string) => (cat || '').toUpperCase().trim();
+
+    const efficiencyCards = completedCards.filter(c => normalizeCategory(c.category) === 'EFFICIENCY');
+    const growthCards = completedCards.filter(c => normalizeCategory(c.category) === 'GROWTH');
+    const moonshotCards = completedCards.filter(c => normalizeCategory(c.category) === 'MOONSHOT');
+
+    // SAFETY NET: Capture anything the AI hallucinated or misspelled
+    const uncategorizedCards = completedCards.filter(c => {
+        const cat = normalizeCategory(c.category);
+        return cat !== 'EFFICIENCY' && cat !== 'GROWTH' && cat !== 'MOONSHOT';
+    });
+
     const DualStreamTracker = () => {
         const backlogQueue = queue.filter(q => !q.id || !q.id.startsWith('seed-'));
         const researchQueue = queue.filter(q => q.id && q.id.startsWith('seed-'));
@@ -297,8 +310,13 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             {intelligenceState === 'analyzing' && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
                         </h3>
                     </div>
-                    <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
-                        {currentLog || "Ready to Initialize"}
+                    <div className="flex gap-3">
+                        <Badge variant="outline" className="font-mono bg-white">
+                            {completedCards.length} Generated
+                        </Badge>
+                        <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                            {currentLog || "Ready to Initialize"}
+                        </div>
                     </div>
                 </div>
                 <div className="grid gap-8">
@@ -420,64 +438,51 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             <div className="space-y-8 animate-in fade-in duration-500">
                                 <DualStreamTracker />
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                                    {/* COL 1: EFFICIENCY */}
                                     <div className="space-y-4">
                                         <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2 mb-4"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Efficiency (Now)</h3>
                                         <div>
-                                            {completedCards
-                                                .filter(c => c.category === 'EFFICIENCY')
-                                                .map((card, i) => (
-                                                    <IdeaCard
-                                                        key={i}
-                                                        card={{
-                                                            ...card,
-                                                            id: card.originalId,
-                                                            source: card.source || 'WORKSHOP_GENERATED'
-                                                        }}
-                                                        onClick={() => setSelectedCard(card)}
-                                                    />
-                                                ))
-                                            }
+                                            {efficiencyCards.map((card, i) => (
+                                                <IdeaCard key={i} card={{ ...card, id: card.originalId, source: card.source || 'WORKSHOP_GENERATED' }} onClick={() => setSelectedCard(card)} />
+                                            ))}
                                         </div>
                                     </div>
+
+                                    {/* COL 2: GROWTH */}
                                     <div className="space-y-4">
                                         <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2 mb-4"><div className="w-2 h-2 rounded-full bg-blue-500" /> Growth (Next)</h3>
                                         <div>
-                                            {completedCards
-                                                .filter(c => c.category === 'GROWTH')
-                                                .map((card, i) => (
-                                                    <IdeaCard
-                                                        key={i}
-                                                        card={{
-                                                            ...card,
-                                                            id: card.originalId,
-                                                            source: card.source || 'WORKSHOP_GENERATED'
-                                                        }}
-                                                        onClick={() => setSelectedCard(card)}
-                                                    />
-                                                ))
-                                            }
+                                            {growthCards.map((card, i) => (
+                                                <IdeaCard key={i} card={{ ...card, id: card.originalId, source: card.source || 'WORKSHOP_GENERATED' }} onClick={() => setSelectedCard(card)} />
+                                            ))}
                                         </div>
                                     </div>
+
+                                    {/* COL 3: MOONSHOT */}
                                     <div className="space-y-4">
                                         <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-2 mb-4"><div className="w-2 h-2 rounded-full bg-purple-500" /> Moonshot (Later)</h3>
                                         <div>
-                                            {completedCards
-                                                .filter(c => c.category === 'MOONSHOT')
-                                                .map((card, i) => (
-                                                    <IdeaCard
-                                                        key={i}
-                                                        card={{
-                                                            ...card,
-                                                            id: card.originalId,
-                                                            source: card.source || 'WORKSHOP_GENERATED'
-                                                        }}
-                                                        onClick={() => setSelectedCard(card)}
-                                                    />
-                                                ))
-                                            }
+                                            {moonshotCards.map((card, i) => (
+                                                <IdeaCard key={i} card={{ ...card, id: card.originalId, source: card.source || 'WORKSHOP_GENERATED' }} onClick={() => setSelectedCard(card)} />
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* SAFETY NET: UNCATEGORIZED ITEMS */}
+                                {uncategorizedCards.length > 0 && (
+                                    <div className="mt-8 border-t border-dashed border-slate-200 pt-8">
+                                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                            <HelpCircle className="w-4 h-4" /> Uncategorized Opportunities ({uncategorizedCards.length})
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {uncategorizedCards.map((card, i) => (
+                                                <IdeaCard key={i} card={{ ...card, id: card.originalId, source: card.source || 'WORKSHOP_GENERATED' }} onClick={() => setSelectedCard(card)} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
