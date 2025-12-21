@@ -77,7 +77,9 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     const [selectedCard, setSelectedCard] = useState<OpportunityCard | null>(null);
     const [isResetting, setIsResetting] = useState(false);
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-    const [currentLog, setCurrentLog] = useState<string>("Initializing Engine...");
+
+    // FIX 1: Change default state from "Initializing..." to "System Ready"
+    const [currentLog, setCurrentLog] = useState<string>("System Ready");
 
     // EFFECTS
     useEffect(() => {
@@ -89,7 +91,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
     useEffect(() => {
         if (activeTab === 'intelligence') {
-            preWarmContext(workshopId).catch((err: any) => console.error("Warmup silent fail", err));
+            preWarmContext(workshopId).catch(err => console.error("Warmup silent fail", err));
         }
     }, [activeTab, workshopId]);
 
@@ -102,13 +104,11 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         setIntelligenceState('idle');
         setIsResetting(false);
         setIsResetModalOpen(false);
+        setCurrentLog("System Reset Complete");
     };
 
     const handleCardUpdate = async (updatedCard: OpportunityCardData) => {
-        // 1. Optimistic Update (UI)
         setCompletedCards(prev => prev.map(c => c.originalId === updatedCard.originalId ? { ...c, ...updatedCard } : c));
-
-        // 2. Server Update (DB)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await updateOpportunity(workshopId, updatedCard as any);
     };
@@ -123,6 +123,10 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 if (saved.success && saved.opportunities && (saved.opportunities as any[]).length > 0) {
                     setCompletedCards(saved.opportunities as OpportunityCard[]);
                     setIntelligenceState('complete');
+
+                    // FIX 2: Explicitly set log when data is found
+                    setCurrentLog("Analysis Restored");
+
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setQueue(saved.opportunities.map((op: any) => ({
                         id: op.originalId || 'restored',
@@ -149,6 +153,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     setTimeout(() => {
                         setIntelligenceState('complete');
                         toast.success("Intelligence Analysis Complete");
+                        setCurrentLog("Analysis Complete");
                     }, 1000);
                 }
                 return;
@@ -296,7 +301,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     <div className="flex gap-3">
                         <Badge variant="outline" className="font-mono bg-white">{completedCards.length} Generated</Badge>
                         <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
-                            {currentLog || "Ready to Initialize"}
+                            {currentLog}
                         </div>
                     </div>
                 </div>
