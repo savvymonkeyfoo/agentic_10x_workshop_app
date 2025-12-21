@@ -13,10 +13,14 @@ interface SmartBulletEditorProps {
 }
 
 export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-700", placeholder }: SmartBulletEditorProps) {
-    // Helper: Parse raw markdown into lines, stripping leading bullets
+    // Helper: Parse raw markdown into lines, stripping bullets AND formatting chars
     const parseValue = (val: string) => {
         if (!val) return [''];
-        return val.split('\n').map(line => line.replace(/^[-*•]\s*/, ''));
+        return val.split('\n').map(line =>
+            line.replace(/^[-*•]\s*/, '') // Remove leading bullet
+                .replace(/\*\*/g, '')      // Remove bold markers
+                .replace(/__/g, '')        // Remove italic markers
+        );
     };
 
     const [items, setItems] = useState<string[]>(parseValue(value));
@@ -42,9 +46,9 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
     const updateParent = (newItems: string[]) => {
         // Reconstruct Markdown: "- item"
         const cleanString = newItems
-            .map(i => i) // Keep whitespace for indentation if needed, or .trim()
+            .map(i => i)
             .filter(i => i.trim() !== '')
-            .map(i => `- ${i}`)
+            .map(i => `- ${i}`) // We re-add the bullet structure for the DB
             .join('\n');
         onChange(cleanString);
     };
@@ -57,37 +61,27 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, index: number) => {
-        // ENTER: Split line or create new bullet
         if (e.key === 'Enter') {
             e.preventDefault();
             const cursor = e.currentTarget.selectionStart;
             const text = items[index];
-
             const firstPart = text.slice(0, cursor);
             const secondPart = text.slice(cursor);
-
             const newItems = [...items];
             newItems[index] = firstPart;
             newItems.splice(index + 1, 0, secondPart);
-
             setItems(newItems);
             updateParent(newItems);
         }
-
-        // BACKSPACE: Merge lines if at start of line
         if (e.key === 'Backspace' && e.currentTarget.selectionStart === 0 && index > 0) {
             e.preventDefault();
             const currentText = items[index];
             const prevText = items[index - 1];
-
             const newItems = [...items];
             newItems[index - 1] = prevText + currentText;
             newItems.splice(index, 1);
-
             setItems(newItems);
             updateParent(newItems);
-
-            // Focus previous line (manual focus management would go here)
         }
     };
 
@@ -112,7 +106,6 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
                     />
                 </div>
             ))}
-
             <button
                 onClick={() => {
                     const newItems = [...items, ''];

@@ -1,11 +1,10 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
@@ -31,10 +30,19 @@ interface OpportunityModalProps {
 export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityModalProps) {
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const titleRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         setLocalCard(card);
     }, [card]);
+
+    // Auto-resize Title on load
+    useEffect(() => {
+        if (titleRef.current) {
+            titleRef.current.style.height = 'auto';
+            titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
+        }
+    }, [localCard?.title, isOpen]);
 
     if (!localCard) return null;
 
@@ -56,6 +64,11 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
+                    {/* ACCESSIBILITY FIX: Screen Reader Title */}
+                    <DialogTitle className="sr-only">
+                        Edit Opportunity: {localCard.title}
+                    </DialogTitle>
+
                     {/* SOURCE BADGE */}
                     <div className="flex items-center justify-between mb-4">
                         <Badge variant="outline" className={cn(
@@ -72,13 +85,20 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
 
-                    {/* TITLE & DESCRIPTION */}
+                    {/* EDITABLE TITLE - Styled as Heading, Auto-Wrapping */}
                     <div className="space-y-4">
-                        <Input
-                            className="text-2xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 h-auto py-2 shadow-none"
+                        <Textarea
+                            ref={titleRef}
+                            className="text-3xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none overflow-hidden leading-tight min-h-[60px]"
                             value={localCard.title}
-                            onChange={(e) => handleChange('title', e.target.value)}
+                            rows={1}
+                            onChange={(e) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                                handleChange('title', e.target.value);
+                            }}
                         />
+
                         <Textarea
                             className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none min-h-[80px]"
                             value={localCard.description}
