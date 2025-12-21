@@ -26,6 +26,14 @@ interface RetrievalResult {
     chunkCount: number;
 }
 
+// DEFINED RETURN TYPE FOR BRIEF GENERATION
+interface GenerationResult {
+    success: boolean;
+    briefs: string[];
+    brief?: string; // Optional because error case won't have it
+    error?: string; // Optional because success case won't have it
+}
+
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
@@ -35,7 +43,6 @@ const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 export async function preWarmContext(workshopId: string) {
     try {
         console.log(`[SupremeScout] Pre-warming connection for ${workshopId}...`);
-        // Forces lazy import to execute
         const { getWorkshopNamespace } = await import('@/lib/pinecone');
         const namespace = getWorkshopNamespace(workshopId);
         await namespace.describeIndexStats();
@@ -59,7 +66,6 @@ async function queryPinecone(
 
     console.log(`[SupremeScout] Querying Pinecone for workshop: ${workshopId}`);
 
-    // DYNAMIC IMPORT: Hides Pinecone from the Client Bundle
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
 
     const { embedding } = await embed({
@@ -251,7 +257,6 @@ export async function hydrateBacklog(workshopId: string) {
     try {
         console.log(`[SupremeScout] Hydrating backlog for ${workshopId}...`);
 
-        // 1. Check DB Cache
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
         // @ts-ignore
         const rawBacklog = context?.rawBacklog;
@@ -266,7 +271,6 @@ export async function hydrateBacklog(workshopId: string) {
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
-        // 2. Fetch Context
         const retrieval = await queryContext(workshopId, "backlog features", 'BACKLOG');
         const { backlogContext } = formatContext(retrieval.chunks);
 
@@ -274,13 +278,11 @@ export async function hydrateBacklog(workshopId: string) {
             console.warn("[SupremeScout] Backlog context is empty or too short!");
         }
 
-        // 3. Generate (Smart Extraction)
         const { text } = await generateText({
             model: AI_CONFIG.auditModel,
             prompt: `${BACKLOG_EXTRACTION_PROMPT}\n\nRAW BACKLOG:\n${backlogContext}`,
         });
 
-        // 4. Safe Parsing
         let items = [];
         try {
             const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -301,7 +303,6 @@ export async function hydrateBacklog(workshopId: string) {
             return { success: false, error: "JSON Extraction Failed" };
         }
 
-        // 5. Save to DB
         await prisma.workshopContext.upsert({
             where: { workshopId },
             update: { rawBacklog: items },
@@ -359,10 +360,8 @@ export async function getWorkshopIntelligence(workshopId: string) {
     }
 }
 
-// 4. FIX: ADD TRY/CATCH TO GENERATE BRIEF
-// This ensures the return type includes { success: false, error: string }
-// which fixes the build error in ResearchInterface.tsx
-export async function generateBrief(workshopId: string) {
+// 4. FIX: EXPLICIT RETURN TYPE FOR GENERATE BRIEF
+export async function generateBrief(workshopId: string): Promise<GenerationResult> {
     try {
         const workshop = await prisma.workshop.findUnique({ where: { id: workshopId }, select: { clientName: true } });
         const clientName = workshop?.clientName || "The Client";
@@ -381,17 +380,17 @@ export async function generateBrief(workshopId: string) {
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
     } catch (error) {
         console.error("Brief Generation Failed", error);
-        return { success: false, error: "Failed to generate brief" };
+        return {
+            success: false,
+            briefs: [],
+            error: "Failed to generate brief"
+        };
     }
 }
 
 export async function queryContext(workshopId: string, query: string, assetType?: AssetType) {
     return queryPinecone(workshopId, query, { topK: 10, filterType: assetType });
 }
-
-// =============================================================================
-// RESET WORKFLOW (NUCLEAR CACHE CLEAR)
-// =============================================================================
 
 export async function resetWorkshopIntelligence(workshopId: string) {
     try {
@@ -400,7 +399,6 @@ export async function resetWorkshopIntelligence(workshopId: string) {
             where: { workshopId },
             data: {
                 intelligenceAnalysis: { opportunities: [] },
-                // THIS FIXES THE GHOST CACHE & FORCES RE-EXTRACTION
                 rawBacklog: Prisma.DbNull
             }
         });
