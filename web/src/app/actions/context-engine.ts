@@ -55,7 +55,8 @@ async function queryPinecone(
     query: string,
     options: { topK?: number; filterType?: AssetType | AssetType[] } = {}
 ): Promise<RetrievalResult> {
-    const { topK = 15, filterType } = options;
+    // UPDATED: Increased topK to 30 to prevent backlog truncation
+    const { topK = 30, filterType } = options;
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
     const { embedding } = await embed({ model: AI_CONFIG.embeddingModel, value: query });
 
@@ -76,6 +77,7 @@ async function queryPinecone(
     }));
 
     const uniqueFiles = new Set(chunks.map(c => c.filename));
+    console.log(`[SupremeScout] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} docs.`);
     return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
 
@@ -91,12 +93,23 @@ function formatContext(chunks: RetrievedChunk[]): { dossierContext: string; back
 }
 
 // =============================================================================
-// PROMPTS (AGGRESSIVE AUSTRALIAN LOCALISATION)
+// PROMPTS (ROBUST & LOCALISED)
 // =============================================================================
 
+// RESTORED: Detailed instructions to prevent lazy extraction
 const BACKLOG_EXTRACTION_PROMPT = `You are a Senior Business Analyst.
-Task: Extract a structured backlog from the raw text.
-Output JSON Array: [{"title": "...", "description": "..."}]`;
+Task: Extract a structured backlog from the raw document text provided below.
+
+INSTRUCTIONS:
+1. Identify items: Look for bullet points, numbered lists, or sections describing features/tasks.
+2. Extract Content:
+   - Title: Summarize the item (keep close to original).
+   - Description: Capture the full detail verbatim.
+3. completeness: Extract ALL items found. Do not truncate the list.
+
+OUTPUT FORMAT:
+Return a clean JSON array of objects.
+Example: [{"title": "Login", "description": "User login via SSO"}]`;
 
 const TECHNICAL_AUDIT_PROMPT = `You are a Systems Architect. Extract hard data points.`;
 const STRATEGIC_GAPS_PROMPT = `You are a Strategy Analyst. Identify strategic collision points.`;
@@ -267,25 +280,33 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
     }
 }
 
-// ... (Hydrate/Fetch/Brief/Reset functions remain unchanged) ...
+// =============================================================================
+// HYDRATION (FIXED: RETRIEVAL & SEEDS)
+// =============================================================================
+
 export async function hydrateBacklog(workshopId: string) {
     try {
         console.log(`[SupremeScout] Hydrating backlog for ${workshopId}...`);
+
+        // 1. Generate Seeds (Always do this first to ensure they exist)
+        const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
+            id: `seed-${Date.now()}-${i}`, // Unique ID every time
+            title: `Strategic Opportunity Discovery ${i + 1}`,
+            description: "Analysing market signals...",
+            isSeed: true
+        }));
 
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
         // @ts-ignore
         const rawBacklog = context?.rawBacklog;
 
+        // 2. Return Cached if Available
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
-            const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
-                id: `seed-${i}`,
-                title: `Strategic Opportunity Discovery ${i + 1}`,
-                description: "Analysing market signals...",
-                isSeed: true
-            }));
+            console.log(`[SupremeScout] Using cached backlog: ${rawBacklog.length} items`);
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
+        // 3. Retrieve & Extract (Increased Retrieval Limit)
         const retrieval = await queryContext(workshopId, "backlog features", 'BACKLOG');
         const { backlogContext } = formatContext(retrieval.chunks);
 
@@ -313,6 +334,8 @@ export async function hydrateBacklog(workshopId: string) {
                 isSeed: false
             }));
 
+            console.log(`[SupremeScout] Extracted ${items.length} items from backlog.`);
+
         } catch (e) {
             console.error("[SupremeScout] JSON Parsing Failed:", text);
             return { success: false, error: "JSON Extraction Failed" };
@@ -323,13 +346,6 @@ export async function hydrateBacklog(workshopId: string) {
             update: { rawBacklog: items },
             create: { workshopId, rawBacklog: items }
         });
-
-        const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
-            id: `seed-${i}`,
-            title: `Strategic Opportunity Discovery ${i + 1}`,
-            description: "Analysing market signals...",
-            isSeed: true
-        }));
 
         return { success: true, items: [...items, ...researchSeeds] };
 
@@ -346,7 +362,7 @@ export async function fetchAnalysisContext(workshopId: string) {
     const dna = await technicalAudit(dossierContext, backlogContext);
     const research = workshopContext?.researchBrief || "No research briefs found.";
     // @ts-ignore
-    const items = (workshopContext?.rawBacklog as any[]) || [];
+    const items = workshopContext?.rawBacklog || [];
     return {
         success: true,
         context: { dna, research },
@@ -366,7 +382,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             select: { intelligenceAnalysis: true }
         });
         // @ts-ignore
-        const data = context?.intelligenceAnalysis as any;
+        const data = context?.intelligenceAnalysis;
         return { success: true, opportunities: data?.opportunities || [] };
     } catch (error) {
         return { success: false, error: "Failed to load" };
@@ -385,8 +401,8 @@ export async function generateBrief(workshopId: string): Promise<GenerationResul
 
         await prisma.workshopContext.upsert({
             where: { workshopId },
-            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature as string | null },
-            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature as string | null },
+            update: { researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
+            create: { workshopId, researchBrief: briefs.join('\n\n---\n\n'), researchBriefs: briefs, reasoningSignature: signature },
         });
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true, briefs, brief: briefs.join('\n\n---\n\n') };
@@ -397,7 +413,8 @@ export async function generateBrief(workshopId: string): Promise<GenerationResul
 }
 
 export async function queryContext(workshopId: string, query: string, assetType?: AssetType) {
-    return queryPinecone(workshopId, query, { topK: 10, filterType: assetType });
+    // UPDATED: topK: 30 for safety
+    return queryPinecone(workshopId, query, { topK: 30, filterType: assetType });
 }
 
 export async function resetWorkshopIntelligence(workshopId: string) {
