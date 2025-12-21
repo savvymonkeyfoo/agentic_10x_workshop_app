@@ -40,12 +40,13 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         setLocalCard(card);
     }, [card]);
 
-    // Auto-resize Title & Description on open/change
+    // Auto-resize Title on open/change
     useLayoutEffect(() => {
         if (titleRef.current) {
             titleRef.current.style.height = 'auto';
             titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
         }
+        // We do NOT force description height here to allow the max-h CSS to work
         if (descRef.current) {
             descRef.current.style.height = 'auto';
             descRef.current.style.height = descRef.current.scrollHeight + 'px';
@@ -76,7 +77,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                     <DialogTitle className="sr-only">Edit Opportunity</DialogTitle>
 
                     {/* SOURCE BADGE */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline" className={cn(
                             "px-3 py-1 text-xs font-bold tracking-wide border",
                             isMarketSignal
@@ -91,12 +92,14 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
                     </div>
 
-                    {/* EDITABLE TITLE & DESCRIPTION */}
-                    <div className="space-y-4">
+                    {/* HEADER SECTION */}
+                    <div className="space-y-3 pb-2">
+                        {/* H1 TITLE: Massive, Black, Tight Tracking */}
                         <Textarea
                             ref={titleRef}
                             rows={1}
-                            className="text-3xl font-black text-slate-900 border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none overflow-hidden leading-tight min-h-[60px]"
+                            className="text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
+                            placeholder="Opportunity Title"
                             value={localCard.title}
                             onChange={(e) => {
                                 handleChange('title', e.target.value);
@@ -105,21 +108,26 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                             }}
                         />
 
+                        {/* DESCRIPTION: Limited Height + Resize Handle */}
                         <Textarea
                             ref={descRef}
-                            rows={1}
-                            className="text-sm text-slate-600 leading-relaxed border-transparent hover:border-slate-200 focus:border-slate-300 px-0 shadow-none resize-none overflow-hidden min-h-[40px]"
+                            rows={3}
+                            className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[80px] max-h-[12rem] resize-y overflow-y-auto"
+                            placeholder="Add a description..."
                             value={localCard.description}
                             onChange={(e) => {
                                 handleChange('description', e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
+                                // Only auto-grow if under max-height threshold
+                                if (e.target.scrollHeight < 192) { // ~12rem
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                }
                             }}
                         />
                     </div>
                 </DialogHeader>
 
-                <div className="space-y-6 mt-4">
+                <div className="space-y-6 mt-2">
                     {/* 1. FRICTION (RED) */}
                     <div className="bg-red-50/50 p-4 rounded-xl border border-red-100/50 hover:border-red-200 transition-colors group">
                         <Label className="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-2">
