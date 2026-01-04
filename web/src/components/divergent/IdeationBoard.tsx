@@ -20,7 +20,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation-actions';
-import { getWorkshopIntelligence } from '@/app/actions/context-engine';
+import { getWorkshopIntelligence, updateOpportunity } from '@/app/actions/context-engine';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
 // --- COMPONENTS ---
@@ -178,16 +178,13 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
     };
 
     // Modal Save -> Refresh Local State
-    const handleModalSave = async () => {
-        // The modal updates the Server SSOT. 
-        // We just need to re-fetch to get the latest text (Title/Friction)
-        // keeping our local positions (though they should be synced).
+    const handleModalSave = async (updatedCard: any) => {
+        // 1. SAVE: Persist text changes to DB
+        await updateOpportunity(workshopId, updatedCard);
+
+        // 2. REFRESH: Get latest state (merges updates)
         const result = await getWorkshopIntelligence(workshopId);
         if (result.success) {
-            // MERGE STRATEGY: 
-            // We want latest text from Server, but maybe keep local positions if we were dragging?
-            // actually, initializeIdeationBoard IDEMPOTENCY protects us.
-            // We can safely replace state with server state as it's the SSOT.
             setItems(result.opportunities as UnifiedOpportunity[]);
         }
     };
@@ -273,7 +270,6 @@ export function IdeationBoard({ workshopId }: { workshopId: string }) {
                 // We know Unified is superset, so casting usually fine or ignoring.
                 // Ideally OpportunityModal should accept UnifiedOpportunity.
                 card={selectedCard as any}
-                workshopId={workshopId}
                 onSave={handleModalSave}
             />
         </WorkshopPageShell>
