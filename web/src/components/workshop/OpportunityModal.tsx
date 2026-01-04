@@ -25,11 +25,13 @@ interface OpportunityModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (updatedCard: OpportunityCardData) => void;
+    onEnrich?: (title: string, description: string) => Promise<{ success: boolean; data?: any }>;
 }
 
-export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityModalProps) {
+export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich }: OpportunityModalProps) {
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isEnriching, setIsEnriching] = useState(false);
 
     // Refs for auto-growing standard textareas
     const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -70,12 +72,29 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
         const updated = { ...localCard, [field]: value };
         setLocalCard(updated);
 
-        setIsSaving(true);
-        const timer = setTimeout(() => {
-            onSave(updated);
-            setIsSaving(false);
-        }, 800);
-        return () => clearTimeout(timer);
+        // AUTO-SAVE ONLY IF NOT DRAFT
+        if (localCard?.originalId !== 'draft') {
+            setIsSaving(true);
+            const timer = setTimeout(() => {
+                onSave(updated);
+                setIsSaving(false);
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    };
+
+    const handleManualSave = () => {
+        if (localCard) onSave(localCard);
+    };
+
+    const handleEnrichClick = async () => {
+        if (!onEnrich || !localCard) return;
+        setIsEnriching(true);
+        const result = await onEnrich(localCard.title, localCard.description);
+        if (result.success && result.data) {
+            setLocalCard(prev => prev ? ({ ...prev, ...result.data }) : null);
+        }
+        setIsEnriching(false);
     };
 
     const isMarketSignal = localCard.source === 'MARKET_SIGNAL';
@@ -101,6 +120,16 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                             }
                         </Badge>
                         {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
+                        {localCard.originalId === 'draft' && onEnrich && (
+                            <button
+                                onClick={handleEnrichClick}
+                                disabled={isEnriching || !localCard.title}
+                                className="ml-auto flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold transition-all disabled:opacity-50"
+                            >
+                                {isEnriching ? <Sparkles className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                {isEnriching ? "Enriching..." : "Enrich with AI"}
+                            </button>
+                        )}
                     </div>
 
                     <div className="space-y-3 pb-2">
@@ -178,6 +207,17 @@ export function OpportunityModal({ card, isOpen, onClose, onSave }: OpportunityM
                         </span>
                     </div>
                 </div>
+
+                {localCard.originalId === 'draft' && (
+                    <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end">
+                        <button
+                            onClick={handleManualSave}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                        >
+                            <CheckCircle className="w-4 h-4" /> Create Opportunity
+                        </button>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );

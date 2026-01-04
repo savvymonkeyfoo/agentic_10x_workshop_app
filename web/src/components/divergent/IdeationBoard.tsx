@@ -13,14 +13,14 @@ import {
 } from '@dnd-kit/core';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, ArrowLeft, RefreshCw, Layers } from 'lucide-react';
+import { LayoutGrid, ArrowLeft, RefreshCw, Layers, Plus, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
-import { initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
-import { getWorkshopIntelligence, updateOpportunity } from '@/app/actions/context-engine';
+import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
+import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity } from '@/app/actions/context-engine';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
 // --- COMPONENTS ---
@@ -152,14 +152,44 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
     // 3. Handle Modal Save
     const handleModalSave = async (updatedCard: any) => {
-        // Optimistic Update
-        setOpportunities(prev => prev.map(o => o.originalId === updatedCard.originalId ? { ...o, ...updatedCard } : o));
-
-        // SAVE TO SERVER (Critical for Persistence)
-        await updateOpportunity(workshopId, updatedCard);
+        // CREATE NEW
+        if (updatedCard.originalId === 'draft') {
+            const result = await createWorkshopOpportunity(workshopId, updatedCard);
+            if (result.success && result.opportunity) {
+                // @ts-ignore
+                setOpportunities(prev => [...prev, result.opportunity]);
+                toast.success("Workshop Idea Created");
+            } else {
+                toast.error("Failed to create idea");
+            }
+        }
+        // UPDATE EXISTING
+        else {
+            // Optimistic Update
+            setOpportunities(prev => prev.map(o => o.originalId === updatedCard.originalId ? { ...o, ...updatedCard } : o));
+            await updateOpportunity(workshopId, updatedCard);
+            toast.success("Saved");
+        }
 
         // Close Modal
         setSelectedCard(null);
+    };
+
+    const handleNewIdea = () => {
+        setSelectedCard({
+            id: 'draft',
+            originalId: 'draft',
+            title: '',
+            description: '',
+            source: 'WORKSHOP_GENERATED',
+            friction: '',
+            techAlignment: '',
+            strategyAlignment: '',
+        } as UnifiedOpportunity);
+    };
+
+    const handleEnrich = async (title: string, description: string) => {
+        return await enrichOpportunity(workshopId, title, description);
     };
 
     const handleCardClick = (item: UnifiedOpportunity) => {
@@ -180,6 +210,9 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                         </h1>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button onClick={handleNewIdea} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all">
+                            <Plus className="w-4 h-4 mr-2" /> New Idea
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
                             <RefreshCw className="w-4 h-4 mr-2" /> Sync Grid
                         </Button>
@@ -234,6 +267,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                     // @ts-ignore
                     card={selectedCard as any}
                     onSave={handleModalSave}
+                    onEnrich={handleEnrich}
                 />
             </div>
         </WorkshopPageShell>

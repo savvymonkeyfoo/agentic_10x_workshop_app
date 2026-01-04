@@ -136,6 +136,23 @@ OUTPUT JSON: {
     "originalId": "string" 
 }`;
 
+const WORKSHOP_ENRICHMENT_PROMPT = `You are a Strategy Consultant in Australia.
+Task: Enrich this Workshop Idea with Technical and Strategic context.
+
+STRICT RULES:
+1. LOCALE: Use Australian English (en-AU).
+2. TONE: Professional, analytical, but concise (bullet points).
+3. FORMATTING: Friction, Tech, and Strategy MUST be Markdown Bullet Points.
+
+CONTEXT:
+I will provide the Idea and an Enterprise Dossier. Use the Dossier to validate the idea.
+
+OUTPUT JSON: { 
+    "friction": "string (bullet points of potential challenges)", 
+    "techAlignment": "string (bullet points of required tech or alignment)", 
+    "strategyAlignment": "string (bullet points of strategic value)" 
+}`;
+
 const GENERATION_PROMPT = `You are a Chief Innovation Officer in Australia.
 Task: Generate a BRAND NEW Strategic Opportunity.
 Constraint: Must be totally different from Backlog.
@@ -252,6 +269,35 @@ export async function analyzeBacklogItem(
     } catch (error) {
         console.error("Analysis Failed", error);
         return { success: false, error: "Analysis failed" };
+    }
+}
+
+export async function enrichOpportunity(workshopId: string, title: string, description: string) {
+    try {
+        const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
+        // @ts-ignore
+        let techDNA = dbContext?.extractedConstraints as string;
+
+        // Fallback if missing
+        if (!techDNA) {
+            techDNA = "Standard Enterprise Architecture. Cloud-first, API-first.";
+        }
+
+        const prompt = `${WORKSHOP_ENRICHMENT_PROMPT}\n\nIDEA: ${title}\nDESC: ${description}\nDNA: ${techDNA}`;
+
+        const { text: cardJson } = await generateText({
+            model: AI_CONFIG.strategicModel,
+            prompt,
+            // @ts-ignore
+            response_format: { type: "json_object" }
+        });
+
+        const analysis = JSON.parse(cardJson.replace(/```json/g, '').replace(/```/g, '').trim());
+        return { success: true, data: analysis };
+
+    } catch (error) {
+        console.error("Enrichment Failed", error);
+        return { success: false, error: "Failed to enrich" };
     }
 }
 

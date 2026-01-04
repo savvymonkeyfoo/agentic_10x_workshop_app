@@ -105,3 +105,64 @@ export async function updateBoardPosition(
         return { success: false };
     }
 }
+
+export async function createWorkshopOpportunity(
+    workshopId: string,
+    cardData: Partial<UnifiedOpportunity>
+) {
+    try {
+        const context = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            select: { intelligenceAnalysis: true }
+        });
+
+        // @ts-ignore
+        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
+
+        // GRID CALCULATION FIND FIRST EMPTY SLOT OR APPEND
+        const COLUMNS = 3;
+        const CARD_WIDTH = 320;
+        const CARD_HEIGHT = 220;
+        const START_X = 50;
+        const START_Y = 50;
+
+        // Simply append to the end of the grid logic
+        const nextIndex = opportunities.length;
+        const col = nextIndex % COLUMNS;
+        const row = Math.floor(nextIndex / COLUMNS);
+
+        const newOpportunity: UnifiedOpportunity = {
+            id: `work-${Date.now()}`,
+            originalId: `work-${Date.now()}`,
+            title: cardData.title || "Untitled Idea",
+            description: cardData.description || "",
+            source: "WORKSHOP_GENERATED",
+            boardStatus: 'inbox',
+            boardPosition: {
+                x: START_X + (col * CARD_WIDTH),
+                y: START_Y + (row * CARD_HEIGHT)
+            },
+            friction: cardData.friction,
+            techAlignment: cardData.techAlignment,
+            strategyAlignment: cardData.strategyAlignment,
+        };
+
+        await prisma.workshopContext.update({
+            where: { workshopId },
+            data: {
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: [...opportunities, newOpportunity]
+                }
+            }
+        });
+
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true, opportunity: newOpportunity };
+
+    } catch (error) {
+        console.error("Failed to create workshop opportunity", error);
+        return { success: false, error: "Failed to create" };
+    }
+}
