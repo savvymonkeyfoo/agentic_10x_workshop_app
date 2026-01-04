@@ -243,26 +243,25 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
             const result = await promoteToCapture(workshopId, selectedOpps);
 
             if (result.success && result.count > 0) {
-                toast.success(`${result.count} Ideas Promoted`, {
-                    action: {
-                        label: 'Go to Capture',
-                        onClick: () => router.push(`/workshop/${workshopId}/input`)
-                    },
-                    duration: 5000
+                toast.success(`${result.count} Ideas Promoted! Redirecting...`, {
+                    duration: 2000
                 });
 
-                // UX Cleanup
-                setIsSelectMode(false);
-                setSelectedItems(new Set());
-
-                // Optimistic Update: Mark local items as promoted
+                // Optimistic Update
                 setOpportunities(prev => prev.map(o => {
-                    // Check if it was in the selection (using originalId)
                     if (selectedOpps.some(s => s.originalId === o.originalId)) {
                         return { ...o, promotionStatus: 'PROMOTED' };
                     }
                     return o;
                 }));
+
+                // UX Cleanup
+                setIsSelectMode(false);
+                setSelectedItems(new Set());
+
+                // AUTO-NAVIGATE (User Requested)
+                router.push(`/workshop/${workshopId}/input`);
+
             } else if (result.count === 0) {
                 toast.info("No new items were promoted (duplicates skipped).");
                 setIsSelectMode(false);
@@ -273,6 +272,21 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
             console.error(error);
         } finally {
             setIsPromoting(false);
+        }
+    };
+
+    const handleTopBarAction = () => {
+        if (isSelectMode) {
+            // If items selected, treat 'Done' as Promote
+            if (selectedItems.size > 0) {
+                handlePromoteSelection();
+            } else {
+                // Zero items -> Just Cancel/Exit
+                setIsSelectMode(false);
+            }
+        } else {
+            // Enter Select Mode
+            setIsSelectMode(true);
         }
     };
 
@@ -294,10 +308,13 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                         <Button
                             variant={isSelectMode ? "secondary" : "ghost"}
                             className={cn(isSelectMode && "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200")}
-                            onClick={toggleSelectionMode}
+                            onClick={handleTopBarAction}
                         >
                             {isSelectMode ? <Check className="w-4 h-4 mr-2" /> : <MousePointer2 className="w-4 h-4 mr-2" />}
-                            {isSelectMode ? "Done Selecting" : "Select Ideas"}
+                            {isSelectMode
+                                ? (selectedItems.size > 0 ? `Promote Selected (${selectedItems.size})` : "Done Selecting")
+                                : "Select Ideas"
+                            }
                         </Button>
 
                         <div className="h-6 w-px bg-slate-200 mx-2" />
