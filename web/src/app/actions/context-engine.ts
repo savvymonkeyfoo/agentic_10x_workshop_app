@@ -336,6 +336,36 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
     }
 }
 
+// -----------------------------------------------------------------------------
+// NEW: DELETE ACTION
+// -----------------------------------------------------------------------------
+export async function deleteOpportunity(workshopId: string, originalId: string) {
+    try {
+        const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
+        // @ts-ignore
+        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+
+        // Filter OUT the item to delete
+        const filteredOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== originalId);
+
+        await prisma.workshopContext.update({
+            where: { workshopId },
+            data: {
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: filteredOpportunities
+                }
+            }
+        });
+
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Delete Failed", error);
+        return { success: false };
+    }
+}
+
 // =============================================================================
 // HYDRATION (FIXED: RETRIEVAL & SEEDS)
 // =============================================================================

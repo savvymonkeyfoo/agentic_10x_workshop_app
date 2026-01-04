@@ -20,7 +20,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
-import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity } from '@/app/actions/context-engine';
+import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteOpportunity } from '@/app/actions/context-engine';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
 // --- COMPONENTS ---
@@ -152,27 +152,40 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
     // 3. Handle Modal Save
     const handleModalSave = async (updatedCard: any) => {
-        // CREATE NEW
         if (updatedCard.originalId === 'draft') {
+            // Create New
             const result = await createWorkshopOpportunity(workshopId, updatedCard);
             if (result.success && result.opportunity) {
-                // @ts-ignore
                 setOpportunities(prev => [...prev, result.opportunity]);
-                toast.success("Workshop Idea Created");
-            } else {
-                toast.error("Failed to create idea");
+                setSelectedCard(null);
+                toast.success("Card Created");
             }
-        }
-        // UPDATE EXISTING
-        else {
-            // Optimistic Update
+        } else {
+            // Update Existing (Optimistic)
             setOpportunities(prev => prev.map(o => o.originalId === updatedCard.originalId ? { ...o, ...updatedCard } : o));
             await updateOpportunity(workshopId, updatedCard);
-            toast.success("Saved");
         }
+    };
 
-        // Close Modal
+    // 4. Handle Delete
+    const handleDelete = async (card: any) => {
+        if (!card.originalId || card.originalId === 'draft') {
+            setSelectedCard(null);
+            return;
+        }
+        // Optimistic Remove
+        setOpportunities(prev => prev.filter(o => o.originalId !== card.originalId));
         setSelectedCard(null);
+        toast.success("Card Deleted");
+
+        // Server Delete
+        await deleteOpportunity(workshopId, card.originalId);
+    };
+
+    // 5. Handle Enrichment
+    const handleEnrich = async (title: string, description: string) => {
+        setSelectedCard(null);
+        return await enrichOpportunity(workshopId, title, description);
     };
 
     const handleNewIdea = () => {
@@ -188,9 +201,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         } as UnifiedOpportunity);
     };
 
-    const handleEnrich = async (title: string, description: string) => {
-        return await enrichOpportunity(workshopId, title, description);
-    };
+
 
     const handleCardClick = (item: UnifiedOpportunity) => {
         setSelectedCard(item);
@@ -268,6 +279,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                     card={selectedCard as any}
                     onSave={handleModalSave}
                     onEnrich={handleEnrich}
+                    onDelete={handleDelete}
                 />
             </div>
         </WorkshopPageShell>

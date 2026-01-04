@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap } from "lucide-react";
+import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,9 +26,10 @@ interface OpportunityModalProps {
     onClose: () => void;
     onSave: (updatedCard: OpportunityCardData) => void;
     onEnrich?: (title: string, description: string) => Promise<{ success: boolean; data?: any }>;
+    onDelete?: (card: OpportunityCardData) => void;
 }
 
-export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich }: OpportunityModalProps) {
+export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDelete }: OpportunityModalProps) {
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isEnriching, setIsEnriching] = useState(false);
@@ -197,9 +198,25 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich }: Op
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                        ID: {localCard.originalId || 'UNKNOWN_ID'}
-                    </span>
+                    <div className="flex items-center gap-4">
+                        {/* DELETE BUTTON */}
+                        {onDelete && (
+                            <button
+                                onClick={() => {
+                                    if (confirm("Are you sure you want to delete this opportunity? This cannot be undone.")) {
+                                        onDelete(localCard);
+                                    }
+                                }}
+                                className="flex items-center gap-1 text-red-400 hover:text-red-600 transition-colors"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="font-bold">Delete</span>
+                            </button>
+                        )}
+                        <span className="font-mono bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                            ID: {localCard.originalId || 'UNKNOWN_ID'}
+                        </span>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-3 h-3 text-purple-400" />
                         <span className="italic">

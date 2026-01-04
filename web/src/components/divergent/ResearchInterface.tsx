@@ -12,7 +12,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext, updateOpportunity } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext, updateOpportunity, deleteOpportunity } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { OpportunityModal, OpportunityCardData } from '@/components/workshop/OpportunityModal';
@@ -111,6 +111,17 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         setCompletedCards(prev => prev.map(c => c.originalId === updatedCard.originalId ? { ...c, ...updatedCard } : c));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await updateOpportunity(workshopId, updatedCard as any);
+    };
+
+    // HANDLE DELETE
+    const handleDelete = async (card: OpportunityCardData) => {
+        // Optimistic UI Update
+        setCompletedCards(prev => prev.filter(c => c.originalId !== card.originalId));
+        setSelectedCard(null);
+        toast.success("Opportunity Deleted");
+
+        // Server Update
+        await deleteOpportunity(workshopId, card.originalId);
     };
 
     // AUTO-HYDRATION
@@ -447,6 +458,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 isOpen={!!selectedCard}
                 onClose={() => setSelectedCard(null)}
                 onSave={handleCardUpdate}
+                onDelete={handleDelete}
             />
         </WorkshopPageShell>
     );
