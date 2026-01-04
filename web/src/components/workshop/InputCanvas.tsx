@@ -22,6 +22,8 @@ import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
 import { calculateCompleteness } from '@/utils/completeness';
+import { agenticEnrichment, EnrichmentMode } from '@/app/actions/agentic-enrichment';
+import { toast } from 'sonner';
 
 // --- Initial State (Mirroring Schema) ---
 
@@ -56,7 +58,13 @@ const INITIAL_STATE: OpportunityState = {
     systemGuardrails: '',
     aiOpsRequirements: '',
     changeManagement: '',
-    trainingRequirements: ''
+    trainingRequirements: '',
+
+    // Narrative Fields
+    businessCase: '',
+    executionPlan: '',
+    techAlignment: '',
+    strategyAlignment: ''
 };
 
 // --- Config: Tabs ---
@@ -405,6 +413,58 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     // AI Execution Drafter State
     const [isDraftingExec, setIsDraftingExec] = useState(false);
     const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+    const [isEnriching, setIsEnriching] = useState<EnrichmentMode | null>(null);
+
+    const handleEnrichment = async (mode: EnrichmentMode, e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        setIsEnriching(mode);
+        try {
+            const result = await agenticEnrichment(workshopId, mode, {
+                title: data.projectName || "Untitled Opportunity",
+                description: data.whyDoIt || "No description provided",
+                currentData: data
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const res = result as any;
+
+            if (res.success && res.data) {
+                if (mode === 'ANALYSIS' && res.type === 'json') {
+                    setData(prev => ({
+                        ...prev,
+                        frictionStatement: res.data.frictionStatement || prev.frictionStatement,
+                        techAlignment: res.data.techAlignment || prev.techAlignment,
+                        strategyAlignment: res.data.strategyAlignment || prev.strategyAlignment,
+                        impactedSystems: res.data.impactedSystems || prev.impactedSystems,
+                    }));
+                    toast.success("Analysis Enriched ✨");
+                } else if (mode === 'WORKFLOW' && res.type === 'json') {
+                    // @ts-ignore
+                    setData(prev => ({ ...prev, workflowPhases: res.data }));
+                    toast.success("Workflow Generated ✨");
+                } else if (mode === 'EXECUTION' && res.type === 'markdown') {
+                    // @ts-ignore
+                    setData(prev => ({ ...prev, executionPlan: res.data }));
+                    toast.success("Execution Plan Drafted ✨");
+                } else if (mode === 'BUSINESS_CASE' && res.type === 'markdown') {
+                    // @ts-ignore
+                    setData(prev => ({ ...prev, businessCase: res.data }));
+                    toast.success("Business Case Drafted ✨");
+                }
+            } else {
+                toast.error("AI Generation Failed");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Enrichment error");
+        } finally {
+            setIsEnriching(null);
+        }
+    };
 
     const handleSmartSelect = (opp: { id: string }) => {
         // 1. Perform the normal selection
@@ -542,11 +602,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     riskOverrideLog: selected.riskOverrideLog || '',
                 },
                 tShirtSize: selected.tShirtSize || 'M',
-                benefitRevenue: selected.benefitRevenue || undefined,
-                benefitCostAvoidance: selected.benefitCostAvoidance || undefined,
-                benefitEstCost: selected.benefitEstCost || undefined,
-                benefitEfficiency: selected.benefitEfficiency || undefined,
-                benefitTimeframe: selected.benefitTimeframe || 'Monthly',
+                benefitTimeframe: selected.benefitTimeframe || 'Annually',
+                benefitRevenue: selected.benefitRevenue || 0,
+                benefitCostAvoidance: selected.benefitCostAvoidance || 0,
+                benefitEfficiency: selected.benefitEfficiency || 0,
+                benefitEstCost: selected.benefitEstCost || 0,
+                // New Fields
+                techAlignment: selected.techAlignment || '',
+                strategyAlignment: selected.strategyAlignment || '',
+                businessCase: selected.businessCase || '',
+                executionPlan: selected.executionPlan || '',
                 dfvAssessment: selected.dfvAssessment || DEFAULT_DFV_ASSESSMENT,
                 definitionOfDone: selected.definitionOfDone || '',
                 keyDecisions: selected.keyDecisions || '',
@@ -932,6 +997,44 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 placeholder="What is the problem?"
                                             />
                                         </div>
+
+                                        {/* AI Analysis Fields */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                                    Strategy Alignment
+                                                </label>
+                                                <textarea
+                                                    value={data.strategyAlignment || ''}
+                                                    onChange={(e) => handleInputChange('strategyAlignment', e.target.value)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm h-24 resize-none focus:ring-2 focus:ring-brand-cyan outline-none"
+                                                    placeholder="Strategic relevance..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                                    Tech Alignment
+                                                </label>
+                                                <textarea
+                                                    value={data.techAlignment || ''}
+                                                    onChange={(e) => handleInputChange('techAlignment', e.target.value)}
+                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm h-24 resize-none focus:ring-2 focus:ring-brand-cyan outline-none"
+                                                    placeholder="Technical fit..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Magic Button for Analysis */}
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={(e) => handleEnrichment('ANALYSIS', e)}
+                                                disabled={isEnriching === 'ANALYSIS'}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                            >
+                                                {isEnriching === 'ANALYSIS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                {isEnriching === 'ANALYSIS' ? "Analyzing..." : "Analyze Opportunity"}
+                                            </button>
+                                        </div>
                                         <div className="mb-6">
                                             <h3 id="strategic-horizon-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</h3>
                                             <div role="group" aria-labelledby="strategic-horizon-label" className="flex gap-2 flex-wrap">
@@ -971,14 +1074,26 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 Workflow Definition (Phase Cards)
                                             </h3>
 
-                                            {/* VIEW TOGGLE (Replaces old Add Button) */}
-                                            <button
-                                                onClick={() => setIsZoomedOut(!isZoomedOut)}
-                                                className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded border border-slate-200"
-                                            >
-                                                {isZoomedOut ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
-                                                {isZoomedOut ? "Zoom In (Detail)" : "Zoom Out (Overview)"}
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {/* Magic Workflow Button */}
+                                                <button
+                                                    onClick={(e) => handleEnrichment('WORKFLOW', e)}
+                                                    disabled={isEnriching === 'WORKFLOW'}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                                                >
+                                                    {isEnriching === 'WORKFLOW' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    Suggest Workflow
+                                                </button>
+
+                                                {/* VIEW TOGGLE (Replaces old Add Button) */}
+                                                <button
+                                                    onClick={() => setIsZoomedOut(!isZoomedOut)}
+                                                    className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded border border-slate-200"
+                                                >
+                                                    {isZoomedOut ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+                                                    {isZoomedOut ? "Zoom In (Detail)" : "Zoom Out (Overview)"}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {/* --- WORKFLOW SCROLL CONTAINER --- */}
@@ -1145,13 +1260,25 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                                 {/* AI Button */}
                                                 <button
-                                                    onClick={handleRecommendClick}
-                                                    disabled={isDraftingExec}
+                                                    onClick={(e) => handleEnrichment('EXECUTION', e)}
+                                                    disabled={isEnriching === 'EXECUTION'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {isDraftingExec ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                                    {isDraftingExec ? "Drafting..." : "Recommend"}
+                                                    {isEnriching === 'EXECUTION' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION' ? "Drafting..." : "Draft Execution Plan"}
                                                 </button>
+                                            </div>
+
+                                            {/* Execution Plan Narrative */}
+                                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                <SmartTextarea
+                                                    label="Execution Plan (Narrative)"
+                                                    id="executionPlan"
+                                                    name="executionPlan"
+                                                    value={data.executionPlan || ''}
+                                                    onChange={(val) => handleInputChange('executionPlan', val)}
+                                                    placeholder="Use AI to draft a plan or write your own..."
+                                                />
                                             </div>
 
                                             {/* The 6-Box Grid */}
@@ -1183,6 +1310,32 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             {activeTab === 'D' && (
                                 <motion.div key="D" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
+
+                                        {/* Header with Magic Button for Business Case */}
+                                        <div className="flex justify-between items-end border-b border-slate-100 pb-2">
+                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500">Business Case & Value</h3>
+                                            <button
+                                                onClick={(e) => handleEnrichment('BUSINESS_CASE', e)}
+                                                disabled={isEnriching === 'BUSINESS_CASE'}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                            >
+                                                {isEnriching === 'BUSINESS_CASE' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                {isEnriching === 'BUSINESS_CASE' ? "Authoring..." : "Draft Business Case"}
+                                            </button>
+                                        </div>
+
+                                        {/* Business Case Narrative */}
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <SmartTextarea
+                                                label="Business Case Narrative"
+                                                id="businessCase"
+                                                name="businessCase"
+                                                value={data.businessCase || ''}
+                                                onChange={(val) => handleInputChange('businessCase', val)}
+                                                placeholder="Executive Summary, ROI, and Strategic Value..."
+                                            />
+                                        </div>
+
                                         {/* 2-Column Grid: T-Shirt Size | Estimated Benefit */}
                                         <div className="grid grid-cols-2 gap-8 mb-6">
                                             {/* Left Column: T-Shirt Size */}
@@ -1360,7 +1513,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     )}
                 </AnimatePresence>
 
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

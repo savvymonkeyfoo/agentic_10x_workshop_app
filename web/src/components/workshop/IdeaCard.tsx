@@ -33,37 +33,92 @@ export interface IdeaCardProps {
         friction?: string;
         techAlignment?: string;
         strategyAlignment?: string;
+        promotionStatus?: string; // Add check for lock icon
     };
     onClick?: () => void;
     onDelete?: () => void;
+
+    // Selection Mode Props
+    isSelectMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: () => void;
 }
 
-export function IdeaCard({ card, onClick, onDelete }: IdeaCardProps) {
+export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, onToggleSelect }: IdeaCardProps) {
     const tierKey = (card.tier as keyof typeof TIER_CONFIG) || 'UNSCORED';
     const tierConfig = TIER_CONFIG[tierKey] || TIER_CONFIG.UNSCORED;
 
     const sourceKey = (card.source as keyof typeof SOURCE_CONFIG) || 'WORKSHOP_GENERATED';
     const sourceConfig = SOURCE_CONFIG[sourceKey] || SOURCE_CONFIG.WORKSHOP_GENERATED;
 
+    const isPromoted = card.promotionStatus === 'PROMOTED';
     // Intelligence Mode: Clean white card, simple left border
     // Ideation Mode: Tier-based styling
     const isIntelligenceCard = !!card.friction || !!card.strategyAlignment;
 
-    const cardStyle = isIntelligenceCard
-        ? "shadow-sm hover:shadow-md cursor-pointer transition-all group mb-4 bg-white border-l-4 border-l-slate-300 hover:border-l-brand-blue"
+    // Base Style
+    let cardStyle = isIntelligenceCard
+        ? "shadow-sm hover:shadow-md transition-all group mb-4 bg-white border-l-4 border-l-slate-300 hover:border-l-brand-blue"
         : tierConfig.cardClass;
 
+    // Selection Overrides
+    if (isSelectMode) {
+        if (isSelected) {
+            cardStyle = cn(cardStyle, "ring-4 ring-blue-500/20 border-blue-500 bg-blue-50/10 z-10");
+        } else {
+            // Dim unselected
+            cardStyle = cn(cardStyle, "opacity-50 grayscale-[0.8] hover:opacity-100 hover:grayscale-0");
+        }
+    }
+
+    // Logic for Click: If SelectMode, toggle. If Promoted, do nothing (or show toast). Else open modal.
+    const handleClick = (e: React.MouseEvent) => {
+        if (isSelectMode) {
+            e.stopPropagation();
+            onToggleSelect?.();
+        } else if (isPromoted) {
+            // Maybe show a tooltip or prevent click? 
+            // PRD: "Render a 'Lock' icon... They can no longer be edited"
+            // But maybe allow read-only? For now, we just pass onClick which is the Modal opener.
+            // The Modal itself might read-only if promoted?
+            onClick?.();
+        } else {
+            onClick?.();
+        }
+    };
+
     return (
-        <Card onClick={onClick} className={cn("relative transition-all duration-200 group overflow-hidden", cardStyle)}>
+        <Card onClick={handleClick} className={cn("relative transition-all duration-200 group overflow-hidden cursor-pointer", cardStyle)}>
+
+            {/* SELECTION OVERLAY */}
+            {isSelectMode && (
+                <div className="absolute top-2 right-2 z-50">
+                    <div className={cn(
+                        "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shadow-sm",
+                        isSelected
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "bg-white border-slate-300 text-transparent hover:border-blue-400"
+                    )}>
+                        <CheckCircle size={14} className="fill-current" />
+                    </div>
+                </div>
+            )}
+
             <CardContent className="p-4 space-y-3">
                 {/* HEADER: BADGES */}
-                <div className="flex justify-between items-start gap-2">
-                    <Badge variant="outline" className={cn("text-[10px] border px-2 py-0.5 font-bold tracking-wide", sourceConfig.class)}>
-                        {sourceConfig.icon} {sourceConfig.label}
-                    </Badge>
+                <div className="flex justify-between items-start gap-2 max-w-[85%]">
+                    {isPromoted ? (
+                        <Badge className="bg-slate-100 text-slate-500 border-slate-200">
+                            🔒 Promoted
+                        </Badge>
+                    ) : (
+                        <Badge variant="outline" className={cn("text-[10px] border px-2 py-0.5 font-bold tracking-wide", sourceConfig.class)}>
+                            {sourceConfig.icon} {sourceConfig.label}
+                        </Badge>
+                    )}
 
-                    {/* Only show Tier in Ideation Phase */}
-                    {!isIntelligenceCard && (
+                    {/* Only show Tier in Ideation Phase (and if not promoted/intelligence mode hidden logic) */}
+                    {!isIntelligenceCard && !isPromoted && (
                         <Badge variant="outline" className={cn("text-[10px] font-bold", tierConfig.badgeClass)}>
                             {tierConfig.label}
                         </Badge>
@@ -71,12 +126,10 @@ export function IdeaCard({ card, onClick, onDelete }: IdeaCardProps) {
                 </div>
 
                 {/* CONTENT */}
-                <div>
+                <div className={cn(isPromoted && "opacity-70")}>
                     <h4 className="font-bold text-slate-900 text-sm mb-1 leading-tight line-clamp-2">{card.title}</h4>
                     <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{card.description}</p>
                 </div>
-
-                {/* NOTE: Rich Data (Friction/Tech) is intentionally HIDDEN here. It lives in the Modal only. */}
 
                 {/* IDEATION LENSES (Legacy Support) */}
                 {!isIntelligenceCard && card.lenses && card.lenses.length > 0 && (
@@ -87,7 +140,7 @@ export function IdeaCard({ card, onClick, onDelete }: IdeaCardProps) {
             </CardContent>
 
             {/* FOOTER: Delete actions for Ideation Phase only */}
-            {!isIntelligenceCard && (
+            {!isIntelligenceCard && !isPromoted && !isSelectMode && (
                 <CardFooter className="p-2 bg-slate-50/50 flex items-center justify-between rounded-b-lg border-t border-slate-100">
                     <GripVertical size={14} className="text-slate-300 group-hover:text-slate-500" />
                     <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-md group/trash">

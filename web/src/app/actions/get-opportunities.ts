@@ -7,7 +7,8 @@ export async function getOpportunities(workshopId: string) {
 
     try {
         const opportunities = await prisma.opportunity.findMany({
-            where: { workshopId }
+            where: { workshopId },
+            orderBy: { updatedAt: 'desc' }
         });
         return opportunities;
     } catch (error) {

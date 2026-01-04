@@ -30,6 +30,15 @@ export interface UnifiedOpportunity {
 
     // Legacy / Extra Fields (Preserved for compatibility if needed)
     lenses?: string[];
+
+    // Captured Data (Agentic Enrichment)
+    businessCase?: string;
+    workflowData?: any;
+    executionPlan?: string;
+
+    // Lineage
+    originId?: string;
+    promotionStatus?: string;
 }
 
 // Re-export as Opportunity for backward compatibility if needed, 

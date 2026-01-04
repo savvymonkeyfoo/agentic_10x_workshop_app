@@ -90,6 +90,21 @@ model Opportunity {
   strategicRationale  String?   @db.Text
   matrixX             Float?
   matrixY             Float?
+  // NEW: Rich Intelligence Fields (Promoted from Ideation)
+  friction          String? @db.Text
+  techAlignment     String? @db.Text
+  strategyAlignment String? @db.Text
+
+  // NEW: Capture Canvas Fields (Populated by Agents)
+  businessCase      String? @db.Text // For ROI/Value tab
+  workflowData      Json?            // For Workflow tab
+  executionPlan     String? @db.Text // For Execution tab
+  
+  // NEW: Lineage
+  originId          String? // The ID of the sticky note this came from
+  promotionStatus   String? @default("PROMOTED") 
+
+  @@index([originId])
 }
 
 // 3. Capabilities

@@ -16,6 +16,8 @@ export interface OpportunityState {
     frictionStatement: string;
     strategicHorizon: string[]; // Changed to array for multi-select, will join on save
     whyDoIt: string; // Stored concatenated string
+    techAlignment: string; // New: Tech alignment statement
+    strategyAlignment: string; // New: Strategy alignment statement
 
     // Tab B (Refactored)
     workflowPhases: WorkflowPhase[];
@@ -47,4 +49,8 @@ export interface OpportunityState {
     benefitEfficiency: number | undefined;
     benefitTimeframe: 'Monthly' | 'Annually';
     dfvAssessment: DFVAssessment;
+
+    // Narrative Fields (New)
+    businessCase?: string;
+    executionPlan?: string;
 }

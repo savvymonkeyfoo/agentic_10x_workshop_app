@@ -18,6 +18,12 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
 
         // New Workflow Data - cast to Prisma.InputJsonValue for proper JSON handling
         workflowPhases: (data.workflowPhases || []) as Prisma.InputJsonValue,
+
+        // Narrative Fields
+        businessCase: data.businessCase || "",
+        executionPlan: data.executionPlan || "",
+        techAlignment: data.techAlignment || "",
+        strategyAlignment: data.strategyAlignment || "",
         // Removed agentDirective
 
         scoreValue: Number(data.vrcc?.value ?? 3),

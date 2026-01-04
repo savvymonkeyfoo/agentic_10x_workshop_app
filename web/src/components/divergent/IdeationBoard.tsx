@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, ArrowLeft, RefreshCw, Layers, Plus, Sparkles } from 'lucide-react';
+import { LayoutGrid, ArrowLeft, RefreshCw, Layers, Plus, Sparkles, MousePointer2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
 import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteOpportunity } from '@/app/actions/context-engine';
+import { promoteToCapture } from '@/app/actions/promotion';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
 // --- COMPONENTS ---
@@ -92,6 +93,11 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
     const [opportunities, setOpportunities] = useState<UnifiedOpportunity[]>([]);
     const [selectedCard, setSelectedCard] = useState<UnifiedOpportunity | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // SELECTION MODE STATE
+    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+    const [isPromoting, setIsPromoting] = useState(false);
 
     // Sensors for DND
     const sensors = useSensors(
@@ -201,11 +207,74 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         } as UnifiedOpportunity);
     };
 
-
-
     const handleCardClick = (item: UnifiedOpportunity) => {
         setSelectedCard(item);
     }
+
+    // --- SELECTION LOGIC ---
+
+    const toggleSelectionMode = () => {
+        if (isSelectMode) {
+            // Exit Mode -> Clear selection
+            setIsSelectMode(false);
+            setSelectedItems(new Set());
+        } else {
+            setIsSelectMode(true);
+        }
+    };
+
+    const handleToggleItem = (id: string) => {
+        const newSet = new Set(selectedItems);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedItems(newSet);
+    };
+
+    const handlePromoteSelection = async () => {
+        if (selectedItems.size === 0) return;
+        setIsPromoting(true);
+
+        const selectedOpps = opportunities.filter(o => selectedItems.has(o.originalId));
+
+        try {
+            const result = await promoteToCapture(workshopId, selectedOpps);
+
+            if (result.success && result.count > 0) {
+                toast.success(`${result.count} Ideas Promoted`, {
+                    action: {
+                        label: 'Go to Capture',
+                        onClick: () => router.push(`/workshop/${workshopId}/input`)
+                    },
+                    duration: 5000
+                });
+
+                // UX Cleanup
+                setIsSelectMode(false);
+                setSelectedItems(new Set());
+
+                // Optimistic Update: Mark local items as promoted
+                setOpportunities(prev => prev.map(o => {
+                    // Check if it was in the selection (using originalId)
+                    if (selectedOpps.some(s => s.originalId === o.originalId)) {
+                        return { ...o, promotionStatus: 'PROMOTED' };
+                    }
+                    return o;
+                }));
+            } else if (result.count === 0) {
+                toast.info("No new items were promoted (duplicates skipped).");
+                setIsSelectMode(false);
+                setSelectedItems(new Set());
+            }
+        } catch (error) {
+            toast.error("Promotion failed. Please try again.");
+            console.error(error);
+        } finally {
+            setIsPromoting(false);
+        }
+    };
 
     return (
         <WorkshopPageShell
@@ -221,6 +290,18 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                         </h1>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* SELECT MODE TOGGLE */}
+                        <Button
+                            variant={isSelectMode ? "secondary" : "ghost"}
+                            className={cn(isSelectMode && "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200")}
+                            onClick={toggleSelectionMode}
+                        >
+                            {isSelectMode ? <Check className="w-4 h-4 mr-2" /> : <MousePointer2 className="w-4 h-4 mr-2" />}
+                            {isSelectMode ? "Done Selecting" : "Select Ideas"}
+                        </Button>
+
+                        <div className="h-6 w-px bg-slate-200 mx-2" />
+
                         <Button onClick={handleNewIdea} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all">
                             <Plus className="w-4 h-4 mr-2" /> New Idea
                         </Button>
@@ -253,6 +334,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                                     id={item.originalId}
                                     x={x}
                                     y={y}
+                                    disabled={isSelectMode} // DISABLING DRAG IN SELECT MODE
                                 >
                                     <IdeaCard
                                         card={{
@@ -261,15 +343,43 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                                             // Legacy / Unified Mapping
                                             source: item.source,
                                             // @ts-ignore
-                                            tier: item.tier
+                                            tier: item.tier,
+                                            promotionStatus: item.promotionStatus
                                         }}
                                         onClick={() => handleCardClick(item)}
+                                        // SELECTION PROPS
+                                        isSelectMode={isSelectMode}
+                                        isSelected={selectedItems.has(item.originalId)}
+                                        onToggleSelect={() => handleToggleItem(item.originalId)}
                                     />
                                 </DraggableCard>
                             );
                         })}
                     </CanvasBoard>
                 </DndContext>
+
+                {/* FLOATING ACTION BAR */}
+                {selectedItems.size > 0 && (
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                        <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 border border-slate-700">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                                    {selectedItems.size}
+                                </div>
+                                <span className="font-semibold text-sm">Ideas Selected</span>
+                            </div>
+
+                            <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-6 font-bold shadow-lg shadow-blue-900/50"
+                                onClick={handlePromoteSelection}
+                                disabled={isPromoting}
+                            >
+                                {isPromoting ? "Promoting..." : "Promote to Capture 🚀"}
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* SHARED MODAL FOR EDITING */}
                 <OpportunityModal
