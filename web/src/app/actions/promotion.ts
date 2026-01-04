@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { revalidatePath } from 'next/cache';
 
+// Force schema sync check
+
 export async function promoteToCapture(workshopId: string, opportunities: UnifiedOpportunity[]) {
     if (!workshopId || !opportunities || opportunities.length === 0) return { success: false, count: 0 };
 
