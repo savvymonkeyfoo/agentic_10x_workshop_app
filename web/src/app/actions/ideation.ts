@@ -12,8 +12,8 @@ export async function initializeIdeationBoard(workshopId: string) {
         });
 
         // @ts-ignore
-        const currentData = context?.intelligenceAnalysis || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = currentData.opportunities || [];
+        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
 
         let hasUpdates = false;
 
@@ -77,8 +77,8 @@ export async function updateBoardPosition(
         });
 
         // @ts-ignore
-        const currentData = context?.intelligenceAnalysis || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = currentData.opportunities || [];
+        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
 
         const updatedOpportunities = opportunities.map(op => {
             if (op.originalId === opportunityId) {
