@@ -1,74 +1,107 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { UnifiedOpportunity } from '@/types/opportunity';
 import { revalidatePath } from 'next/cache';
 
-export async function updateIdeaCard(id: string, updates: any) {
+export async function initializeIdeationBoard(workshopId: string) {
     try {
-        // Filter updates to only allowed fields
-        const allowed = {
-            title: updates.title,
-            description: updates.description,
-            tier: updates.tier,
-            status: updates.status,
-            xPosition: updates.xPosition,
-            yPosition: updates.yPosition,
-            source: updates.source
-        };
+        const context = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            select: { intelligenceAnalysis: true }
+        });
 
-        // Remove undefined keys
-        Object.keys(allowed).forEach(key => allowed[key as keyof typeof allowed] === undefined && delete allowed[key as keyof typeof allowed]);
+        // @ts-ignore
+        const currentData = context?.intelligenceAnalysis || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = currentData.opportunities || [];
 
-        // If ID is temporary (starts with "card-"), create new
-        if (id.startsWith('card-')) {
-            // For creation, we need workshopId. But here I only have updates.
-            // Ideally we create on "Add New" or handle creation differently.
-            // Simplest: If ID is fake, do nothing until "real" creation happens, OR create now if we had workshopId.
-            // Since handleAddNew creates a client-side only ID, we should probably have a create action called then.
-            // BUT, the goal is SYNC.
-            return { success: false, error: "Cannot update temporary card. Create it first." };
+        let hasUpdates = false;
+
+        // GRID CONFIGURATION
+        const COLUMNS = 3;
+        const CARD_WIDTH = 320; // Approx card width + gap
+        const CARD_HEIGHT = 220; // Approx card height + gap
+        const START_X = 50;
+        const START_Y = 50;
+
+        const updatedOpportunities = opportunities.map((op, index) => {
+            if (!op.boardPosition) {
+                hasUpdates = true;
+
+                // GRID CALCULATION
+                const col = index % COLUMNS;
+                const row = Math.floor(index / COLUMNS);
+
+                return {
+                    ...op,
+                    boardStatus: 'inbox',
+                    boardPosition: {
+                        x: START_X + (col * CARD_WIDTH),
+                        y: START_Y + (row * CARD_HEIGHT)
+                    }
+                };
+            }
+            return op;
+        });
+
+        if (hasUpdates) {
+            await prisma.workshopContext.update({
+                where: { workshopId },
+                data: {
+                    intelligenceAnalysis: {
+                        ...currentData,
+                        opportunities: updatedOpportunities
+                    }
+                }
+            });
+            revalidatePath(`/workshop/${workshopId}`);
         }
 
-        await prisma.ideaCard.update({
-            where: { id },
-            data: allowed
-        });
+        return { success: true, opportunities: updatedOpportunities };
 
-        // revalidatePath(`/workshop/${updates.workshopId}`); // Optional/Expensive
-        return { success: true };
     } catch (error) {
-        console.error("Update IdeaCard Error:", error);
-        return { success: false, error: "Update failed" };
+        console.error("Failed to initialize board", error);
+        return { success: false, error: "Failed to initialize" };
     }
 }
 
-export async function createIdeaCard(workshopId: string, data: any) {
+export async function updateBoardPosition(
+    workshopId: string,
+    opportunityId: string,
+    position: { x: number, y: number }
+) {
     try {
-        const card = await prisma.ideaCard.create({
+        const context = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            select: { intelligenceAnalysis: true }
+        });
+
+        // @ts-ignore
+        const currentData = context?.intelligenceAnalysis || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = currentData.opportunities || [];
+
+        const updatedOpportunities = opportunities.map(op => {
+            if (op.originalId === opportunityId) {
+                return { ...op, boardPosition: position };
+            }
+            return op;
+        });
+
+        await prisma.workshopContext.update({
+            where: { workshopId },
             data: {
-                workshopId,
-                title: data.title || 'New Idea',
-                description: data.description || '',
-                tier: data.tier || 'UNSCORED',
-                source: data.source || 'WORKSHOP_GENERATED',
-                xPosition: data.x || 400,
-                yPosition: data.y || 300,
-                status: 'ACTIVE'
+                intelligenceAnalysis: {
+                    ...currentData,
+                    opportunities: updatedOpportunities
+                }
             }
         });
-        revalidatePath(`/workshop/${workshopId}/ideation`);
-        return { success: true, card };
-    } catch (error) {
-        console.error("Create IdeaCard Error:", error);
-        return { success: false, error: "Creation failed" };
-    }
-}
 
-export async function deleteIdeaCard(id: string) {
-    try {
-        await prisma.ideaCard.delete({ where: { id } });
+        // We do NOT revalidatePath here to keep the UI smooth (Client State rules)
         return { success: true };
+
     } catch (error) {
-        return { success: false, error: "Delete failed" };
+        console.error("Failed to update position", error);
+        return { success: false };
     }
 }

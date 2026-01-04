@@ -19,7 +19,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
-import { initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation-actions';
+import { initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
 import { getWorkshopIntelligence, updateOpportunity } from '@/app/actions/context-engine';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
@@ -48,40 +48,32 @@ function DraggableCard({
         position: 'absolute',
         left: x,
         top: y,
-        zIndex: isDragging ? 5000 : 10,
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        cursor: isDragging ? 'grabbing' : 'grab',
+        zIndex: isDragging ? 100 : 1,
         touchAction: 'none',
-        width: '320px',
+        width: '300px' // Enforce consistent width for grid alignment
     };
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...listeners}
-            {...attributes}
-            className={cn(
-                "transition-shadow duration-200 ease-in-out",
-                isDragging ? "shadow-2xl ring-2 ring-indigo-400 rotate-1" : ""
-            )}
-        >
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
             {children}
         </div>
     );
 }
 
-// 2. The Canvas (Droppable Area)
+// 2. Infinite Canvas Background
 function CanvasBoard({ children }: { children: React.ReactNode }) {
-    const { setNodeRef } = useDroppable({ id: 'canvas-board' });
+    const { setNodeRef } = useDroppable({
+        id: 'canvas-board',
+    });
 
     return (
         <div
             ref={setNodeRef}
-            className="relative w-full h-full bg-slate-50 overflow-hidden"
+            className="w-[3000px] h-[3000px] bg-slate-50 relative overflow-hidden"
             style={{
                 backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
-                backgroundSize: '24px 24px'
+                backgroundSize: '20px 20px',
             }}
         >
             {children}
@@ -91,187 +83,159 @@ function CanvasBoard({ children }: { children: React.ReactNode }) {
 
 // --- MAIN COMPONENT ---
 
-export function IdeationBoard({ workshopId }: { workshopId: string }) {
+interface IdeationBoardProps {
+    workshopId: string;
+}
+
+export function IdeationBoard({ workshopId }: IdeationBoardProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const [items, setItems] = useState<UnifiedOpportunity[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [opportunities, setOpportunities] = useState<UnifiedOpportunity[]>([]);
     const [selectedCard, setSelectedCard] = useState<UnifiedOpportunity | null>(null);
-    const [isSavingPosition, setIsSavingPosition] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Initialize & Fetch Logic
-    const loadBoard = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            // 1. Ensure Defaults (Idempotent)
-            const initResult = await initializeIdeationBoard(workshopId);
-            if (!initResult.success) throw new Error("Failed to init board");
-
-            // 2. Fetch Fresh Data (SSOT)
-            const result = await getWorkshopIntelligence(workshopId);
-            if (result.success) {
-                setItems(result.opportunities as UnifiedOpportunity[]);
-                if (initResult.migratedCount && initResult.migratedCount > 0) {
-                    toast.success("Board Initialized", {
-                        description: `Placed ${initResult.migratedCount} new items in Inbox.`
-                    });
-                }
-            }
-        } catch (error) {
-            toast.error("Failed to load board");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [workshopId]);
-
-    // Initial Load
-    useEffect(() => {
-        loadBoard();
-    }, [loadBoard]);
-
-    // DND Sensors
+    // Sensors for DND
     const sensors = useSensors(
-        useSensor(MouseSensor, { activationConstraint: { distance: 5 } })
+        useSensor(MouseSensor, {
+            activationConstraint: { distance: 10 }, // Prevent accidental drags
+        })
     );
 
-    // PERSISTENCE: Handle Drag End
+    // 1. Load Data (Unified Store)
+    useEffect(() => {
+        const init = async () => {
+            // First: Try to initialize board (assign positions if missing)
+            const result = await initializeIdeationBoard(workshopId);
+            if (result.success && result.opportunities) {
+                // @ts-ignore
+                setOpportunities(result.opportunities);
+            } else {
+                // Fallback: Just fetch raw if init fails
+                const raw = await getWorkshopIntelligence(workshopId);
+                // @ts-ignore
+                if (raw.success) setOpportunities(raw.opportunities || []);
+            }
+        };
+        init();
+    }, [workshopId]);
+
+    // 2. Handle Drag End
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, delta } = event;
         const id = active.id as string;
 
-        // Find existing item
-        const item = items.find(i => i.id === id || i.originalId === id);
-        if (!item || !item.boardPosition) return;
+        // Find current item
+        const item = opportunities.find(o => (o.originalId === id || o.originalId === id));
+        if (!item) return;
 
-        // Calculate New Coordinates
-        const newX = item.boardPosition.x + delta.x;
-        const newY = item.boardPosition.y + delta.y;
+        // GRID FALLBACKS (Must match server logic for visual consistency)
+        // If we dragged an item that didn't have a position yet, calculate where it WAS visually
+        const index = opportunities.indexOf(item);
+        const col = index % 3;
+        const row = Math.floor(index / 3);
+        const currentX = item.boardPosition?.x ?? (50 + (col * 320));
+        const currentY = item.boardPosition?.y ?? (50 + (row * 220));
 
-        // OPTIMISTIC UPDATE
-        setItems(prev => prev.map(i => {
-            if (i.id === id || i.originalId === id) {
-                return {
-                    ...i,
-                    boardPosition: { x: newX, y: newY },
-                    boardStatus: 'placed'
-                };
+        const newX = currentX + delta.x;
+        const newY = currentY + delta.y;
+
+        // Optimistic Update
+        setOpportunities(prev => prev.map(o => {
+            if (o.originalId === id) {
+                return { ...o, boardPosition: { x: newX, y: newY } };
             }
-            return i;
+            return o;
         }));
 
-        // SERVER SAVE (Debounced effectively by user interaction speed, 
-        // strictly speaking we fire every drop. Acceptable for now.)
-        setIsSavingPosition(true);
-        try {
-            await updateBoardPosition(workshopId, id, { x: newX, y: newY });
-        } catch (err) {
-            toast.error("Failed to save position");
-            // Revert? For now, we trust the sync on next load.
-        } finally {
-            setIsSavingPosition(false);
-        }
+        // Server Persist (Debounced ideally, but simple here)
+        await updateBoardPosition(workshopId, id, { x: newX, y: newY });
     };
 
-    // Card Click -> Edit Modal
-    const handleCardClick = (card: UnifiedOpportunity) => {
-        setSelectedCard(card);
-    };
-
-    // Modal Save -> Refresh Local State
+    // 3. Handle Modal Save
     const handleModalSave = async (updatedCard: any) => {
-        // 1. SAVE: Persist text changes to DB
+        // Optimistic Update
+        setOpportunities(prev => prev.map(o => o.originalId === updatedCard.originalId ? { ...o, ...updatedCard } : o));
+
+        // SAVE TO SERVER (Critical for Persistence)
         await updateOpportunity(workshopId, updatedCard);
 
-        // 2. REFRESH: Get latest state (merges updates)
-        const result = await getWorkshopIntelligence(workshopId);
-        if (result.success) {
-            setItems(result.opportunities as UnifiedOpportunity[]);
-        }
+        // Close Modal
+        setSelectedCard(null);
     };
 
-    const header = (
-        <div className="w-full px-8 py-4 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 relative">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.push(`/workshop/${workshopId}/research`)}>
-                    <ArrowLeft className="h-4 w-4 text-slate-600" />
-                </Button>
-                <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                    <LayoutGrid size={20} />
-                </div>
-                <div>
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight">Ideation Board</h1>
-                    <p className="text-xs text-slate-500 flex gap-2">
-                        {isLoading ? (
-                            <span className="animate-pulse">Syncing...</span>
-                        ) : (
-                            <>
-                                <span>{items.length} Opportunities</span>
-                                <span className="text-slate-300">|</span>
-                                <span className={cn(isSavingPosition ? "text-indigo-600" : "text-green-600")}>
-                                    {isSavingPosition ? "Saving..." : "All Systems Go"}
-                                </span>
-                            </>
-                        )}
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={loadBoard} disabled={isLoading}>
-                    <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-                    Sync
-                </Button>
-            </div>
-        </div>
-    );
+    const handleCardClick = (item: UnifiedOpportunity) => {
+        setSelectedCard(item);
+    }
 
     return (
-        <WorkshopPageShell header={header} className="p-0 overflow-hidden relative h-screen">
-            <DndContext
-                sensors={sensors}
-                onDragEnd={handleDragEnd}
-                collisionDetection={pointerWithin}
-            >
-                <CanvasBoard>
-                    {items.map((item) => {
-                        // SAFETY CHECK: Fallback if position missing (though API guarantees it)
-                        // x: 50, y: 50 fallback just in case
-                        const x = item.boardPosition?.x ?? 50;
-                        const y = item.boardPosition?.y ?? 50;
+        <WorkshopPageShell
+            header={
+                <div className="px-8 py-4 flex justify-between items-center bg-white border-b border-slate-200 shadow-sm z-20 relative">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="sm" onClick={() => router.push(`/workshop/${workshopId}/analysis`)}>
+                            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Analysis
+                        </Button>
+                        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <LayoutGrid className="w-5 h-5 text-indigo-600" />
+                            Ideation Whiteboard
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                            <RefreshCw className="w-4 h-4 mr-2" /> Sync Grid
+                        </Button>
+                    </div>
+                </div>
+            }
+        >
+            <div className="flex-1 overflow-auto relative bg-slate-100">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={pointerWithin}
+                    onDragEnd={handleDragEnd}
+                >
+                    <CanvasBoard>
+                        {opportunities.map((item, i) => {
+                            // SAFETY NET: GRID LAYOUT
+                            // If x/y missing, fallback to Grid (3 cols, 320px width, 220px height)
+                            const col = i % 3;
+                            const row = Math.floor(i / 3);
 
-                        return (
-                            <DraggableCard
-                                key={item.id || item.originalId}
-                                id={item.id || item.originalId}
-                                x={x}
-                                y={y}
-                            >
-                                <IdeaCard
-                                    card={{
-                                        ...item,
-                                        id: item.id || item.originalId,
-                                        // Legacy / Unified Mapping
-                                        source: item.source,
-                                        tier: item.tier
-                                    }}
-                                    onClick={() => handleCardClick(item)}
-                                />
-                            </DraggableCard>
-                        );
-                    })}
-                </CanvasBoard>
-            </DndContext>
+                            const x = item.boardPosition?.x ?? (50 + (col * 320));
+                            const y = item.boardPosition?.y ?? (50 + (row * 220));
 
-            {/* SHARED MODAL FOR EDITING */}
-            <OpportunityModal
-                isOpen={!!selectedCard}
-                onClose={() => setSelectedCard(null)}
-                // @ts-ignore - mismatch between Legacy/Unified types in modal props vs strict Unified
-                // We know Unified is superset, so casting usually fine or ignoring.
-                // Ideally OpportunityModal should accept UnifiedOpportunity.
-                card={selectedCard as any}
-                onSave={handleModalSave}
-            />
+                            return (
+                                <DraggableCard
+                                    key={item.originalId}
+                                    id={item.originalId}
+                                    x={x}
+                                    y={y}
+                                >
+                                    <IdeaCard
+                                        card={{
+                                            ...item,
+                                            id: item.originalId,
+                                            // Legacy / Unified Mapping
+                                            source: item.source,
+                                            // @ts-ignore
+                                            tier: item.tier
+                                        }}
+                                        onClick={() => handleCardClick(item)}
+                                    />
+                                </DraggableCard>
+                            );
+                        })}
+                    </CanvasBoard>
+                </DndContext>
+
+                {/* SHARED MODAL FOR EDITING */}
+                <OpportunityModal
+                    isOpen={!!selectedCard}
+                    onClose={() => setSelectedCard(null)}
+                    // @ts-ignore
+                    card={selectedCard as any}
+                    onSave={handleModalSave}
+                />
+            </div>
         </WorkshopPageShell>
     );
 }
