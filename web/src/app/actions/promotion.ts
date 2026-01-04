@@ -38,6 +38,7 @@ export async function promoteToCapture(workshopId: string, opportunities: Unifie
                     friction: opp.friction,
                     techAlignment: opp.techAlignment,
                     strategyAlignment: opp.strategyAlignment,
+                    strategicHorizon: '',
 
                     // Lineage
                     originId: originId,
