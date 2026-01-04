@@ -260,14 +260,24 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
         const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
 
-        const otherOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== opportunity.originalId);
+        // SMART MERGE: Find existing item to preserve spatial data
+        const existingItem = (currentData.opportunities || []).find((o: any) => o.originalId === opportunity.originalId || o.id === opportunity.id);
+        const otherOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== opportunity.originalId && o.id !== opportunity.id);
+
+        const mergedOpportunity = existingItem ? {
+            ...existingItem, // Keep existing fields (like boardPosition, boardStatus)
+            ...opportunity,  // Overwrite with new edits (title, friction, etc)
+            // Ensure ID consistency
+            id: existingItem.id || opportunity.id,
+            originalId: existingItem.originalId || opportunity.originalId
+        } : opportunity;
 
         await prisma.workshopContext.update({
             where: { workshopId },
             data: {
                 intelligenceAnalysis: {
                     ...currentData,
-                    opportunities: [...otherOpportunities, opportunity]
+                    opportunities: [...otherOpportunities, mergedOpportunity]
                 }
             }
         });
