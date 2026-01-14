@@ -345,11 +345,27 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
         onChange(pitch);
     };
 
+    // Refs for auto-resize on state change
+    const roleRef = React.useRef<HTMLTextAreaElement>(null);
+    const outcomeRef = React.useRef<HTMLTextAreaElement>(null);
+    const solutionRef = React.useRef<HTMLTextAreaElement>(null);
+    const needRef = React.useRef<HTMLTextAreaElement>(null);
+
     // Auto-resize helper
-    const adjustHeight = (el: HTMLTextAreaElement) => {
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
+    const adjustHeight = (el: HTMLTextAreaElement | null) => {
+        if (el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
     };
+
+    // Auto-resize ALL textareas when parts change (e.g., from AI generation)
+    React.useLayoutEffect(() => {
+        adjustHeight(roleRef.current);
+        adjustHeight(outcomeRef.current);
+        adjustHeight(solutionRef.current);
+        adjustHeight(needRef.current);
+    }, [parts]);
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>, key: keyof typeof parts) => {
         adjustHeight(e.target);
@@ -367,6 +383,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                 <div>
                     <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">As a [Role]...</label>
                     <textarea
+                        ref={roleRef}
                         id="vp_role"
                         name="vp_role"
                         rows={1}
@@ -379,6 +396,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                 <div>
                     <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">I want to [Outcome]...</label>
                     <textarea
+                        ref={outcomeRef}
                         id="vp_outcome"
                         name="vp_outcome"
                         rows={1}
@@ -391,6 +409,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                 <div>
                     <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">With [Solution]...</label>
                     <textarea
+                        ref={solutionRef}
                         id="vp_solution"
                         name="vp_solution"
                         rows={1}
@@ -403,6 +422,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                 <div>
                     <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">So that [Need]...</label>
                     <textarea
+                        ref={needRef}
                         id="vp_need"
                         name="vp_need"
                         rows={1}
