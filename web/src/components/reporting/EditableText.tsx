@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { updateOpportunity } from '@/app/actions/update-opportunity';
 import { cn } from '@/lib/utils';
 import { SmartList } from './SmartList';
@@ -59,7 +60,11 @@ export function EditableText({ id, field, value: initialValue, className, placeh
                 )}
             >
                 {value ? (
-                    isList ? <SmartList content={value} /> : <div className="whitespace-pre-wrap">{value}</div>
+                    isList ? <SmartList content={value} /> : (
+                        <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-800 prose-h2:text-base prose-h2:mt-3 prose-h2:mb-1 prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-700">
+                            <ReactMarkdown>{value}</ReactMarkdown>
+                        </article>
+                    )
                 ) : (
                     placeholder || "Click to edit..."
                 )}
