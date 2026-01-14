@@ -1448,13 +1448,14 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         {/* Business Case Narrative */}
                                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                            <SmartTextarea
-                                                label="Business Case Narrative"
+                                            <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider mb-2">Business Case Narrative</h3>
+                                            <MarkdownTextarea
                                                 id="businessCase"
                                                 name="businessCase"
                                                 value={data.businessCase || ''}
                                                 onChange={(val) => handleInputChange('businessCase', val)}
                                                 placeholder="Executive Summary, ROI, and Strategic Value..."
+                                                minHeight="12rem"
                                             />
                                         </div>
 
