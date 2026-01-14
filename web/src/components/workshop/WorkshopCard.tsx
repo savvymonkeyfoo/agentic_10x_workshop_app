@@ -33,7 +33,7 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
     return (
         <>
             <div className="group relative block bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700 overflow-hidden">
-                <Link href={`/workshop/${workshop.id}/input`} className="absolute inset-0 z-0"></Link>
+                <Link href={`/workshop/${workshop.id}/ideation`} className="absolute inset-0 z-0"></Link>
 
                 <div className="absolute top-0 left-0 w-2 h-full bg-brand-cyan opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
