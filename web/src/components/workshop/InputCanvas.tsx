@@ -1356,7 +1356,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <button
                                                     onClick={(e) => handleEnrichment('EXECUTION_PARAMS', e)}
                                                     disabled={isEnriching === 'EXECUTION_PARAMS'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {isEnriching === 'EXECUTION_PARAMS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION_PARAMS' ? "Drafting..." : "Draft Execution Parameters"}
