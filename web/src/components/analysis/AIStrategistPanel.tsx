@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 
 interface SequenceItem {
@@ -79,29 +80,10 @@ export function AIStrategistPanel({
     const renderContent = (text: string) => {
         if (!text) return <p className="text-slate-400 italic">No analysis available.</p>;
 
-        // Check if the text actually contains bullets
-        if (text.includes('•')) {
-            const items = text.split('•').map(t => t.trim()).filter(t => t.length > 0);
-            return (
-                <ul className="space-y-3 list-disc pl-5">
-                    {items.map((item, i) => (
-                        <li key={i} className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed pl-1">
-                            {item}
-                        </li>
-                    ))}
-                </ul>
-            );
-        }
-
-        // Fallback for paragraphs (if AI forgets bullets)
         return (
-            <div className="space-y-3">
-                {text.split('\n').map((line, i) => (
-                    <p key={i} className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                        {line}
-                    </p>
-                ))}
-            </div>
+            <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-700 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-700">
+                <ReactMarkdown>{text}</ReactMarkdown>
+            </article>
         );
     };
 

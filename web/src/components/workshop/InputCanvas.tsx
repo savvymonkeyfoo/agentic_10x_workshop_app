@@ -1377,13 +1377,14 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                             {/* Execution Plan Narrative */}
                                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                                <SmartTextarea
-                                                    label="Execution Plan (Narrative)"
+                                                <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
+                                                <MarkdownTextarea
                                                     id="executionPlan"
                                                     name="executionPlan"
                                                     value={data.executionPlan || ''}
                                                     onChange={(val) => handleInputChange('executionPlan', val)}
                                                     placeholder="Use AI to draft a plan or write your own..."
+                                                    minHeight="12rem"
                                                 />
                                             </div>
 

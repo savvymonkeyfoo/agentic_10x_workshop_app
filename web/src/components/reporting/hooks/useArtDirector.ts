@@ -19,7 +19,7 @@ export function useArtDirector(data: ArtDirectorData) {
 
         riskContentClass: riskLen > 400 ? "text-[10px] leading-snug" : riskLen > 200 ? "text-xs leading-relaxed" : "text-sm leading-relaxed",
 
-        frictionClass: frictionLen > 200 ? "text-sm leading-snug" : "text-xl leading-relaxed text-slate-700 font-serif italic",
+        frictionClass: frictionLen > 200 ? "text-sm leading-snug" : "text-xl leading-relaxed text-slate-700",
 
         rationaleClass: rationaleLen > 300 ? "text-sm leading-snug" : "text-base leading-7 text-slate-600 text-justify",
 
