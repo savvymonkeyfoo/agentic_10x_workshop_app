@@ -18,6 +18,7 @@ import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
 import { BulletListEditor } from '@/components/ui/BulletListEditor';
+import { MarkdownTextarea } from '@/components/ui/MarkdownTextarea';
 import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
@@ -295,7 +296,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
 
 // --- Component: Value Prop Builder ---
 const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
-    // Attempt to parse existing value
+    // Attempt to parse existing value - REFINED REGEX for strict structure
     const [parts, setParts] = useState({
         role: '',
         outcome: '',
@@ -303,9 +304,24 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
         need: ''
     });
 
+    // Sync local state when external value changes matches the pattern
+    // This allows unique updates from AI to populate the boxes
     useEffect(() => {
         if (!value) return;
-        // Logic to pre-fill parts if needed, omitted for now to keep it simple
+
+        // Regex to parse: "As a [Role], I want to [Outcome], with [Solution], so that [Need]."
+        // We make it slightly flexible for whitespace/punctuation
+        const regex = /As a\s+(.+?),\s+I want to\s+(.+?),\s+with\s+(.+?),\s+so that\s+(.+?)[.]?$/i;
+        const match = value.match(regex);
+
+        if (match) {
+            setParts({
+                role: match[1],
+                outcome: match[2],
+                solution: match[3],
+                need: match[4]
+            });
+        }
     }, [value]);
 
     const updatePart = (key: keyof typeof parts, val: string) => {
@@ -433,7 +449,15 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             const res = result as any;
 
             if (res.success && res.data) {
-                if (mode === 'ANALYSIS' && res.type === 'json') {
+                if (mode === 'VALUE_PROP' && res.type === 'json') {
+                    const vp = res.data as any; // role, outcome, solution, need
+                    const sentence = `As a ${vp.role}, I want to ${vp.outcome}, with ${vp.solution}, so that ${vp.need}.`;
+                    setData(prev => ({
+                        ...prev,
+                        whyDoIt: sentence
+                    }));
+                    toast.success("CVP Drafted ✨");
+                } else if (mode === 'ANALYSIS' && res.type === 'json') {
                     setData(prev => ({
                         ...prev,
                         frictionStatement: res.data.frictionStatement || prev.frictionStatement,
@@ -988,13 +1012,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         </div>
                                         <div>
                                             <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction Statement</label>
-                                            <textarea
+                                            <MarkdownTextarea
                                                 id="frictionStatement"
                                                 name="frictionStatement"
                                                 value={data.frictionStatement}
-                                                onChange={(e) => handleInputChange('frictionStatement', e.target.value)}
-                                                className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none h-24 transition-all resize-none"
+                                                onChange={(val) => handleInputChange('frictionStatement', val)}
                                                 placeholder="What is the problem?"
+                                                minHeight="6rem"
                                             />
                                         </div>
 
@@ -1004,22 +1028,22 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                                                     Strategy Alignment
                                                 </label>
-                                                <textarea
+                                                <MarkdownTextarea
                                                     value={data.strategyAlignment || ''}
-                                                    onChange={(e) => handleInputChange('strategyAlignment', e.target.value)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm h-24 resize-none focus:ring-2 focus:ring-brand-cyan outline-none"
+                                                    onChange={(val) => handleInputChange('strategyAlignment', val)}
                                                     placeholder="Strategic relevance..."
+                                                    minHeight="6rem"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                                                     Tech Alignment
                                                 </label>
-                                                <textarea
+                                                <MarkdownTextarea
                                                     value={data.techAlignment || ''}
-                                                    onChange={(e) => handleInputChange('techAlignment', e.target.value)}
-                                                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm h-24 resize-none focus:ring-2 focus:ring-brand-cyan outline-none"
+                                                    onChange={(val) => handleInputChange('techAlignment', val)}
                                                     placeholder="Technical fit..."
+                                                    minHeight="6rem"
                                                 />
                                             </div>
                                         </div>
@@ -1052,7 +1076,21 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             </div>
                                         </div>
                                         <div>
-                                            <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Customer Value Proposition</h3>
+                                            {/* Header with Magic Button for CVP */}
+                                            <div className="flex justify-between items-end mb-2">
+                                                <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                    Customer Value Proposition
+                                                </h3>
+                                                <button
+                                                    onClick={(e) => handleEnrichment('VALUE_PROP', e)}
+                                                    disabled={isEnriching === 'VALUE_PROP'}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                                >
+                                                    {isEnriching === 'VALUE_PROP' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'VALUE_PROP' ? "Drafting..." : "Generate CVP"}
+                                                </button>
+                                            </div>
+
                                             <div role="group" aria-labelledby="cvp-label">
                                                 <ValuePropBuilder
                                                     value={data.whyDoIt}

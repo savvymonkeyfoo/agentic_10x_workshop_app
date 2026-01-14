@@ -34,7 +34,7 @@ export async function promoteToCapture(workshopId: string, opportunities: Unifie
                     projectName: opp.title,
                     // Map legacy 'friction' to 'frictionStatement' as primary
                     frictionStatement: opp.friction || '',
-                    whyDoIt: opp.description,
+                    whyDoIt: '',
 
                     // Rich Intelligence Fields
                     friction: opp.friction,

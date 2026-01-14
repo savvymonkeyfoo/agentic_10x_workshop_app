@@ -30,6 +30,13 @@ const AnalysisResponseSchema = z.object({
     impactedSystems: z.array(z.string()).describe("List of systems (e.g. 'CRM', 'Data Lake')")
 });
 
+const ValuePropResponseSchema = z.object({
+    role: z.string().describe("The user role (e.g. 'Claims Adjuster')"),
+    outcome: z.string().describe("What they want to achieve (e.g. 'auto-sort emails')"),
+    solution: z.string().describe("The proposed solution (e.g. 'an AI Triage Bot')"),
+    need: z.string().describe("The underlying need/benefit (e.g. 'I can focus on complex cases')")
+});
+
 // --- PROMPTS ---
 
 const SYSTEM_PROMPT = `You are an expert Solutions Architect and Business Strategist.
@@ -38,7 +45,7 @@ You have access to Enterprise Context (RAG). Use it to ground your responses in 
 
 // --- ACTION ---
 
-export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'BUSINESS_CASE';
+export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'BUSINESS_CASE' | 'VALUE_PROP';
 
 export async function agenticEnrichment(
     workshopId: string,
@@ -64,6 +71,8 @@ export async function agenticEnrichment(
                 return await generateExecutionPlan(ragContext, context);
             case 'BUSINESS_CASE':
                 return await generateBusinessCase(ragContext, context);
+            case 'VALUE_PROP':
+                return await generateValueProp(ragContext, context);
             default:
                 throw new Error("Invalid Mode");
         }
@@ -161,4 +170,27 @@ async function generateBusinessCase(ragContext: string, context: any) {
     });
 
     return { success: true, type: 'markdown', data: text };
+}
+
+async function generateValueProp(ragContext: string, context: any) {
+    const prompt = `
+    Generate a formatted Customer Value Proposition for "${context.title}" using the standard structure:
+    "As a [Role], I want to [Outcome], with [Solution], so that [Need]."
+
+    Focus on the primary user persona.
+    
+    CONTEXT:
+    ${ragContext}
+    
+    OPPORTUNITY DESC:
+    ${context.description}
+    `;
+
+    const { object } = await generateObject({
+        model: AI_CONFIG.strategicModel,
+        prompt,
+        schema: ValuePropResponseSchema
+    });
+
+    return { success: true, type: 'json', data: object };
 }
