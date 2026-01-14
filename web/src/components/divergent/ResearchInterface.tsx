@@ -362,7 +362,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 </div>
                 <div>
                     {activeTab === 'context' && (
-                        <ResearchBriefButton onClick={handleGenerateBrief} isDisabled={!isReadyForResearch} isLoading={isGeneratingBriefs} dossierCount={dossierReadyCount} backlogCount={backlogReadyCount} />
+                        <ResearchBriefButton onClick={handleGenerateBrief} isDisabled={!isReadyForResearch} isLoading={isGeneratingBriefs} dossierCount={dossierReadyCount} backlogCount={backlogReadyCount} briefCount={generatedBriefs.length} />
                     )}
                     {activeTab === 'intelligence' && intelligenceState === 'complete' && (
                         <div className="flex gap-2">
