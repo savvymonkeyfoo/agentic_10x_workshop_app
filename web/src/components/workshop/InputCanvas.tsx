@@ -500,10 +500,50 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     // @ts-ignore
                     setData(prev => ({ ...prev, executionPlan: res.data }));
                     toast.success("Execution Plan Drafted ✨");
-                } else if (mode === 'BUSINESS_CASE' && res.type === 'markdown') {
-                    // @ts-ignore
+                } else if (mode === 'BUSINESS_CASE' && (res.type === 'markdown' || res.type === 'business_case_full')) {
+                    // Always update the business case narrative
                     setData(prev => ({ ...prev, businessCase: res.data }));
-                    toast.success("Business Case Drafted ✨");
+
+                    // If we have structured params, merge non-null values
+                    if (res.type === 'business_case_full' && res.params) {
+                        const p = res.params as any;
+                        setData(prev => ({
+                            ...prev,
+                            // T-shirt size
+                            tShirtSize: p.tShirtSize ?? prev.tShirtSize,
+                            // Benefits
+                            benefitRevenue: p.benefitRevenue ?? prev.benefitRevenue,
+                            benefitCostAvoidance: p.benefitCostAvoidance ?? prev.benefitCostAvoidance,
+                            benefitEfficiency: p.benefitEfficiency ?? prev.benefitEfficiency,
+                            benefitEstCost: p.benefitEstCost ?? prev.benefitEstCost,
+                            // VRCC scores
+                            vrcc: {
+                                ...prev.vrcc,
+                                value: p.scoreValue ?? prev.vrcc.value,
+                                riskFinal: p.scoreRisk ?? prev.vrcc.riskFinal,
+                                capability: p.scoreCapability ?? prev.vrcc.capability,
+                                complexity: p.scoreComplexity ?? prev.vrcc.complexity
+                            },
+                            // DFV Assessment (nested DFVDimension structure)
+                            dfvAssessment: {
+                                desirability: {
+                                    score: p.dfvDesirability ?? prev.dfvAssessment.desirability.score,
+                                    justification: p.dfvDesirabilityNote ?? prev.dfvAssessment.desirability.justification
+                                },
+                                feasibility: {
+                                    score: p.dfvFeasibility ?? prev.dfvAssessment.feasibility.score,
+                                    justification: p.dfvFeasibilityNote ?? prev.dfvAssessment.feasibility.justification
+                                },
+                                viability: {
+                                    score: p.dfvViability ?? prev.dfvAssessment.viability.score,
+                                    justification: p.dfvViabilityNote ?? prev.dfvAssessment.viability.justification
+                                }
+                            }
+                        }));
+                        toast.success("Business Case & Estimates Drafted ✨");
+                    } else {
+                        toast.success("Business Case Drafted ✨");
+                    }
                 } else if (mode === 'EXECUTION_PARAMS' && res.type === 'json') {
                     const params = res.data as any;
                     setData(prev => ({

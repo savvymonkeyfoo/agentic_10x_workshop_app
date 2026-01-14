@@ -47,6 +47,34 @@ const ExecutionParamsSchema = z.object({
     systemGuardrails: z.string().describe("Bullet list of system guardrails and safety checks. Use '• ' prefix for each item.")
 });
 
+// Business Case Parameters Schema (structured estimates)
+const BusinessCaseParamsSchema = z.object({
+    // T-shirt sizing
+    tShirtSize: z.enum(['XS', 'S', 'M', 'L', 'XL']).nullable().describe("Estimated T-shirt size based on complexity and effort. Null if uncertain."),
+
+    // Estimated Benefits (null if no data to support)
+    benefitRevenue: z.number().nullable().describe("Estimated annual revenue uplift in dollars. Null if uncertain."),
+    benefitCostAvoidance: z.number().nullable().describe("Estimated annual cost avoidance in dollars. Null if uncertain."),
+    benefitEfficiency: z.number().nullable().describe("Estimated hours saved per year. Null if uncertain."),
+    benefitEstCost: z.number().nullable().describe("Estimated implementation cost in dollars. Null if uncertain."),
+
+    // VRCC Scores (1-5, null if uncertain)
+    scoreValue: z.number().min(1).max(5).nullable().describe("Value score 1-5. Based on benefit potential. Null if uncertain."),
+    scoreRisk: z.number().min(1).max(5).nullable().describe("Risk score 1-5. Based on autonomy levels and integration complexity. Null if uncertain."),
+    scoreCapability: z.number().min(1).max(5).nullable().describe("Capability score 1-5. Based on existing vs missing capabilities. Null if uncertain."),
+    scoreComplexity: z.number().min(1).max(5).nullable().describe("Complexity score 1-5. Based on integration count and workflow phases. Null if uncertain."),
+
+    // DFV Ratings (1-5 stars, null if uncertain)
+    dfvDesirability: z.number().min(1).max(5).nullable().describe("Desirability rating 1-5. Is this wanted by users? Null if uncertain."),
+    dfvFeasibility: z.number().min(1).max(5).nullable().describe("Feasibility rating 1-5. Can this be built? Null if uncertain."),
+    dfvViability: z.number().min(1).max(5).nullable().describe("Viability rating 1-5. Is this sustainable for the business? Null if uncertain."),
+
+    // DFV Justifications (optional)
+    dfvDesirabilityNote: z.string().nullable().describe("Brief justification for desirability rating."),
+    dfvFeasibilityNote: z.string().nullable().describe("Brief justification for feasibility rating."),
+    dfvViabilityNote: z.string().nullable().describe("Brief justification for viability rating.")
+});
+
 // --- PROMPTS ---
 
 const SYSTEM_PROMPT = `You are an expert Solutions Architect and Business Strategist.
@@ -162,7 +190,8 @@ async function generateExecutionPlan(ragContext: string, context: any) {
 }
 
 async function generateBusinessCase(ragContext: string, context: any) {
-    const prompt = `
+    // 1. Generate the narrative markdown
+    const narrativePrompt = `
     Write a compelling Business Case for "${context.title}".
     Focus on:
     - The Problem (Friction)
@@ -177,11 +206,59 @@ async function generateBusinessCase(ragContext: string, context: any) {
     `;
 
     const { text } = await generateText({
-        model: AI_CONFIG.strategicModel, // Use strategicModel
-        prompt
+        model: AI_CONFIG.strategicModel,
+        prompt: narrativePrompt
     });
 
-    return { success: true, type: 'markdown', data: text };
+    // 2. Generate structured parameters
+    const paramsPrompt = `
+    Based on the Opportunity "${context.title}" and the available context, estimate the following parameters.
+
+    CRITICAL RULES:
+    - ONLY provide values you can confidently estimate from the context
+    - Return null for ANY field you cannot confidently estimate
+    - Do NOT invent or guess numbers without grounding
+    - Base estimates on the workflow phases, integrations, and capabilities provided
+
+    AVAILABLE DATA:
+    - Title: ${context.title}
+    - Description: ${context.description}
+    - Workflow Phases: ${context.currentData?.workflowPhases?.length || 0} phases
+    - Phase Details: ${context.currentData?.workflowPhases?.map((p: any) => `${p.name} (${p.autonomy})`).join(', ') || 'Not defined'}
+    - Impacted Systems: ${context.currentData?.impactedSystems?.join(', ') || 'Not defined'}
+    - Existing Capabilities: ${context.currentData?.capabilitiesExisting?.join(', ') || 'None listed'}
+    - Missing Capabilities: ${context.currentData?.capabilitiesMissing?.join(', ') || 'None listed'}
+    - Strategy Alignment: ${context.currentData?.strategyAlignment || 'Not defined'}
+    - Tech Alignment: ${context.currentData?.techAlignment || 'Not defined'}
+    
+    ENTERPRISE CONTEXT:
+    ${ragContext}
+
+    ESTIMATION GUIDANCE:
+    - T-shirt Size: XS (<1 week), S (1-2 weeks), M (1 month), L (2-3 months), XL (>3 months)
+    - VRCC Scores: 1=Low, 3=Medium, 5=High
+    - DFV: Consider user demand (D), technical feasibility (F), business sustainability (V)
+    - Benefits: Only estimate if you have concrete data to support
+    `;
+
+    try {
+        const { object: params } = await generateObject({
+            model: AI_CONFIG.strategicModel,
+            prompt: paramsPrompt,
+            schema: BusinessCaseParamsSchema
+        });
+
+        return {
+            success: true,
+            type: 'business_case_full',
+            data: text,
+            params: params
+        };
+    } catch (error) {
+        // If params generation fails, still return the markdown
+        console.error("[AgenticEnrichment] Params generation failed:", error);
+        return { success: true, type: 'markdown', data: text };
+    }
 }
 
 async function generateValueProp(ragContext: string, context: any) {
