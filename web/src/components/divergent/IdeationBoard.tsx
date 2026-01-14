@@ -20,7 +20,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
-import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteOpportunity } from '@/app/actions/context-engine';
+import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteIdeationOpportunity } from '@/app/actions/context-engine';
 import { promoteToCapture } from '@/app/actions/promotion';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
@@ -185,7 +185,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         toast.success("Card Deleted");
 
         // Server Delete
-        await deleteOpportunity(workshopId, card.originalId);
+        await deleteIdeationOpportunity({ workshopId, originalId: card.originalId });
     };
 
     // 5. Handle Enrichment

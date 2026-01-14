@@ -130,7 +130,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 The application uses Google Gemini for several intelligent features:
 
 | Feature | Description | Trigger |
-|---------|-------------|---------|
+| ------- | ----------- | ------- |
 | **Capability Recommendations** | Suggests missing capabilities based on workflow phases | "Recommend" button in Workflow tab |
 | **Execution Plan Drafting** | Generates Definition of Done, Key Decisions, etc. | "Recommend" button in Execution tab |
 | **Content Optimization** | Polishes and structures canvas text | "AI Polish" button on Canvas page |
@@ -162,7 +162,7 @@ npm run lint
 
 ## 📂 Project Structure
 
-```
+```text
 web/
 ├── src/
 │   ├── app/                    # Next.js App Router
@@ -216,4 +216,3 @@ MIT License - See [LICENSE](LICENSE) for details.
 - Built with the [Agentic 10x Protocol](https://www.10xworkshop.com/)
 - Powered by [Google Gemini](https://ai.google.dev/)
 - UI inspired by modern design systems
- 

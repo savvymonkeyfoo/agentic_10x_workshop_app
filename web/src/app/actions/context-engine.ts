@@ -33,6 +33,28 @@ interface GenerationResult {
     error?: string;
 }
 
+// Type definitions for Prisma JSON fields
+interface OpportunityCardData {
+    title: string;
+    description: string;
+    friction?: string;
+    techAlignment?: string;
+    strategyAlignment?: string;
+    source?: string;
+    originalId: string;
+}
+
+interface IntelligenceAnalysisData {
+    opportunities: OpportunityCardData[];
+}
+
+// Type for AI SDK provider metadata (Gemini-specific)
+interface GeminiProviderMetadata {
+    google?: {
+        thoughtSignature?: string;
+    };
+}
+
 const BRIEF_SEPARATOR = '[---BRIEF_SEPARATOR---]';
 
 // =============================================================================
@@ -199,8 +221,8 @@ async function architectResearchBriefs(auditData: string, gapHypotheses: string,
         prompt: `${RESEARCH_BRIEFS_PROMPT}\n\nCLIENT: ${clientName}\nDNA: ${auditData}\nGAPS: ${gapHypotheses}\nSOURCES: ${sources.join(', ')}`,
         providerOptions: { google: { thinkingConfig: { thinkingLevel: AI_CONFIG.thinking.strategicLevel, includeThoughts: true } } },
     });
-    // @ts-ignore
-    const signature = result.providerMetadata?.google?.thoughtSignature || null;
+    const metadata = result.providerMetadata as GeminiProviderMetadata | undefined;
+    const signature = metadata?.google?.thoughtSignature || null;
     const briefArray = result.text.split(BRIEF_SEPARATOR).map(b => b.trim()).filter(b => b.length > 0);
     return { briefs: briefArray, signature };
 }
@@ -212,8 +234,7 @@ export async function analyzeBacklogItem(
 ) {
     try {
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        // @ts-ignore
-        let techDNA = context?.dna || dbContext?.extractedConstraints as string;
+        let techDNA = context?.dna || (dbContext?.extractedConstraints as string | null);
         let research = context?.research || dbContext?.researchBrief || "No specific research briefs.";
 
         if (!techDNA) {
@@ -233,7 +254,7 @@ export async function analyzeBacklogItem(
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
             prompt,
-            // @ts-ignore
+            // @ts-expect-error: response_format is a valid Gemini API option but not yet in @ai-sdk/google types
             response_format: { type: "json_object" }
         });
 
@@ -275,8 +296,7 @@ export async function analyzeBacklogItem(
 export async function enrichOpportunity(workshopId: string, title: string, description: string) {
     try {
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        // @ts-ignore
-        let techDNA = dbContext?.extractedConstraints as string;
+        let techDNA = dbContext?.extractedConstraints as string | null;
 
         // Fallback if missing
         if (!techDNA) {
@@ -288,7 +308,7 @@ export async function enrichOpportunity(workshopId: string, title: string, descr
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
             prompt,
-            // @ts-ignore
+            // @ts-expect-error: response_format is a valid Gemini API option but not yet in @ai-sdk/google types
             response_format: { type: "json_object" }
         });
 
@@ -337,13 +357,23 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
 }
 
 // -----------------------------------------------------------------------------
-// NEW: DELETE ACTION
+// DELETE IDEATION OPPORTUNITY (from JSON, pre-promotion)
 // -----------------------------------------------------------------------------
-export async function deleteOpportunity(workshopId: string, originalId: string) {
+interface DeleteIdeationOpportunityOptions {
+    workshopId: string;
+    originalId: string;
+}
+
+/**
+ * Deletes an IDEATION opportunity from the JSON intelligenceAnalysis field.
+ * Use this for opportunities that are still in the ideation/research phase.
+ * 
+ * For promoted opportunities (in SQL), use `deletePromotedOpportunity` from delete-opportunity.ts
+ */
+export async function deleteIdeationOpportunity({ workshopId, originalId }: DeleteIdeationOpportunityOptions) {
     try {
         const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        // @ts-ignore
-        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+        const currentData = (currentContext?.intelligenceAnalysis as IntelligenceAnalysisData | null) || { opportunities: [] };
 
         // Filter OUT the item to delete
         const filteredOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== originalId);
@@ -354,14 +384,14 @@ export async function deleteOpportunity(workshopId: string, originalId: string) 
                 intelligenceAnalysis: {
                     ...currentData,
                     opportunities: filteredOpportunities
-                }
+                } as unknown as Prisma.InputJsonValue
             }
         });
 
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true };
     } catch (error) {
-        console.error("Delete Failed", error);
+        console.error("Delete ideation opportunity failed", error);
         return { success: false };
     }
 }
@@ -383,8 +413,7 @@ export async function hydrateBacklog(workshopId: string) {
         }));
 
         const context = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        // @ts-ignore
-        const rawBacklog = context?.rawBacklog;
+        const rawBacklog = context?.rawBacklog as unknown[] | null;
 
         // 2. Return Cached if Available
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {

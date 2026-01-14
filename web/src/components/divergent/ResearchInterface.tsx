@@ -12,7 +12,7 @@ import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { Asset } from '@prisma/client';
 import { AssetRegistry } from '@/components/workshop/AssetRegistry';
 import { ResearchBriefButton } from './ResearchBriefButton';
-import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext, updateOpportunity, deleteOpportunity } from '@/app/actions/context-engine';
+import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntelligence, resetWorkshopIntelligence, preWarmContext, updateOpportunity, deleteIdeationOpportunity } from '@/app/actions/context-engine';
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { OpportunityModal, OpportunityCardData } from '@/components/workshop/OpportunityModal';
@@ -121,7 +121,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         toast.success("Opportunity Deleted");
 
         // Server Update
-        await deleteOpportunity(workshopId, card.originalId);
+        await deleteIdeationOpportunity({ workshopId, originalId: card.originalId });
     };
 
     // AUTO-HYDRATION

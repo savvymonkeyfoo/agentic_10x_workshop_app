@@ -10,7 +10,7 @@ import { VRCCSlider } from '@/components/ui/VRCCSlider';
 import { StrategicProfile } from '@/components/workshop/StrategicProfile';
 import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
-import { deleteOpportunity } from '@/app/actions/delete-opportunity';
+import { deletePromotedOpportunity } from '@/app/actions/delete-opportunity';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
 import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
@@ -642,7 +642,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         if (!opportunityToDelete) return;
         setIsDeletingOpportunity(true);
         try {
-            await deleteOpportunity(opportunityToDelete.id, workshopId);
+            await deletePromotedOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
 
             // Refresh list
             const updatedList = allOpportunities.filter(o => o.id !== opportunityToDelete.id);

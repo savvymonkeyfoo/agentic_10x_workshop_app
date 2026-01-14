@@ -26,7 +26,7 @@ git push origin main
 
 ### 2. Wait for Vercel Deployment
 
-Wait approximately 2-3 minutes for Vercel to:
+Wait approximately 1-2 minutes for Vercel to:
 
 - Pull changes from GitHub
 - Run build process
