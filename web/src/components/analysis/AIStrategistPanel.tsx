@@ -80,9 +80,16 @@ export function AIStrategistPanel({
     const renderContent = (text: string) => {
         if (!text) return <p className="text-slate-400 italic">No analysis available.</p>;
 
+        // Convert inline bullet characters to proper markdown list format
+        // This handles cases where AI outputs "text. • Item1 • Item2" instead of proper list
+        const processedText = text
+            .replace(/\s*•\s*/g, '\n- ')  // Convert inline bullets to markdown list items
+            .replace(/^\s*-\s*/, '')       // Remove leading dash if text starts with bullet
+            .trim();
+
         return (
-            <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-700 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-700">
-                <ReactMarkdown>{text}</ReactMarkdown>
+            <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-700 prose-p:my-2 prose-ul:my-2 prose-ul:pl-4 prose-li:my-1 prose-strong:text-slate-700">
+                <ReactMarkdown>{processedText}</ReactMarkdown>
             </article>
         );
     };
