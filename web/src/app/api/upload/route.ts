@@ -6,7 +6,7 @@ import { processAssetForRAG } from '@/lib/rag-service';
 // Route Segment Config
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60; // Allow up to 60 seconds for upload + indexing
+export const maxDuration = 300; // Allow up to 5 minutes for upload + indexing large files
 
 /**
  * POST /api/upload

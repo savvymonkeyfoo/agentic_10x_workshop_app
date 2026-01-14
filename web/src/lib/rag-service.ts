@@ -48,19 +48,30 @@ function chunkText(text: string): string[] {
 /**
  * Generate embeddings for text chunks using Gemini.
  * Returns 768-dimensional vectors.
+ * Batches requests to comply with Gemini API limit of 100 chunks per request.
  */
 async function generateEmbeddings(chunks: string[]): Promise<number[][]> {
     if (chunks.length === 0) return [];
 
     console.log(`[RAG] Generating embeddings for ${chunks.length} chunks...`);
 
-    const { embeddings } = await embedMany({
-        model: google.textEmbeddingModel('text-embedding-004'),
-        values: chunks,
-    });
+    const BATCH_SIZE = 100; // Gemini API limit
+    const allEmbeddings: number[][] = [];
 
-    console.log(`[RAG] Generated ${embeddings.length} embeddings (dim: ${embeddings[0]?.length || 0})`);
-    return embeddings;
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        const batch = chunks.slice(i, i + BATCH_SIZE);
+        console.log(`[RAG] Processing embedding batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(chunks.length / BATCH_SIZE)} (${batch.length} chunks)`);
+
+        const { embeddings } = await embedMany({
+            model: google.textEmbeddingModel('text-embedding-004'),
+            values: batch,
+        });
+
+        allEmbeddings.push(...embeddings);
+    }
+
+    console.log(`[RAG] Generated ${allEmbeddings.length} embeddings (dim: ${allEmbeddings[0]?.length || 0})`);
+    return allEmbeddings;
 }
 
 /**
