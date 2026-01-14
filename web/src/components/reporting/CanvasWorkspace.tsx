@@ -243,7 +243,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                 id={data.id}
                                 field="whyDoIt"
                                 value={cleanText(data.whyDoIt)}
-                                className="text-base italic leading-relaxed text-slate-700 font-serif"
+                                className="text-base leading-relaxed text-slate-700"
                                 placeholder="As a User, I want..."
                             />
                         </div>
