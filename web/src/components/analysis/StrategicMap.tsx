@@ -79,89 +79,100 @@ const resolveCollisions = (nodes: Opportunity[], width: number, height: number) 
 };
 
 const resolveLabelCollisions = (nodes: Opportunity[], width: number) => {
-    // Card Dimensions (approximate for collision)
+    // Card Dimensions
     const CARD_W = 240;
     const CARD_H = 100;
+    const PADDING = 20; // Space between cards
 
-    // Initialize Card Positions
+    // 1. Initialize Card Positions at their anchor points
     nodes.forEach(node => {
         if (node.x !== undefined && node.y !== undefined && node.r !== undefined) {
+            // Start centered above the bubble
             node.cardX = node.x;
-            node.cardY = node.y - node.r - 20; // Default: 20px above bubble
+            node.cardY = node.y - node.r - 40;
         }
     });
 
-    // Iterative Collision Resolution for Cards
-    const iterations = 10;
+    // 2. Iterative Force Simulation
+    // We run a "simulation" for N ticks to let the cards settle into open spaces.
+    const iterations = 60;
+
     for (let k = 0; k < iterations; k++) {
+        // Temperature (decreases over time to settle the layout)
+        const alpha = 1 - (k / iterations);
+
+        // A. Repulsion (Cards pushing against each other)
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < nodes.length; j++) {
                 const a = nodes[i];
                 const b = nodes[j];
-
                 if (a.cardX === undefined || a.cardY === undefined || b.cardX === undefined || b.cardY === undefined) continue;
 
-                // AABB Collision Detection
-                const aCy = a.cardY - (CARD_H / 2);
-                const bCy = b.cardY - (CARD_H / 2);
-                const subX = Math.abs(a.cardX - b.cardX);
-                const subY = Math.abs(aCy - bCy);
+                const dx = a.cardX - b.cardX;
+                const dy = a.cardY - b.cardY;
+                const distX = Math.abs(dx);
+                const distY = Math.abs(dy);
 
-                if (subX < CARD_W + 10 && subY < CARD_H + 10) {
-                    // Overlap detected. Push apart.
-                    const overlapX = (CARD_W + 10) - subX;
-                    const overlapY = (CARD_H + 10) - subY;
+                // Check for overlap + padding
+                const minW = CARD_W + PADDING;
+                const minH = CARD_H + PADDING;
 
-                    // Prefer vertical stacking if horiz overlap is large
-                    if (overlapY < overlapX) {
-                        const sign = aCy < bCy ? -1 : 1;
-                        a.cardY += sign * overlapY * -0.5;
-                        b.cardY += sign * overlapY * 0.5;
+                if (distX < minW && distY < minH) {
+                    // Overlap detected!
+                    // Calculate "overlap amount"
+                    const overlapX = minW - distX;
+                    const overlapY = minH - distY;
+
+                    // Push apart along the axis of least overlap (easiest escape route)
+                    if (overlapX < overlapY) {
+                        const nudge = overlapX * 0.5 * alpha;
+                        const sign = dx > 0 ? 1 : -1;
+                        a.cardX += sign * nudge;
+                        b.cardX -= sign * nudge;
                     } else {
-                        const sign = a.cardX < b.cardX ? -1 : 1;
-                        a.cardX += sign * overlapX * -0.5;
-                        b.cardX += sign * overlapX * 0.5;
+                        const nudge = overlapY * 0.5 * alpha;
+                        const sign = dy > 0 ? 1 : -1;
+                        a.cardY += sign * nudge;
+                        b.cardY -= sign * nudge;
                     }
                 }
             }
         }
 
-        // Clamp Cards to screen
+        // B. Attraction (Tether to Anchor)
+        // Pull everyone gently back towards their "ideal" spot to prevent drifting too far
+        nodes.forEach(node => {
+            if (node.x === undefined || node.y === undefined || node.cardX === undefined || node.cardY === undefined || node.r === undefined) return;
+
+            // Ideal position: Centered above bubble
+            const idealX = node.x;
+            const idealY = node.y - node.r - 40;
+
+            // Hooke's Law (Spring)
+            const dx = idealX - node.cardX;
+            const dy = idealY - node.cardY;
+
+            // Strength of the spring
+            const strength = 0.05 * alpha;
+
+            node.cardX += dx * strength;
+            node.cardY += dy * strength;
+        });
+
+        // C. Wall Collision (Keep on screen)
         nodes.forEach(node => {
             if (node.cardX !== undefined && node.cardY !== undefined) {
-                const margin = CARD_W / 2 + 10;
-                node.cardX = Math.max(margin, Math.min(width - margin, node.cardX));
-                node.cardY = Math.max(CARD_H, node.cardY);
+                const marginX = CARD_W / 2 + 10;
+                const marginY = CARD_H / 2 + 10; // Center-point based
+
+                // Clamp X
+                node.cardX = Math.max(marginX, Math.min(width - marginX, node.cardX));
+
+                // Clamp Y (ensure it doesn't go off top or overlap bottom axis labels too much)
+                // We let it go down to height - 80 to clear "DEPRIORITISE" labels
+                node.cardY = Math.max(CARD_H, Math.min(750 - 80, node.cardY));
             }
         });
-    }
-
-    // 4. Topology Untangling (Uncross Lines)
-    // If two items are close horizontally, ensure their vertical stacking matches their bubble's vertical order to avoid crossing lines.
-    for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-            const a = nodes[i];
-            const b = nodes[j];
-            if (a.x === undefined || a.y === undefined || a.cardY === undefined ||
-                b.x === undefined || b.y === undefined || b.cardY === undefined) continue;
-
-            // Check if lines cross
-            // Simple heuristic: if bubbles are vertically distinct but cards are swapped relative to bubbles
-            // Bubble A is above Bubble B (y is smaller), but Card A is below Card B (cardY is larger) -> Cross!
-
-            // Only swap if they are horizontally overlapping (in the same "column")
-            if (Math.abs(a.x - b.x) < CARD_W / 2) {
-                const bubbleABelowB = a.y > b.y;
-                const cardABelowB = a.cardY > b.cardY;
-
-                if (bubbleABelowB !== cardABelowB) {
-                    // Swap card Y positions to uncross
-                    const tempY = a.cardY;
-                    a.cardY = b.cardY;
-                    b.cardY = tempY;
-                }
-            }
-        }
     }
 
     return nodes;
