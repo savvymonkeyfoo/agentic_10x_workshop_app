@@ -307,14 +307,24 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
     // Sync local state when external value changes matches the pattern
     // This allows unique updates from AI to populate the boxes
     useEffect(() => {
-        if (!value) return;
-
         // Regex to parse: "As a [Role], I want to [Outcome], with [Solution], so that [Need]."
-        // We make it slightly flexible for whitespace/punctuation
         const regex = /As a\s+(.+?),\s+I want to\s+(.+?),\s+with\s+(.+?),\s+so that\s+(.+?)[.]?$/i;
+
+        if (!value) {
+            // Case 1: Empty value - RESET internal state to prevent "phantom" data
+            setParts({
+                role: '',
+                outcome: '',
+                solution: '',
+                need: ''
+            });
+            return;
+        }
+
         const match = value.match(regex);
 
         if (match) {
+            // Case 2: Valid match - SYNC internal state with prop
             setParts({
                 role: match[1],
                 outcome: match[2],
@@ -322,6 +332,10 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                 need: match[4]
             });
         }
+        // Case 3: Non-matching valid string - Keep current state or deciding to let it be 'raw' text?
+        // For now, if it doesn't match, we assume the user might be free-text editing in the main box
+        // or it's legacy data. Use caution not to wipe user's work if they are typing manually.
+        // We do NOT reset here to avoid clearing inputs while user is typing a sentence that momentarily breaks regex.
     }, [value]);
 
     const updatePart = (key: keyof typeof parts, val: string) => {
