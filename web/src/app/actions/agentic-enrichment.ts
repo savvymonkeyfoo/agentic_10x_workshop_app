@@ -37,6 +37,16 @@ const ValuePropResponseSchema = z.object({
     need: z.string().describe("The underlying need/benefit (e.g. 'I can focus on complex cases')")
 });
 
+// Execution Parameters Schema (6 fields)
+const ExecutionParamsSchema = z.object({
+    definitionOfDone: z.string().describe("Bullet list of success metrics and definition of done. Use '• ' prefix for each item."),
+    keyDecisions: z.string().describe("Bullet list of key decisions like build vs buy. Use '• ' prefix for each item."),
+    changeManagement: z.string().describe("Bullet list of change management considerations. Use '• ' prefix for each item."),
+    trainingRequirements: z.string().describe("Bullet list of training requirements. Use '• ' prefix for each item."),
+    aiOpsRequirements: z.string().describe("Bullet list of AI ops and infrastructure needs. Use '• ' prefix for each item."),
+    systemGuardrails: z.string().describe("Bullet list of system guardrails and safety checks. Use '• ' prefix for each item.")
+});
+
 // --- PROMPTS ---
 
 const SYSTEM_PROMPT = `You are an expert Solutions Architect and Business Strategist.
@@ -45,7 +55,7 @@ You have access to Enterprise Context (RAG). Use it to ground your responses in 
 
 // --- ACTION ---
 
-export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'BUSINESS_CASE' | 'VALUE_PROP';
+export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'EXECUTION_PARAMS' | 'BUSINESS_CASE' | 'VALUE_PROP';
 
 export async function agenticEnrichment(
     workshopId: string,
@@ -69,6 +79,8 @@ export async function agenticEnrichment(
                 return await generateWorkflow(ragContext, context);
             case 'EXECUTION':
                 return await generateExecutionPlan(ragContext, context);
+            case 'EXECUTION_PARAMS':
+                return await generateExecutionParams(ragContext, context);
             case 'BUSINESS_CASE':
                 return await generateBusinessCase(ragContext, context);
             case 'VALUE_PROP':
@@ -190,6 +202,47 @@ async function generateValueProp(ragContext: string, context: any) {
         model: AI_CONFIG.strategicModel,
         prompt,
         schema: ValuePropResponseSchema
+    });
+
+    return { success: true, type: 'json', data: object };
+}
+
+async function generateExecutionParams(ragContext: string, context: any) {
+    const prompt = `
+    Based on the Opportunity "${context.title}" and the Enterprise Context below, generate execution parameters for implementation.
+
+    IMPORTANT RULES:
+    - ONLY include information you can reasonably infer from the context provided
+    - DO NOT invent specific numbers, dates, or details that are not grounded in the data
+    - If you cannot determine something with confidence, leave it brief or omit it
+    - Use bullet format with "• " prefix for each item
+    - Do NOT use markdown formatting (no **, ##, etc.)
+    - Keep each field practical and actionable
+
+    CONTEXT:
+    ${ragContext}
+    
+    OPPORTUNITY DESCRIPTION:
+    ${context.description}
+    
+    CURRENT DATA (if available):
+    Title: ${context.title}
+    Workflow Phases: ${context.currentData?.workflowPhases?.map((p: any) => p.name).join(', ') || 'Not defined'}
+    Impacted Systems: ${context.currentData?.impactedSystems?.join(', ') || 'Not defined'}
+    
+    Generate practical execution parameters for each of the 6 fields:
+    1. definitionOfDone - Success metrics and completion criteria
+    2. keyDecisions - Build vs buy, technology choices
+    3. changeManagement - Organizational change considerations
+    4. trainingRequirements - Skills and training needs
+    5. aiOpsRequirements - Infrastructure and operational needs
+    6. systemGuardrails - Safety checks and limitations
+    `;
+
+    const { object } = await generateObject({
+        model: AI_CONFIG.strategicModel,
+        prompt,
+        schema: ExecutionParamsSchema
     });
 
     return { success: true, type: 'json', data: object };

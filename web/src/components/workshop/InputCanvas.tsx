@@ -504,6 +504,18 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     // @ts-ignore
                     setData(prev => ({ ...prev, businessCase: res.data }));
                     toast.success("Business Case Drafted ✨");
+                } else if (mode === 'EXECUTION_PARAMS' && res.type === 'json') {
+                    const params = res.data as any;
+                    setData(prev => ({
+                        ...prev,
+                        definitionOfDone: params.definitionOfDone || prev.definitionOfDone,
+                        keyDecisions: params.keyDecisions || prev.keyDecisions,
+                        changeManagement: params.changeManagement || prev.changeManagement,
+                        trainingRequirements: params.trainingRequirements || prev.trainingRequirements,
+                        aiOpsRequirements: params.aiOpsRequirements || prev.aiOpsRequirements,
+                        systemGuardrails: params.systemGuardrails || prev.systemGuardrails
+                    }));
+                    toast.success("Execution Parameters Drafted ✨");
                 }
             } else {
                 toast.error("AI Generation Failed");
@@ -1333,6 +1345,22 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     onChange={(val) => handleInputChange('executionPlan', val)}
                                                     placeholder="Use AI to draft a plan or write your own..."
                                                 />
+                                            </div>
+
+                                            {/* Execution Parameters Header with AI Button */}
+                                            <div className="flex justify-between items-end border-b border-slate-100 pb-4 mt-6">
+                                                <div>
+                                                    <h3 className="text-md font-bold text-slate-700">Execution Parameters</h3>
+                                                    <p className="text-xs text-slate-400">Define success criteria, decisions, and operational requirements.</p>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => handleEnrichment('EXECUTION_PARAMS', e)}
+                                                    disabled={isEnriching === 'EXECUTION_PARAMS'}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isEnriching === 'EXECUTION_PARAMS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION_PARAMS' ? "Drafting..." : "Draft Execution Parameters"}
+                                                </button>
                                             </div>
 
                                             {/* The 6-Box Grid */}
