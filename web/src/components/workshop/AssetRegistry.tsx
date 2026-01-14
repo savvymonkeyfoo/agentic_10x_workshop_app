@@ -121,7 +121,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
             setItems(prev => [...prev, ...newAssets]);
 
             toast.success('Upload complete', { id: toastId });
-            // router.refresh(); // Removed immediate refresh to rely on local polling
+            router.refresh(); // Refresh to sync parent component state
         } catch (error) {
             console.error(error);
             toast.error('Upload failed', { id: toastId });

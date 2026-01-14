@@ -471,15 +471,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         whyDoIt: sentence
                     }));
                     toast.success("CVP Drafted ✨");
-                } else if (mode === 'ANALYSIS' && res.type === 'json') {
-                    setData(prev => ({
-                        ...prev,
-                        frictionStatement: res.data.frictionStatement || prev.frictionStatement,
-                        techAlignment: res.data.techAlignment || prev.techAlignment,
-                        strategyAlignment: res.data.strategyAlignment || prev.strategyAlignment,
-                        impactedSystems: res.data.impactedSystems || prev.impactedSystems,
-                    }));
-                    toast.success("Analysis Enriched ✨");
+
                 } else if (mode === 'WORKFLOW' && res.type === 'json') {
                     // @ts-ignore
                     setData(prev => ({ ...prev, workflowPhases: res.data }));
@@ -1062,17 +1054,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             </div>
                                         </div>
 
-                                        {/* Magic Button for Analysis */}
-                                        <div className="flex justify-end">
-                                            <button
-                                                onClick={(e) => handleEnrichment('ANALYSIS', e)}
-                                                disabled={isEnriching === 'ANALYSIS'}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
-                                            >
-                                                {isEnriching === 'ANALYSIS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                                {isEnriching === 'ANALYSIS' ? "Analyzing..." : "Analyze Opportunity"}
-                                            </button>
-                                        </div>
+
                                         <div className="mb-6">
                                             <h3 id="strategic-horizon-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</h3>
                                             <div role="group" aria-labelledby="strategic-horizon-label" className="flex gap-2 flex-wrap">
