@@ -72,7 +72,7 @@ export function MarkdownTextarea({
             style={{ minHeight }}
         >
             {hasContent ? (
-                <article className="prose prose-sm prose-slate max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:my-1 prose-headings:font-bold prose-strong:text-slate-800">
+                <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-800 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-slate-700">
                     <ReactMarkdown>{value}</ReactMarkdown>
                 </article>
             ) : (
