@@ -176,7 +176,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                 <p className="text-sm font-medium text-slate-700">
                     {isUploading ? 'Uploading...' : 'Drag & drop files here'}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">PDF or Text support</p>
+                <p className="text-xs text-slate-400 mt-1">PDF, JSON, Markdown, or Text</p>
             </div>
 
             {/* Asset Table */}
