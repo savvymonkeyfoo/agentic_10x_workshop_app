@@ -21,8 +21,8 @@ interface Opportunity {
 
 const resolveCollisions = (nodes: Opportunity[], width: number, height: number) => {
     // CONFIG:
-    const paddingSide = 80;
-    const paddingBottom = 60;
+    const paddingSide = 100;
+    const paddingBottom = 80;
     const paddingTop = 160;
 
     const effectiveWidth = width - (paddingSide * 2);
@@ -134,6 +134,34 @@ const resolveLabelCollisions = (nodes: Opportunity[], width: number) => {
                 node.cardY = Math.max(CARD_H, node.cardY);
             }
         });
+    }
+
+    // 4. Topology Untangling (Uncross Lines)
+    // If two items are close horizontally, ensure their vertical stacking matches their bubble's vertical order to avoid crossing lines.
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            const a = nodes[i];
+            const b = nodes[j];
+            if (a.x === undefined || a.y === undefined || a.cardY === undefined ||
+                b.x === undefined || b.y === undefined || b.cardY === undefined) continue;
+
+            // Check if lines cross
+            // Simple heuristic: if bubbles are vertically distinct but cards are swapped relative to bubbles
+            // Bubble A is above Bubble B (y is smaller), but Card A is below Card B (cardY is larger) -> Cross!
+
+            // Only swap if they are horizontally overlapping (in the same "column")
+            if (Math.abs(a.x - b.x) < CARD_W / 2) {
+                const bubbleABelowB = a.y > b.y;
+                const cardABelowB = a.cardY > b.cardY;
+
+                if (bubbleABelowB !== cardABelowB) {
+                    // Swap card Y positions to uncross
+                    const tempY = a.cardY;
+                    a.cardY = b.cardY;
+                    b.cardY = tempY;
+                }
+            }
+        }
     }
 
     return nodes;
