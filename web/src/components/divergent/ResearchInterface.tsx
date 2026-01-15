@@ -95,6 +95,22 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         }
     }, [activeTab, workshopId]);
 
+    // Navigation warning during analysis
+    useEffect(() => {
+        const isAnalyzing = intelligenceState === 'analyzing' || intelligenceState === 'initializing';
+
+        if (!isAnalyzing) return;
+
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = 'Analysis in progress. Results will be saved, but you may miss real-time updates.';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [intelligenceState]);
+
     // HANDLERS
     const handleResetAnalysis = async () => {
         setIsResetting(true);
