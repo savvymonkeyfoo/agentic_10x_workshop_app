@@ -107,7 +107,14 @@ const resolveCollisions = (nodes: Opportunity[], width: number, height: number) 
 };
 
 
-export default function StrategicMap({ opportunities }: { opportunities: Opportunity[] }) {
+// Helper to compute SVG path for a curve between two cards
+const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: number }) => {
+    // Control points for a smooth S-curve
+    const midX = (start.x + end.x) / 2;
+    return `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`;
+};
+
+export default function StrategicMap({ opportunities, edges = [] }: { opportunities: Opportunity[], edges?: { from: string, to: string }[] }) {
     const width = 1000;
     const height = 750;
     const CARD_W = 180;
@@ -119,10 +126,13 @@ export default function StrategicMap({ opportunities }: { opportunities: Opportu
         return resolveCollisions(valid, width, height).sort((a, b) => (a.sequenceRank || 99) - (b.sequenceRank || 99));
     }, [opportunities]);
 
-    const pathData = processedData
-        .filter(d => d.sequenceRank && d.sequenceRank < 90)
-        .map((d, i) => (i === 0 ? `M ${d.x} ${d.y}` : `L ${d.x} ${d.y}`))
-        .join(' ');
+    // Map ID to coordinates for quick lookup
+    const nodeMap = useMemo(() => {
+        return processedData.reduce((acc, node) => {
+            acc[node.id] = node;
+            return acc;
+        }, {} as Record<string, typeof processedData[0]>);
+    }, [processedData]);
 
     const getCardColor = (rank: number | null) => {
         // Wave 1: Green, Wave 2: Blue
@@ -138,6 +148,13 @@ export default function StrategicMap({ opportunities }: { opportunities: Opportu
 
             {/* --- SVG LAYER (Lines & Grid) --- */}
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-h-[600px] absolute inset-0 overflow-visible pointer-events-none">
+                {/* Defines for Arrowhead */}
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+                    </marker>
+                </defs>
+
                 {/* Grid */}
                 <g opacity="0.1">
                     {[0.5].map(p => <line key={`v-${p}`} x1={width * p} y1="0" x2={width * p} y2={height} stroke="black" strokeWidth="2" strokeDasharray="5 5" />)}
@@ -150,8 +167,28 @@ export default function StrategicMap({ opportunities }: { opportunities: Opportu
                 <text x="30" y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">FILL-INS</text>
                 <text x={width - 30} y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
 
-                {/* Strategy Path */}
-                <path d={pathData} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="6 6" />
+                {/* Strategy Dependency Edge Paths */}
+                {edges.map((edge, i) => {
+                    const startNode = nodeMap[edge.from];
+                    const endNode = nodeMap[edge.to];
+
+                    // Only draw if both nodes exist on the map (might be filtered out)
+                    if (!startNode || !endNode) return null;
+                    if (!startNode.x || !startNode.y || !endNode.x || !endNode.y) return null;
+
+                    return (
+                        <path
+                            key={`${edge.from}-${edge.to}`}
+                            d={getCurvePath({ x: startNode.x, y: startNode.y }, { x: endNode.x, y: endNode.y })}
+                            fill="none"
+                            stroke="#94a3b8"
+                            strokeWidth="2"
+                            strokeDasharray="4 4"
+                            markerEnd="url(#arrowhead)"
+                            opacity="0.6"
+                        />
+                    );
+                })}
             </svg>
 
             {/* --- CARD LAYER --- */}

@@ -52,6 +52,11 @@ export async function analyzeWorkshop(workshopId: string) {
                     dependency_analysis: z.string().describe("Identify which projects build capabilities that others need."),
                     risk_analysis: z.string().describe("Identify High-Risk projects that share capabilities with Low-Risk projects."),
                     final_narrative: z.string().describe("The executive summary of the strategy in 2-3 sentences."),
+                    edges: z.array(z.object({
+                        from: z.string().describe("The ID of the prerequisite project."),
+                        to: z.string().describe("The ID of the dependent project."),
+                        reason: z.string().describe("Why is this a prerequisite?")
+                    })).describe("The specific dependency links between projects."),
                     sequence: z.array(z.object({
                         id: z.string().describe("The exact project ID from the input."),
                         rank: z.number().describe("Execution order starting from 1."),
@@ -73,6 +78,8 @@ ${context}
 PROTOCOL (ANALYZE STEP-BY-STEP):
 
 1. DEPENDENCY ANALYSIS: Identify semantic overlaps in capabilities. If Project A requires 'Data Extraction' and Project B develops 'Document Processing', they share a dependency chain.
+   - EXPLICITLY output these as "edges" in the JSON response.
+   - If a project stands alone, do NOT force a dependency.
 
 2. RISK MITIGATION: Apply the 'Risk Staircase' principle. High-Risk projects (Risk > 3) should NEVER precede Lower-Risk projects that share the same capabilities. The lower-risk initiative serves as the validation pilot.
 
@@ -109,7 +116,8 @@ CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence 
             data: {
                 strategyNarrative: object.strategy.final_narrative,
                 strategyDependencies: object.strategy.dependency_analysis,
-                strategyRisks: object.strategy.risk_analysis
+                strategyRisks: object.strategy.risk_analysis,
+                dependencyGraph: object.strategy.edges as any // Store the calculated edges
             }
         });
 
@@ -131,7 +139,8 @@ CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence 
             narrative: object.strategy.final_narrative,
             dependencies: object.strategy.dependency_analysis,
             risks: object.strategy.risk_analysis,
-            sequence: enrichedSequence
+            sequence: enrichedSequence,
+            edges: object.strategy.edges
         };
 
     } catch (error) {

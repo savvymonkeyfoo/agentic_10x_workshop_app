@@ -11,7 +11,8 @@ async function getAnalysisData(workshopId: string) {
         select: {
             strategyNarrative: true,
             strategyDependencies: true,
-            strategyRisks: true
+            strategyRisks: true,
+            dependencyGraph: true
         }
     });
 
@@ -67,12 +68,15 @@ async function getAnalysisData(workshopId: string) {
         benefitCostAvoidance: opp.benefitCostAvoidance || 0
     }));
 
+
+
     return {
         nodes,
         opportunities,
         strategyNarrative: workshop.strategyNarrative,
         strategyDependencies: workshop.strategyDependencies,
-        strategyRisks: workshop.strategyRisks
+        strategyRisks: workshop.strategyRisks,
+        dependencyGraph: workshop.dependencyGraph as { from: string, to: string }[] | null
     };
 }
 
@@ -89,6 +93,7 @@ export default async function AnalysisPage({ params }: { params: { id: string } 
             initialNarrative={data.strategyNarrative || ""}
             initialDependencies={data.strategyDependencies || ""}
             initialRisks={data.strategyRisks || ""}
+            initialEdges={data.dependencyGraph || []}
         />
     );
 }

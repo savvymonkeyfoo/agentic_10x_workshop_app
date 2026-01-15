@@ -40,6 +40,7 @@ interface AnalysisResult {
     dependencies?: string;
     risks?: string;
     sequence: SequenceItem[];
+    edges?: { from: string; to: string }[];
 }
 
 interface AnalysisDashboardProps {
@@ -49,9 +50,12 @@ interface AnalysisDashboardProps {
     initialNarrative?: string;
     initialDependencies?: string;
     initialRisks?: string;
+    initialEdges?: { from: string; to: string }[];
 }
 
 type ViewMode = 'MATRIX' | 'WAVES';
+
+// ... imports ...
 
 export default function AnalysisDashboard({
     workshopId,
@@ -59,7 +63,8 @@ export default function AnalysisDashboard({
     opportunities,
     initialNarrative = "",
     initialDependencies = "",
-    initialRisks = ""
+    initialRisks = "",
+    initialEdges = []
 }: AnalysisDashboardProps) {
     const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -77,6 +82,9 @@ export default function AnalysisDashboard({
             setLoading(false);
         }
     };
+
+    // Pass edges to StrategicMap
+    const edges = analysis?.edges || initialEdges;
 
     return (
         <div className="flex h-screen w-screen bg-[var(--bg-core)]">
@@ -130,7 +138,7 @@ export default function AnalysisDashboard({
                 {/* Conditional View Render */}
                 {viewMode === 'MATRIX' ? (
                     <div className="pt-20 h-full">
-                        <StrategicMap opportunities={opportunities} />
+                        <StrategicMap opportunities={opportunities} edges={edges} />
                     </div>
                 ) : (
                     <StrategicWaves nodes={nodes} workshopId={workshopId} />

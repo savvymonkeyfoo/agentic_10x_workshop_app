@@ -20,6 +20,7 @@ model Workshop {
   strategyNarrative    String? @db.Text // Executive Summary
   strategyDependencies String? @db.Text // The Architect's Analysis
   strategyRisks        String? @db.Text // The Risk Officer's Analysis
+  dependencyGraph      Json?   // Structured graph: [{from, to, reason}]
   opportunities        Opportunity[]
   
   // Divergent Extension Relations
