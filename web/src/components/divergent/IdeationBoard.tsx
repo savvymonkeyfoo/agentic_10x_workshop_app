@@ -13,6 +13,13 @@ import {
 } from '@dnd-kit/core';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import { LayoutGrid, ArrowLeft, RefreshCw, Plus, MousePointer2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
