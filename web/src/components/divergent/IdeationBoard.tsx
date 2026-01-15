@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
 import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition, syncIdeationWithCapture } from '@/app/actions/ideation';
 import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteIdeationOpportunity } from '@/app/actions/context-engine';
-import { promoteToCapture } from '@/app/actions/promotion';
+import { promoteToCapture, demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
 
 // --- COMPONENTS ---
@@ -285,6 +285,46 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         }
     };
 
+    // --- DEMOTE HANDLER ---
+    const handleDemoteSelection = async () => {
+        if (selectedItems.size === 0) return;
+        setIsPromoting(true); // Reuse loading state
+
+        const selectedOpps = opportunities.filter(o => selectedItems.has(o.originalId));
+        const promotedOnly = selectedOpps.filter(o => o.showInCapture === true);
+
+        if (promotedOnly.length === 0) {
+            toast.info("No promoted items to demote.");
+            setIsPromoting(false);
+            return;
+        }
+
+        try {
+            const result = await demoteFromCapture({ workshopId, opportunityIds: promotedOnly.map(o => o.id) });
+
+            if (result.success && result.count > 0) {
+                toast.success(`${result.count} Ideas removed from Capture.`);
+
+                // Optimistic Update
+                setOpportunities(prev => prev.map(o => {
+                    if (promotedOnly.some(s => s.originalId === o.originalId)) {
+                        return { ...o, promotionStatus: undefined, showInCapture: false };
+                    }
+                    return o;
+                }));
+
+                // UX Cleanup
+                setIsSelectMode(false);
+                setSelectedItems(new Set());
+            }
+        } catch (error) {
+            toast.error("Demotion failed. Please try again.");
+            console.error(error);
+        } finally {
+            setIsPromoting(false);
+        }
+    };
+
     const handleTopBarAction = () => {
         if (isSelectMode) {
             // If items selected, treat 'Done' as Promote
@@ -404,27 +444,49 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                 </DndContext>
 
                 {/* FLOATING ACTION BAR */}
-                {selectedItems.size > 0 && (
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                        <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 border border-slate-700">
-                            <div className="flex items-center gap-2">
-                                <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
-                                    {selectedItems.size}
-                                </div>
-                                <span className="font-semibold text-sm">Ideas Selected</span>
-                            </div>
+                {selectedItems.size > 0 && (() => {
+                    const selectedOpps = opportunities.filter(o => selectedItems.has(o.originalId));
+                    const hasPromotedInSelection = selectedOpps.some(o => o.showInCapture === true);
+                    const hasUnpromotedInSelection = selectedOpps.some(o => o.showInCapture !== true);
 
-                            <Button
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-6 font-bold shadow-lg shadow-blue-900/50"
-                                onClick={handlePromoteSelection}
-                                disabled={isPromoting}
-                            >
-                                {isPromoting ? "Promoting..." : "Promote to Capture 🚀"}
-                            </Button>
+                    return (
+                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                            <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-slate-700">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                                        {selectedItems.size}
+                                    </div>
+                                    <span className="font-semibold text-sm">Ideas Selected</span>
+                                </div>
+
+                                {/* DEMOTE BUTTON - Only show if any selected are promoted */}
+                                {hasPromotedInSelection && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="bg-transparent border-slate-500 text-slate-300 hover:bg-slate-700 hover:text-white rounded-full px-4 font-bold"
+                                        onClick={handleDemoteSelection}
+                                        disabled={isPromoting}
+                                    >
+                                        Remove from Capture ↩️
+                                    </Button>
+                                )}
+
+                                {/* PROMOTE BUTTON - Only show if any selected are unpromoted */}
+                                {hasUnpromotedInSelection && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-6 font-bold shadow-lg shadow-blue-900/50"
+                                        onClick={handlePromoteSelection}
+                                        disabled={isPromoting}
+                                    >
+                                        {isPromoting ? "Working..." : "Promote to Capture 🚀"}
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {/* SHARED MODAL FOR EDITING */}
                 <OpportunityModal

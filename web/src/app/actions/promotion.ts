@@ -61,3 +61,36 @@ export async function promoteOpportunities(
 
     return promoteToCapture({ workshopId, opportunityIds: ids });
 }
+
+/**
+ * DEMOTE FROM CAPTURE
+ * 
+ * Reverses promotion by setting showInCapture = false
+ * Items remain visible in Ideation
+ */
+export async function demoteFromCapture({ workshopId, opportunityIds }: { workshopId: string; opportunityIds: string[] }) {
+    if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
+        return { success: false, count: 0 };
+    }
+
+    try {
+        const result = await prisma.opportunity.updateMany({
+            where: {
+                id: { in: opportunityIds },
+                workshopId
+            },
+            data: {
+                showInCapture: false,
+                promotionStatus: null,  // Clear promoted status
+            }
+        });
+
+        revalidatePath(`/workshop/${workshopId}`);
+
+        return { success: true, count: result.count };
+
+    } catch (error) {
+        console.error("Failed to demote opportunities", error);
+        return { success: false, count: 0 };
+    }
+}
