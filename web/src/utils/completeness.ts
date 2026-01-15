@@ -30,25 +30,25 @@ export function calculateCompleteness(opportunity: OpportunityForCompleteness | 
     const hasWorkflow = Array.isArray(phases) && phases.length > 0;
 
     // --- TAB 3: EXECUTION (25%) ---
-    // Must have Definition of Done AND Key Decisions (checking length prevents empty defaults)
+    // Must have Definition of Done AND Key Decisions
     const hasExecution =
-        (opportunity.definitionOfDone && opportunity.definitionOfDone.trim().length > 5) &&
-        (opportunity.keyDecisions && opportunity.keyDecisions.trim().length > 5);
+        (opportunity.definitionOfDone && opportunity.definitionOfDone.trim().length > 0) &&
+        (opportunity.keyDecisions && opportunity.keyDecisions.trim().length > 0);
 
     // --- TAB 4: BUSINESS CASE (25%) ---
     // Must have Financials OR Strategic Scores
 
-    // Financials: Check for ANY positive impact (Revenue, Cost Avoidance, or Efficiency)
+    // Financials: Check for ANY defined numeric impact (0 is a valid "No Impact" assessment)
     const hasFinancials =
-        (opportunity.benefitRevenue || 0) > 0 ||
-        (opportunity.benefitCostAvoidance || 0) > 0 ||
-        (opportunity.benefitEfficiency || 0) > 0;
+        (opportunity.benefitRevenue !== undefined && opportunity.benefitRevenue !== null) ||
+        (opportunity.benefitCostAvoidance !== undefined && opportunity.benefitCostAvoidance !== null) ||
+        (opportunity.benefitEfficiency !== undefined && opportunity.benefitEfficiency !== null);
 
-    // DFV: Check if assessment exists and has scores
+    // DFV: Check if assessment exists and has scores (1-5, so >0 check is generally correct, but safe to just check existence)
     const hasDFV = opportunity.dfvAssessment && (
-        (opportunity.dfvAssessment.desirability?.score || 0) > 0 ||
-        (opportunity.dfvAssessment.feasibility?.score || 0) > 0 ||
-        (opportunity.dfvAssessment.viability?.score || 0) > 0
+        (opportunity.dfvAssessment.desirability?.score ?? 0) > 0 ||
+        (opportunity.dfvAssessment.feasibility?.score ?? 0) > 0 ||
+        (opportunity.dfvAssessment.viability?.score ?? 0) > 0
     );
 
     const hasBusinessCase = hasFinancials || hasDFV;
