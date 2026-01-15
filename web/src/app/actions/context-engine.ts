@@ -525,6 +525,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             techAlignment: opp.techAlignment || '',
             strategyAlignment: opp.strategyAlignment || '',
             source: opp.source || 'CLIENT_BACKLOG',
+            promotionStatus: opp.promotionStatus, // Crucial for UI badges
             showInIdeation: opp.showInIdeation,
             showInCapture: opp.showInCapture,
         }));
@@ -576,13 +577,22 @@ export async function queryContext(workshopId: string, query: string, assetType?
 export async function resetWorkshopIntelligence(workshopId: string) {
     try {
         console.log(`[SupremeScout] Resetting intelligence for ${workshopId}...`);
-        await prisma.workshopContext.update({
-            where: { workshopId },
-            data: {
-                intelligenceAnalysis: { opportunities: [] },
-                rawBacklog: Prisma.DbNull
-            }
-        });
+
+        // Transaction to ensure both SQL and JSON are cleared
+        await prisma.$transaction([
+            // 1. Clear JSON blob
+            prisma.workshopContext.update({
+                where: { workshopId },
+                data: {
+                    intelligenceAnalysis: { opportunities: [] },
+                    rawBacklog: Prisma.DbNull
+                }
+            }),
+            // 2. Clear SQL Opportunities for this workshop
+            prisma.opportunity.deleteMany({
+                where: { workshopId }
+            })
+        ]);
         revalidatePath(`/workshop/${workshopId}`);
         return { success: true };
     } catch (error) {

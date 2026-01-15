@@ -107,7 +107,7 @@ model Opportunity {
 
   // NEW: Visibility Flags (where does this item appear?)
   showInIdeation    Boolean  @default(false)  // Appears on ideation whiteboard
-  showInCapture     Boolean  @default(true)   // Appears in opportunities/capture view
+  showInCapture     Boolean  @default(false)  // Appears in opportunities/capture view
   
   // NEW: Whiteboard Position (for ideation view)
   boardX            Float?
