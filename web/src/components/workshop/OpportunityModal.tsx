@@ -180,32 +180,48 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                             </div>
 
                             <div className="space-y-3 pb-2">
-                                {/* H1 TITLE */}
-                                <Textarea
-                                    ref={titleRef}
-                                    rows={1}
-                                    className="!text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
-                                    placeholder="Opportunity Title"
-                                    value={localCard.title}
-                                    onChange={(e) => handleChange('title', e.target.value)}
-                                />
+                                {/* H1 TITLE + AI BUTTON */}
+                                <div className="flex items-start gap-4">
+                                    <Textarea
+                                        ref={titleRef}
+                                        rows={1}
+                                        className="flex-1 !text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
+                                        placeholder="Opportunity Title"
+                                        value={localCard.title}
+                                        onChange={(e) => handleChange('title', e.target.value)}
+                                    />
 
-                                {/* PROBLEM STATEMENT (Legacy Description) */}
+                                    {/* ENRICH BUTTON (Relocated) */}
+                                    {onEnrich && (
+                                        <button
+                                            onClick={handleEnrich}
+                                            disabled={isEnriching}
+                                            className="shrink-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 mt-2"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            {isEnriching ? "Drafting..." : "Generate Solution"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* DESCRIPTION -> PROBLEM STATEMENT */}
                                 <div className="space-y-1">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Problem Statement</Label>
                                     <Textarea
                                         ref={probRef}
                                         rows={1}
-                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
+                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] resize-none overflow-hidden"
                                         placeholder="Describe the problem..."
-                                        value={localCard.description || ''}
+                                        value={localCard.description}
                                         onChange={(e) => handleChange('description', e.target.value)}
                                     />
                                 </div>
 
-                                {/* PROPOSED SOLUTION (New Field) */}
+                                {/* PROPOSED SOLUTION */}
                                 <div className="space-y-1">
-                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
+                                    </div>
                                     <Textarea
                                         ref={solRef}
                                         rows={1}
@@ -215,18 +231,6 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                         onChange={(e) => handleChange('proposedSolution', e.target.value)}
                                     />
                                 </div>
-
-                                {/* ENRICH BUTTON */}
-                                {onEnrich && (
-                                    <button
-                                        onClick={handleEnrich}
-                                        disabled={isEnriching}
-                                        className="text-xs font-bold text-white shadow-md shadow-emerald-200 hover:shadow-lg flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full transition-all w-fit mt-1"
-                                    >
-                                        <Sparkles className="w-3 h-3" />
-                                        {isEnriching ? "Analyzing Context..." : "Generate Solution & Analysis"}
-                                    </button>
-                                )}
                             </div>
                         </DialogHeader>
 
