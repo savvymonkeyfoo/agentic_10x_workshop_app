@@ -605,6 +605,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
     // --- MAGIC FILL LOGIC ---
     const [magicFillStatus, setMagicFillStatus] = useState({
+        valueProp: 'idle' as 'idle' | 'loading' | 'complete',
         workflow: 'idle' as 'idle' | 'loading' | 'complete',
         execution: 'idle' as 'idle' | 'loading' | 'complete',
         businessCase: 'idle' as 'idle' | 'loading' | 'complete'
@@ -612,24 +613,49 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [isMagicFilling, setIsMagicFilling] = useState(false);
 
     const handleMagicFill = async () => {
-        if (!data.projectName || !data.whyDoIt) {
-            toast.error("Please fill in Title and Description first.");
+        // 1. Validation: Require Title and Friction Statement (User Input)
+        if (!data.projectName || !data.frictionStatement) {
+            toast.error("Please fill in Title and Friction Statement first.");
             return;
         }
 
         setIsMagicFilling(true);
         toast.info("Magic Fill Started! Analyzing Opportunity...");
 
+        // Local tracking for sequential data flow since state updates are async
+        let currentWhyDoIt = data.whyDoIt;
+
         try {
+            // PHASE 0: VALUE PROPOSITION (CVP)
+            setMagicFillStatus(prev => ({ ...prev, valueProp: 'loading' }));
+
+            // Safe Mode: Only fill if empty
+            if (!currentWhyDoIt || currentWhyDoIt.trim() === '') {
+                const cvpResult = await agenticEnrichment(workshopId, 'VALUE_PROP', {
+                    title: data.projectName,
+                    description: data.frictionStatement, // Use Friction as input
+                    currentData: data
+                }) as any;
+
+                if (cvpResult.success && cvpResult.data) {
+                    currentWhyDoIt = cvpResult.data; // Capture for next steps
+                    setData(prev => {
+                        if (prev.whyDoIt) return prev; // Safety check again
+                        return { ...prev, whyDoIt: cvpResult.data };
+                    });
+                }
+            }
+            setMagicFillStatus(prev => ({ ...prev, valueProp: 'complete' }));
+
             // PHASE 1: WORKFLOW
             setMagicFillStatus(prev => ({ ...prev, workflow: 'loading' }));
 
-            // Safe Mode: Only fill if empty
+            // Safe Mode: Only generate if empty
             if (data.workflowPhases.length === 0) {
                 const wfResult = await agenticEnrichment(workshopId, 'WORKFLOW', {
                     title: data.projectName,
-                    description: data.whyDoIt,
-                    currentData: data
+                    description: currentWhyDoIt, // Use the detailed CVP
+                    currentData: { ...data, whyDoIt: currentWhyDoIt } // Ensure context has it
                 }) as any;
 
                 if (wfResult.success && wfResult.data) {
@@ -647,13 +673,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             const [narrativeResult, execParamsResult] = await Promise.all([
                 agenticEnrichment(workshopId, 'EXECUTION', {
                     title: data.projectName,
-                    description: data.whyDoIt,
-                    currentData: data
+                    description: currentWhyDoIt,
+                    currentData: { ...data, whyDoIt: currentWhyDoIt }
                 }),
                 agenticEnrichment(workshopId, 'EXECUTION_PARAMS', {
                     title: data.projectName,
-                    description: data.whyDoIt,
-                    currentData: data
+                    description: currentWhyDoIt,
+                    currentData: { ...data, whyDoIt: currentWhyDoIt }
                 })
             ]) as any[];
 
@@ -680,8 +706,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
             const bcResult = await agenticEnrichment(workshopId, 'BUSINESS_CASE', {
                 title: data.projectName,
-                description: data.whyDoIt,
-                currentData: data
+                description: currentWhyDoIt,
+                currentData: { ...data, whyDoIt: currentWhyDoIt }
             }) as any;
 
             if (bcResult.success && bcResult.data) {
@@ -710,7 +736,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         } finally {
             setIsMagicFilling(false);
             setTimeout(() => {
-                setMagicFillStatus({ workflow: 'idle', execution: 'idle', businessCase: 'idle' });
+                setMagicFillStatus({ valueProp: 'idle', workflow: 'idle', execution: 'idle', businessCase: 'idle' });
             }, 3000);
         }
     };
@@ -1208,7 +1234,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-brand-blue' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
                                 >
-                                    {/* Loading Indicator for Tab */}
+                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
                                     {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
                                     {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
                                     {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
@@ -1236,7 +1262,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-bold text-indigo-900 dark:text-indigo-200">Magic Fill</div>
-                                                    <div className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">Auto-generate Workflow, Execution, and Value Case from your description.</div>
+                                                    <div className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
                                                 </div>
                                             </div>
                                             <button
