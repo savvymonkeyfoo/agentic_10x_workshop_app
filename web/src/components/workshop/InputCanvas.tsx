@@ -11,6 +11,7 @@ import { StrategicProfile } from '@/components/workshop/StrategicProfile';
 import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
 import { deletePromotedOpportunity } from '@/app/actions/delete-opportunity';
+import { demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
 import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
@@ -991,8 +992,23 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const confirmDeleteOpportunity = async () => {
         if (!opportunityToDelete) return;
         setIsDeletingOpportunity(true);
+
+        // Check if this opportunity exists in Ideation (has a home to go back to)
+        const hasIdeationOrigin = opportunityToDelete.showInIdeation === true;
+
         try {
-            await deletePromotedOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
+            if (hasIdeationOrigin) {
+                // DEMOTE: Remove from Capture but keep in Ideation
+                await demoteFromCapture({
+                    workshopId,
+                    opportunityIds: [opportunityToDelete.id]
+                });
+                toast.success(`"${opportunityToDelete.projectName}" returned to Ideation`);
+            } else {
+                // DELETE: Permanently remove (Capture-only item)
+                await deletePromotedOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
+                toast.success(`"${opportunityToDelete.projectName}" deleted`);
+            }
 
             // Refresh list
             const updatedList = allOpportunities.filter(o => o.id !== opportunityToDelete.id);
@@ -1004,8 +1020,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             }
             setOpportunityToDelete(null);
         } catch (error) {
-            console.error("Delete failed", error);
-            alert("Failed to delete opportunity");
+            console.error("Action failed", error);
+            toast.error("Failed to process opportunity");
         } finally {
             setIsDeletingOpportunity(false);
         }
@@ -1179,14 +1195,22 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     return (
         <div className="min-h-screen bg-[var(--bg-core)] text-[var(--text-primary)] font-sans flex flex-col relative">
 
-            {/* Confirmation Modal (Opportunity) */}
+            {/* Confirmation Modal (Opportunity) - Conditional Demote vs Delete */}
             <DeleteConfirmationModal
                 isOpen={!!opportunityToDelete}
-                title="Delete Opportunity?"
-                description={`Are you sure you want to remove "${opportunityToDelete?.projectName || 'this item'}"? This action cannot be undone.`}
+                title={opportunityToDelete?.showInIdeation
+                    ? "Remove from Capture?"
+                    : "Delete Opportunity?"}
+                description={opportunityToDelete?.showInIdeation
+                    ? `"${opportunityToDelete?.projectName || 'this item'}" will be removed from Capture but will remain available in Ideation.`
+                    : `Are you sure you want to permanently delete "${opportunityToDelete?.projectName || 'this item'}"? This action cannot be undone.`}
                 onClose={() => setOpportunityToDelete(null)}
                 onConfirm={confirmDeleteOpportunity}
                 isDeleting={isDeletingOpportunity}
+                variant={opportunityToDelete?.showInIdeation ? 'demote' : 'delete'}
+                confirmLabel={opportunityToDelete?.showInIdeation
+                    ? 'Yes, Remove from Capture'
+                    : 'Yes, Delete Permanently'}
             />
 
             <ActionConfirmationModal
