@@ -1366,20 +1366,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         </div>
 
                                         <div>
-                                            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</label>
-                                            <MarkdownTextarea
-                                                id="description"
-                                                name="description"
-                                                value={data.description}
-                                                onChange={(val) => handleInputChange('description', val)}
-                                                className="min-h-[100px]"
-                                                placeholder="Describe the opportunity..."
-                                                minHeight="100px"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction Statement</label>
+                                            <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction / Problem</label>
                                             <MarkdownTextarea
                                                 id="frictionStatement"
                                                 name="frictionStatement"
@@ -1387,6 +1374,19 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 onChange={(val) => handleInputChange('frictionStatement', val)}
                                                 placeholder="What is the problem?"
                                                 minHeight="6rem"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Proposed Solution</label>
+                                            <MarkdownTextarea
+                                                id="description"
+                                                name="description"
+                                                value={data.description}
+                                                onChange={(val) => handleInputChange('description', val)}
+                                                className="min-h-[100px]"
+                                                placeholder="Describe the proposed solution..."
+                                                minHeight="100px"
                                             />
                                         </div>
 

@@ -186,15 +186,18 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     onChange={(e) => handleChange('title', e.target.value)}
                                 />
 
-                                {/* DESCRIPTION */}
-                                <Textarea
-                                    ref={descRef}
-                                    rows={1}
-                                    className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
-                                    placeholder="Add a description..."
-                                    value={localCard.description}
-                                    onChange={(e) => handleChange('description', e.target.value)}
-                                />
+                                {/* DESCRIPTION -> SOLUTION */}
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
+                                    <Textarea
+                                        ref={descRef}
+                                        rows={1}
+                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
+                                        placeholder="Describe the proposed solution..."
+                                        value={localCard.description}
+                                        onChange={(e) => handleChange('description', e.target.value)}
+                                    />
+                                </div>
 
                                 {/* ENRICH BUTTON */}
                                 {onEnrich && (isWorkshop || (!localCard.friction && !localCard.techAlignment)) && (
