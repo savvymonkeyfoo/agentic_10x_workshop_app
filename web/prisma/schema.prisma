@@ -103,7 +103,7 @@ model Opportunity {
   
   // NEW: Lineage
   originId          String? // The ID of the sticky note this came from
-  promotionStatus   String? @default("PROMOTED") 
+  promotionStatus   String? // null = not promoted, "PROMOTED" = promoted to capture 
 
   // NEW: Visibility Flags (where does this item appear?)
   showInIdeation    Boolean  @default(false)  // Appears on ideation whiteboard
