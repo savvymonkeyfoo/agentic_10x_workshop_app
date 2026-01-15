@@ -24,6 +24,7 @@ import CapabilitiesManager from './CapabilitiesManager';
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
 import { calculateCompleteness } from '@/utils/completeness';
 import { agenticEnrichment, EnrichmentMode } from '@/app/actions/agentic-enrichment';
+import { recommendCapabilities } from '@/app/actions/recommend-capabilities';
 import { toast } from 'sonner';
 
 // --- Initial State (Mirroring Schema) ---
@@ -499,6 +500,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [isDraftingExec, setIsDraftingExec] = useState(false);
     const [showOverwriteModal, setShowOverwriteModal] = useState(false);
     const [isEnriching, setIsEnriching] = useState<EnrichmentMode | null>(null);
+    const [suggestedCapabilities, setSuggestedCapabilities] = useState<string[]>([]);
 
     const handleEnrichment = async (mode: EnrichmentMode, e?: React.MouseEvent) => {
         if (e) {
@@ -624,6 +626,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
         // Local tracking for sequential data flow since state updates are async
         let currentWhyDoIt = data.whyDoIt;
+        let currentWorkflowPhases = [...data.workflowPhases];
+        let currentExecutionPlan = data.executionPlan;
+        let currentExecutionParams = {
+            definitionOfDone: data.definitionOfDone,
+            keyDecisions: data.keyDecisions,
+            changeManagement: data.changeManagement,
+            trainingRequirements: data.trainingRequirements,
+            aiOpsRequirements: data.aiOpsRequirements,
+            systemGuardrails: data.systemGuardrails
+        };
 
         try {
             // PHASE 0: VALUE PROPOSITION (CVP)
@@ -664,10 +676,21 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 }) as any;
 
                 if (wfResult.success && wfResult.data) {
+                    currentWorkflowPhases = wfResult.data;
                     setData(prev => {
                         if (prev.workflowPhases.length > 0) return prev;
                         return { ...prev, workflowPhases: wfResult.data };
                     });
+
+                    // PHASE 1.5: AUTOMATIC CAPABILITY RECOMMENDATION
+                    try {
+                        const capsResult = await recommendCapabilities(currentWorkflowPhases);
+                        if (capsResult.success && capsResult.data) {
+                            setSuggestedCapabilities(capsResult.data);
+                        }
+                    } catch (e) {
+                        console.error("Auto-capability recommendation failed", e);
+                    }
                 }
             }
             setMagicFillStatus(prev => ({ ...prev, workflow: 'complete' }));
@@ -675,16 +698,23 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             // PHASE 2: EXECUTION
             setMagicFillStatus(prev => ({ ...prev, execution: 'loading' }));
 
+            // Prepare context with LATEST generated data
+            const commonContext = {
+                ...data,
+                whyDoIt: currentWhyDoIt,
+                workflowPhases: currentWorkflowPhases
+            };
+
             const [narrativeResult, execParamsResult] = await Promise.all([
                 agenticEnrichment(workshopId, 'EXECUTION', {
                     title: data.projectName,
                     description: currentWhyDoIt,
-                    currentData: { ...data, whyDoIt: currentWhyDoIt }
+                    currentData: commonContext
                 }),
                 agenticEnrichment(workshopId, 'EXECUTION_PARAMS', {
                     title: data.projectName,
                     description: currentWhyDoIt,
-                    currentData: { ...data, whyDoIt: currentWhyDoIt }
+                    currentData: commonContext
                 })
             ]) as any[];
 
@@ -692,6 +722,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 let next = { ...prev };
                 if (!next.executionPlan && narrativeResult.success) {
                     next.executionPlan = narrativeResult.data;
+                    currentExecutionPlan = narrativeResult.data;
                 }
                 if (execParamsResult.success && execParamsResult.data) {
                     const p = execParamsResult.data;
@@ -701,6 +732,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     if (!next.trainingRequirements) next.trainingRequirements = p.trainingRequirements;
                     if (!next.aiOpsRequirements) next.aiOpsRequirements = p.aiOpsRequirements;
                     if (!next.systemGuardrails) next.systemGuardrails = p.systemGuardrails;
+
+                    // Update local tracking
+                    currentExecutionParams = { ...p };
                 }
                 return next;
             });
@@ -709,10 +743,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             // PHASE 3: BUSINESS CASE
             setMagicFillStatus(prev => ({ ...prev, businessCase: 'loading' }));
 
+            // CRITICAL: Pass the FULLY populated local context so Business Case agent sees the T-Shirt inputs (workflow complexity, execution risks)
+            const businessCaseContext = {
+                ...commonContext,
+                executionPlan: currentExecutionPlan,
+                ...currentExecutionParams
+            };
+
             const bcResult = await agenticEnrichment(workshopId, 'BUSINESS_CASE', {
                 title: data.projectName,
                 description: currentWhyDoIt,
-                currentData: { ...data, whyDoIt: currentWhyDoIt }
+                currentData: businessCaseContext
             }) as any;
 
             if (bcResult.success && bcResult.data) {
@@ -723,11 +764,39 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     }
                     if (bcResult.params) {
                         const p = bcResult.params;
+                        // Always override if we have AI suggestions and the field is empty/default
                         if (!next.tShirtSize) next.tShirtSize = p.tShirtSize;
+
+                        // For numbers, we check undefined because 0 is a valid number, but undefined means "active user hasn't touched it"
                         if (next.benefitRevenue === undefined) next.benefitRevenue = p.benefitRevenue;
                         if (next.benefitCostAvoidance === undefined) next.benefitCostAvoidance = p.benefitCostAvoidance;
                         if (next.benefitEfficiency === undefined) next.benefitEfficiency = p.benefitEfficiency;
                         if (next.benefitEstCost === undefined) next.benefitEstCost = p.benefitEstCost;
+
+                        // For sliders (initial value is often 3/defaults), we might want to overwrite if the user hasn't explicitly set them.
+                        // But since we can't track "touched" easily here, let's just update them. The user can adjust after.
+                        next.vrcc = {
+                            ...next.vrcc,
+                            value: p.scoreValue ?? next.vrcc.value,
+                            riskFinal: p.scoreRisk ?? next.vrcc.riskFinal,
+                            capability: p.scoreCapability ?? next.vrcc.capability,
+                            complexity: p.scoreComplexity ?? next.vrcc.complexity
+                        };
+
+                        next.dfvAssessment = {
+                            desirability: {
+                                score: p.dfvDesirability ?? next.dfvAssessment.desirability.score,
+                                justification: p.dfvDesirabilityNote ?? next.dfvAssessment.desirability.justification
+                            },
+                            feasibility: {
+                                score: p.dfvFeasibility ?? next.dfvAssessment.feasibility.score,
+                                justification: p.dfvFeasibilityNote ?? next.dfvAssessment.feasibility.justification
+                            },
+                            viability: {
+                                score: p.dfvViability ?? next.dfvAssessment.viability.score,
+                                justification: p.dfvViabilityNote ?? next.dfvAssessment.viability.justification
+                            }
+                        };
                     }
                     return next;
                 });

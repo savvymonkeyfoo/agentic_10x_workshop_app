@@ -169,12 +169,14 @@ export default function CapabilitiesManager({
     existingCaps,
     missingCaps,
     onUpdate,
-    workflowContext
+    workflowContext,
+    suggestedCapabilities = []
 }: {
     existingCaps: string[],
     missingCaps: string[],
     onUpdate: (field: 'capabilitiesExisting' | 'capabilitiesMissing', newVal: string[]) => void,
-    workflowContext?: WorkflowContextOrItems
+    workflowContext?: WorkflowContextOrItems,
+    suggestedCapabilities?: string[]
 }) {
 
     // Local state for the "Bank" (Filter out items already used)
@@ -188,6 +190,22 @@ export default function CapabilitiesManager({
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Effect: Listen for external suggestions (from Magic Fill)
+    useEffect(() => {
+        if (suggestedCapabilities.length > 0) {
+            setBank(prev => {
+                const currentSet = new Set(prev);
+                const combined = [...prev];
+                suggestedCapabilities.forEach(cap => {
+                    if (!currentSet.has(cap) && !usedCaps.has(cap)) {
+                        combined.unshift(cap); // Add to top
+                    }
+                });
+                return combined;
+            });
+        }
+    }, [suggestedCapabilities]);
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveDrag(event.active.data.current as DragData);
