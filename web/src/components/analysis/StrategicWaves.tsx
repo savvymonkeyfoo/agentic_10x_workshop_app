@@ -54,7 +54,7 @@ const DroppableColumn = ({ rank, title, projects, color, bg }: DroppableColumnPr
 };
 
 // --- 3. Main Component ---
-export default function StrategicWaves({ nodes, workshopId }: { nodes: ProjectNode[], workshopId: string }) {
+export default function StrategicWaves({ nodes, workshopId, edges = [] }: { nodes: ProjectNode[], workshopId: string, edges?: { from: string, to: string }[] }) {
     const router = useRouter();
     const [activeId, setActiveId] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -98,7 +98,7 @@ export default function StrategicWaves({ nodes, workshopId }: { nodes: ProjectNo
     return (
         <div className="w-full h-[600px] relative p-4 mt-16">
             <DndContext onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-                <div className="grid grid-cols-4 gap-4 h-full">
+                <div className="grid grid-cols-4 gap-4 h-full relative z-10">
                     {columns.map(col => (
                         <DroppableColumn
                             key={col.rank}

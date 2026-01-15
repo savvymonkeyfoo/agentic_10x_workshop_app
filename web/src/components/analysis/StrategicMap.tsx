@@ -227,28 +227,8 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
                 <text x="30" y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">FILL-INS</text>
                 <text x={width - 30} y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
 
-                {/* Strategy Dependency Edge Paths */}
-                {edges.map((edge, i) => {
-                    const startNode = nodeMap[edge.from];
-                    const endNode = nodeMap[edge.to];
-
-                    // Only draw if both nodes exist on the map (might be filtered out)
-                    if (!startNode || !endNode) return null;
-                    if (!startNode.x || !startNode.y || !endNode.x || !endNode.y) return null;
-
-                    return (
-                        <path
-                            key={`${edge.from}-${edge.to}`}
-                            d={getCurvePath({ x: startNode.x, y: startNode.y }, { x: endNode.x, y: endNode.y }, CARD_W, CARD_H)}
-                            fill="none"
-                            stroke="#64748b"
-                            strokeWidth="2.5"
-                            strokeDasharray="5 5"
-                            markerEnd="url(#arrowhead)"
-                            opacity="0.8"
-                        />
-                    );
-                })}
+                {/* Strategy Dependency Edge Paths - REMOVED per user request */}
+                {/* {edges.map((edge, i) => ...)} */}
             </svg>
 
             {/* --- CARD LAYER --- */}

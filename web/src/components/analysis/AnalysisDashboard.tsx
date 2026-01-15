@@ -142,7 +142,7 @@ export default function AnalysisDashboard({
                         <StrategicMap opportunities={opportunities} edges={edges} />
                     </div>
                 ) : (
-                    <StrategicWaves nodes={nodes} workshopId={workshopId} />
+                    <StrategicWaves nodes={nodes} workshopId={workshopId} edges={edges} />
                 )}
             </div>
         </div >
