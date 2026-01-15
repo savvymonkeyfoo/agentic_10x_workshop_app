@@ -5,10 +5,21 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 async function getAnalysisData(workshopId: string) {
+    // Get workshop for strategy data
     const workshop = await prisma.workshop.findUnique({
         where: { id: workshopId },
-        include: {
-            opportunities: true
+        select: {
+            strategyNarrative: true,
+            strategyDependencies: true,
+            strategyRisks: true
+        }
+    });
+
+    // Get only Capture opportunities (not all ideation items)
+    const captureOpportunities = await prisma.opportunity.findMany({
+        where: {
+            workshopId,
+            showInCapture: true  // Only show Capture opportunities
         }
     });
 
@@ -23,7 +34,7 @@ async function getAnalysisData(workshopId: string) {
     }
 
     // Map to Nodes for AI Panel
-    const nodes = workshop.opportunities.map((opp: typeof workshop.opportunities[number]) => {
+    const nodes = captureOpportunities.map((opp) => {
         const financialImpact = (opp.benefitRevenue || 0) + (opp.benefitCostAvoidance || 0);
         const minSize = 400;
         const maxSize = 2000;
@@ -46,7 +57,7 @@ async function getAnalysisData(workshopId: string) {
     });
 
     // Raw opportunities for StrategicMap
-    const opportunities = workshop.opportunities.map((opp: typeof workshop.opportunities[number]) => ({
+    const opportunities = captureOpportunities.map((opp) => ({
         id: opp.id,
         projectName: opp.projectName || "Untitled",
         scoreValue: opp.scoreValue || 0,

@@ -4,7 +4,10 @@ import { CanvasSidebar } from '@/components/reporting/CanvasSidebar';
 
 async function getOpportunities(workshopId: string) {
     return await prisma.opportunity.findMany({
-        where: { workshopId },
+        where: {
+            workshopId,
+            showInCapture: true  // Only show Capture opportunities
+        },
         select: {
             id: true,
             projectName: true,

@@ -10,7 +10,10 @@ export async function analyzeWorkshop(workshopId: string) {
     try {
         // 1. Fetch RICH Data (Now including Risk, Horizon, and Description)
         const opportunities = await prisma.opportunity.findMany({
-            where: { workshopId },
+            where: {
+                workshopId,
+                showInCapture: true  // Only analyze Capture opportunities
+            },
             select: {
                 id: true,
                 projectName: true,
