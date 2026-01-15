@@ -69,14 +69,6 @@ export async function analyzeWorkshop(workshopId: string) {
 LANGUAGE: Use Australian English spelling (e.g. 'Prioritise', 'Optimise', 'Analyse', 'Program', 'Centred').
 
 PROTOCOL (THINK STEP-BY-STEP):
-1. ARCHITECT (Dependencies): Identify semantic overlaps. Use bullet points (•) for each distinct dependency found.
-2. RISK OFFICER (Staircasing): Identify risk mitigations. Use bullet points (•) for each specific de-risking move.
-
-DATA DOSSIER:
-${context}
-
-PROTOCOL (ANALYZE STEP-BY-STEP):
-
 1. DEPENDENCY ANALYSIS: Identify semantic overlaps in capabilities. If Project A requires 'Data Extraction' and Project B develops 'Document Processing', they share a dependency chain.
    - EXPLICITLY output these as "edges" in the JSON response.
    - If a project stands alone, do NOT force a dependency.
@@ -88,19 +80,22 @@ PROTOCOL (ANALYZE STEP-BY-STEP):
    - Rank 2: High-Value Accelerators (Projects that leverage newly validated capabilities).
    - Rank 3: Parallel Quick Wins (High Value / Low Complexity projects that are independent).
    - Rank 4: Strategic Deprioritization (High Effort / Low Yield initiatives requiring further justification).
-   
+
    PARALLEL EXECUTION: You MAY assign the SAME rank to multiple independent projects if they can execute in parallel. Do not force a linear 1-2-3-4 order if parallel execution is strategically better.
 
 TONE: Use professional, board-ready language. Avoid informal terms. Use precise business terminology.
 
-CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence array. Use the EXACT IDs from the data dossier.`
+CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence array. Use the EXACT IDs from the data dossier.
+
+DATA DOSSIER:
+${context}`
         });
 
         console.log("[Analyze] AI Response:", JSON.stringify(object, null, 2));
 
         // 4. Update Database (Sequential to prevent race conditions)
         for (const item of object.strategy.sequence) {
-            console.log(`[Analyze] Updating ${item.id} to rank ${item.rank}`);
+            console.log(`[Analyze] Updating ${item.id} to rank ${item.rank} `);
             await prisma.opportunity.update({
                 where: { id: item.id },
                 data: {
@@ -121,7 +116,7 @@ CRITICAL: You MUST return exactly ${opportunities.length} items in the sequence 
             }
         });
 
-        revalidatePath(`/workshop/${workshopId}/analysis`);
+        revalidatePath(`/ workshop / ${workshopId}/analysis`);
 
         // 5. Enrich with project names for UI
         const enrichedSequence = object.strategy.sequence.map(s => {

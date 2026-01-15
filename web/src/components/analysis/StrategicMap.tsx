@@ -107,11 +107,66 @@ const resolveCollisions = (nodes: Opportunity[], width: number, height: number) 
 };
 
 
-// Helper to compute SVG path for a curve between two cards
-const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: number }) => {
-    // Control points for a smooth S-curve
-    const midX = (start.x + end.x) / 2;
-    return `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`;
+// Helper to compute SVG path for a curve between two cards with smart anchoring
+const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: number }, cardW: number, cardH: number) => {
+    // 1. Determine relative position
+    const isRight = end.x > start.x + cardW;
+    const isBelow = end.y > start.y + cardH;
+    const isLeft = end.x < start.x - cardW;
+
+    let sx, sy, ex, ey, c1x, c1y, c2x, c2y;
+
+    if (isRight) {
+        // Source Right -> Target Left
+        sx = start.x + cardW;
+        sy = start.y + cardH / 2;
+        ex = end.x;
+        ey = end.y + cardH / 2;
+
+        const dist = Math.abs(ex - sx) / 2;
+        c1x = sx + dist;
+        c1y = sy;
+        c2x = ex - dist;
+        c2y = ey;
+    } else if (isLeft) {
+        // Source Left -> Target Right (Backwards dependency)
+        sx = start.x;
+        sy = start.y + cardH / 2;
+        ex = end.x + cardW;
+        ey = end.y + cardH / 2;
+
+        const dist = Math.abs(sx - ex) / 2;
+        c1x = sx - dist;
+        c1y = sy;
+        c2x = ex + dist;
+        c2y = ey;
+    } else if (isBelow) {
+        // Source Bottom -> Target Top
+        sx = start.x + cardW / 2;
+        sy = start.y + cardH;
+        ex = end.x + cardW / 2;
+        ey = end.y;
+
+        const dist = Math.abs(ey - sy) / 2;
+        c1x = sx;
+        c1y = sy + dist;
+        c2x = ex;
+        c2y = ey - dist;
+    } else {
+        // Fallback (Source Top -> Target Bottom or overlapping/close)
+        sx = start.x + cardW / 2;
+        sy = start.y;
+        ex = end.x + cardW / 2;
+        ey = end.y + cardH;
+
+        const dist = Math.abs(sy - ey) / 2;
+        c1x = sx;
+        c1y = sy - dist;
+        c2x = ex;
+        c2y = ey + dist;
+    }
+
+    return `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
 };
 
 export default function StrategicMap({ opportunities, edges = [] }: { opportunities: Opportunity[], edges?: { from: string, to: string }[] }) {
@@ -179,7 +234,7 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
                     return (
                         <path
                             key={`${edge.from}-${edge.to}`}
-                            d={getCurvePath({ x: startNode.x, y: startNode.y }, { x: endNode.x, y: endNode.y })}
+                            d={getCurvePath({ x: startNode.x, y: startNode.y }, { x: endNode.x, y: endNode.y }, CARD_W, CARD_H)}
                             fill="none"
                             stroke="#94a3b8"
                             strokeWidth="2"

@@ -33,6 +33,7 @@ interface AIStrategistPanelProps {
     initialDependencies?: string;
     initialRisks?: string;
     nodes?: NodeData[];
+    edges?: { from: string; to: string; reason?: string }[];
 }
 
 export function AIStrategistPanel({
@@ -42,7 +43,8 @@ export function AIStrategistPanel({
     initialNarrative = "",
     initialDependencies = "",
     initialRisks = "",
-    nodes = []
+    nodes = [],
+    edges = []
 }: AIStrategistPanelProps) {
     // Use persisted data if no fresh analysis
     const displayNarrative = analysis?.narrative || initialNarrative;
@@ -152,7 +154,7 @@ export function AIStrategistPanel({
                             <div className="mb-6">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Executive Summary</h3>
                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-xl border border-indigo-100 dark:border-slate-700">
-                                    &ldquo;{displayNarrative}&rdquo;
+                                    {displayNarrative}
                                 </p>
                             </div>
                         )}
@@ -191,7 +193,7 @@ export function AIStrategistPanel({
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
                                 <span>Execution Waves</span>
-                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">Optimized</span>
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">Optimised</span>
                             </h3>
 
                             {/* Group items by rank */}
@@ -203,7 +205,7 @@ export function AIStrategistPanel({
                                 if (waveItems.length === 0) return null;
 
                                 const waveColors = ['bg-emerald-500', 'bg-blue-500', 'bg-violet-500', 'bg-slate-500'];
-                                const waveNames = ['Wave 1: Mobilize', 'Wave 2: Scale', 'Wave 3: Optimize', 'Wave 4: Defer'];
+                                const waveNames = ['Wave 1: Mobilize', 'Wave 2: Scale', 'Wave 3: Optimise', 'Wave 4: Defer'];
 
                                 return (
                                     <div key={waveNum} className="mb-4">
@@ -224,30 +226,81 @@ export function AIStrategistPanel({
 
                                         {/* Wave Items */}
                                         <div className="space-y-2 pl-2 border-l-2 border-slate-100 dark:border-slate-700 ml-3">
-                                            {waveItems.map((item: SequenceItem, index: number) => (
-                                                <motion.details
-                                                    key={item.id}
-                                                    initial={{ opacity: 0, x: -10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    className="group bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-                                                >
-                                                    <summary className="flex items-center gap-2 p-2.5 cursor-pointer list-none select-none">
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-semibold text-slate-800 dark:text-gray-100 text-sm truncate">{item.projectName}</h4>
+                                            {waveItems.map((item: SequenceItem, index: number) => {
+                                                // Find dependencies
+                                                const requires = edges
+                                                    .filter(e => e.to === item.id)
+                                                    .map(e => {
+                                                        const node = nodes.find(n => n.id === e.from);
+                                                        return {
+                                                            name: node ? node.name : "Unknown Project",
+                                                            reason: e.reason
+                                                        };
+                                                    });
+
+                                                const enables = edges
+                                                    .filter(e => e.from === item.id)
+                                                    .map(e => {
+                                                        const node = nodes.find(n => n.id === e.to);
+                                                        return {
+                                                            name: node ? node.name : "Unknown Project",
+                                                            reason: e.reason
+                                                        };
+                                                    });
+
+                                                return (
+                                                    <motion.details
+                                                        key={item.id}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: index * 0.05 }}
+                                                        className="group bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                                                    >
+                                                        <summary className="flex items-center gap-2 p-2.5 cursor-pointer list-none select-none">
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-semibold text-slate-800 dark:text-gray-100 text-sm truncate">{item.projectName}</h4>
+                                                            </div>
+                                                            <svg className="w-4 h-4 text-slate-400 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </summary>
+                                                        <div className="px-3 pb-3 pt-1 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700">
+                                                            {/* Dependency Links */}
+                                                            {(requires.length > 0 || enables.length > 0) && (
+                                                                <div className="mb-3 flex flex-col gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                                                                    {requires.length > 0 && (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded w-fit">REQUIRES</span>
+                                                                            {requires.map((req, i) => (
+                                                                                <div key={i} className="text-xs text-slate-600 dark:text-slate-400 pl-1 border-l-2 border-amber-200 ml-1">
+                                                                                    <span className="font-semibold">{req.name}</span>
+                                                                                    {req.reason && <span className="block text-[10px] text-slate-500 italic mt-0.5">"{req.reason}"</span>}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                    {enables.length > 0 && (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded w-fit">ENABLES</span>
+                                                                            {enables.map((enb, i) => (
+                                                                                <div key={i} className="text-xs text-slate-600 dark:text-slate-400 pl-1 border-l-2 border-emerald-200 ml-1">
+                                                                                    <span className="font-semibold">{enb.name}</span>
+                                                                                    {enb.reason && <span className="block text-[10px] text-slate-500 italic mt-0.5">"{enb.reason}"</span>}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Strategic Logic</p>
+                                                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                                {item.rationale || "No rationale provided."}
+                                                            </p>
                                                         </div>
-                                                        <svg className="w-4 h-4 text-slate-400 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </summary>
-                                                    <div className="px-3 pb-3 pt-1 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700">
-                                                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Strategic Logic</p>
-                                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                                            {item.rationale || "No rationale provided."}
-                                                        </p>
-                                                    </div>
-                                                </motion.details>
-                                            ))}
+                                                    </motion.details>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 );

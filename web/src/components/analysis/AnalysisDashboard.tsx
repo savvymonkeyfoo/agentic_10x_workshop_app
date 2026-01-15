@@ -40,7 +40,7 @@ interface AnalysisResult {
     dependencies?: string;
     risks?: string;
     sequence: SequenceItem[];
-    edges?: { from: string; to: string }[];
+    edges?: { from: string; to: string; reason?: string }[];
 }
 
 interface AnalysisDashboardProps {
@@ -50,7 +50,7 @@ interface AnalysisDashboardProps {
     initialNarrative?: string;
     initialDependencies?: string;
     initialRisks?: string;
-    initialEdges?: { from: string; to: string }[];
+    initialEdges?: { from: string; to: string; reason?: string }[];
 }
 
 type ViewMode = 'MATRIX' | 'WAVES';
@@ -98,6 +98,7 @@ export default function AnalysisDashboard({
                     initialDependencies={initialDependencies}
                     initialRisks={initialRisks}
                     nodes={nodes}
+                    edges={edges}
                 />
             </div>
 
