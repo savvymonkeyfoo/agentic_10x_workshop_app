@@ -109,19 +109,24 @@ const resolveCollisions = (nodes: Opportunity[], width: number, height: number) 
 
 // Helper to compute SVG path for a curve between two cards with smart anchoring
 const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: number }, cardW: number, cardH: number) => {
+    // 0. Defines
+    const halfW = cardW / 2;
+    const halfH = cardH / 2;
+
     // 1. Determine relative position
-    const isRight = end.x > start.x + cardW;
-    const isBelow = end.y > start.y + cardH;
-    const isLeft = end.x < start.x - cardW;
+    // Since x,y are CENTER coordinates:
+    const isRight = end.x > start.x + cardW; // Target is fully to the right (with buffer)
+    const isLeft = end.x < start.x - cardW;  // Target is fully to the left
+    const isBelow = end.y > start.y + cardH; // Target is fully below
 
     let sx, sy, ex, ey, c1x, c1y, c2x, c2y;
 
     if (isRight) {
-        // Source Right -> Target Left
-        sx = start.x + cardW;
-        sy = start.y + cardH / 2;
-        ex = end.x;
-        ey = end.y + cardH / 2;
+        // Source Right Edge -> Target Left Edge
+        sx = start.x + halfW;
+        sy = start.y;
+        ex = end.x - halfW;
+        ey = end.y;
 
         const dist = Math.abs(ex - sx) / 2;
         c1x = sx + dist;
@@ -129,11 +134,11 @@ const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: numb
         c2x = ex - dist;
         c2y = ey;
     } else if (isLeft) {
-        // Source Left -> Target Right (Backwards dependency)
-        sx = start.x;
-        sy = start.y + cardH / 2;
-        ex = end.x + cardW;
-        ey = end.y + cardH / 2;
+        // Source Left Edge -> Target Right Edge (Backwards dependency)
+        sx = start.x - halfW;
+        sy = start.y;
+        ex = end.x + halfW;
+        ey = end.y;
 
         const dist = Math.abs(sx - ex) / 2;
         c1x = sx - dist;
@@ -141,11 +146,11 @@ const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: numb
         c2x = ex + dist;
         c2y = ey;
     } else if (isBelow) {
-        // Source Bottom -> Target Top
-        sx = start.x + cardW / 2;
-        sy = start.y + cardH;
-        ex = end.x + cardW / 2;
-        ey = end.y;
+        // Source Bottom Edge -> Target Top Edge
+        sx = start.x;
+        sy = start.y + halfH;
+        ex = end.x;
+        ey = end.y - halfH;
 
         const dist = Math.abs(ey - sy) / 2;
         c1x = sx;
@@ -153,11 +158,11 @@ const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: numb
         c2x = ex;
         c2y = ey - dist;
     } else {
-        // Fallback (Source Top -> Target Bottom or overlapping/close)
-        sx = start.x + cardW / 2;
-        sy = start.y;
-        ex = end.x + cardW / 2;
-        ey = end.y + cardH;
+        // Fallback: Source Top Edge -> Target Bottom Edge (Target is above)
+        sx = start.x;
+        sy = start.y - halfH;
+        ex = end.x;
+        ey = end.y + halfH;
 
         const dist = Math.abs(sy - ey) / 2;
         c1x = sx;
@@ -205,8 +210,8 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-h-[600px] absolute inset-0 overflow-visible pointer-events-none">
                 {/* Defines for Arrowhead */}
                 <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
                     </marker>
                 </defs>
 
@@ -236,11 +241,11 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
                             key={`${edge.from}-${edge.to}`}
                             d={getCurvePath({ x: startNode.x, y: startNode.y }, { x: endNode.x, y: endNode.y }, CARD_W, CARD_H)}
                             fill="none"
-                            stroke="#94a3b8"
-                            strokeWidth="2"
-                            strokeDasharray="4 4"
+                            stroke="#64748b"
+                            strokeWidth="2.5"
+                            strokeDasharray="5 5"
                             markerEnd="url(#arrowhead)"
-                            opacity="0.6"
+                            opacity="0.8"
                         />
                     );
                 })}
