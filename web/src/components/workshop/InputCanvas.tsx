@@ -483,6 +483,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allOpportunities, setAllOpportunities] = useState<any[]>(initialOpportunities);
     const [opportunityId, setOpportunityId] = useState<string | undefined>(undefined);
+
+    // Ref that mirrors opportunityId - solves stale closure issue in autosave timer
+    const opportunityIdRef = React.useRef<string | undefined>(undefined);
+    React.useEffect(() => {
+        opportunityIdRef.current = opportunityId;
+    }, [opportunityId]);
+
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
     const [isGlobalReady, setIsGlobalReady] = useState(false);
@@ -910,6 +917,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             return;
         }
 
+        // Read current opportunityId from REF (not stale closure state)
+        const currentOpportunityId = opportunityIdRef.current;
+
         isSavingRef.current = true;
         setSaveStatus('saving');
         try {
@@ -920,12 +930,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             };
 
             // Call server action with current opportunityId (if any)
-            const result = await saveOpportunity(workshopId, payload, opportunityId);
+            const result = await saveOpportunity(workshopId, payload, currentOpportunityId);
 
             if (result.success) {
                 // If we didn't have an ID, we do now.
-                if (!opportunityId) {
+                if (!currentOpportunityId) {
                     setOpportunityId(result.id);
+                    opportunityIdRef.current = result.id; // Update ref immediately too
                 }
                 setSaveStatus('saved');
                 fetchOpportunities(); // Refresh list to match
