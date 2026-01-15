@@ -897,10 +897,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     };
 
     // --- Autosave Logic ---
+    // NOTE: Autosave ONLY runs for EXISTING opportunities (has ID)
+    // NEW opportunities are created exclusively via blur/Enter handler
     useEffect(() => {
-        // Better: trigger on any change after mount.
+        // Skip autosave if this is a new opportunity (no ID yet)
+        // Creation is handled by blur handler to avoid race conditions
+        if (!opportunityIdRef.current) {
+            return;
+        }
+
         const timer = setTimeout(async () => {
-            // Only autosave if we have a project name (minimal entry) to avoid ghost records on new
             if (data.projectName) {
                 await performSave(data);
             }
@@ -1407,13 +1413,14 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 onChange={(e) => handleInputChange('projectName', e.target.value)}
                                                 onBlur={() => {
                                                     // Auto-create on blur if new opportunity with 3+ char name
-                                                    if (!opportunityId && data.projectName.trim().length >= 3) {
+                                                    // Use ref (not state) to get current value
+                                                    if (!opportunityIdRef.current && data.projectName.trim().length >= 3) {
                                                         performSave(data);
                                                     }
                                                 }}
                                                 onKeyDown={(e) => {
                                                     // Also create on Enter key for keyboard users
-                                                    if (e.key === 'Enter' && !opportunityId && data.projectName.trim().length >= 3) {
+                                                    if (e.key === 'Enter' && !opportunityIdRef.current && data.projectName.trim().length >= 3) {
                                                         e.preventDefault();
                                                         performSave(data);
                                                     }
