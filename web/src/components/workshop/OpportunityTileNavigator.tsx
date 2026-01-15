@@ -3,24 +3,22 @@ import React from 'react';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Type definition for opportunity
+import { calculateCompleteness } from '@/utils/completeness';
+
+// Type definition for opportunity (aligned with completeness check)
 interface Opportunity {
     id: string;
     projectName?: string | null;
     frictionStatement?: string | null;
     workflowPhases?: unknown[];
+    definitionOfDone?: string | null;
+    keyDecisions?: string | null;
     benefitRevenue?: number | null;
     benefitCostAvoidance?: number | null;
+    benefitEfficiency?: number | null;
     benefitEstCost?: number | null;
+    dfvAssessment?: any; // JSON type in Prisma
 }
-
-// Helper: Check if opportunity has sufficient data
-const checkCompletion = (opp: Opportunity): boolean => {
-    const hasStrategy = opp.projectName && opp.frictionStatement;
-    const hasWorkflow = opp.workflowPhases && Array.isArray(opp.workflowPhases) && opp.workflowPhases.length > 0;
-    const hasBusiness = opp.benefitRevenue || opp.benefitCostAvoidance || opp.benefitEstCost;
-    return !!(hasStrategy && hasWorkflow && hasBusiness);
-};
 
 export const OpportunityTileNavigator = ({
     opportunities,
@@ -90,7 +88,7 @@ export const OpportunityTileNavigator = ({
 
                             {/* Opportunity Cards */}
                             {opportunities.map((opp) => {
-                                const isComplete = checkCompletion(opp);
+                                const isComplete = calculateCompleteness(opp as any).total === 100;
                                 const isSelected = selectedId === opp.id;
 
                                 return (
