@@ -43,6 +43,9 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
     const probRef = useRef<HTMLTextAreaElement>(null);
     const solRef = useRef<HTMLTextAreaElement>(null);
 
+    // Fix: Use ref for timer to persist across renders (Moved to top level)
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
     // 1. SYNC STATE
     useEffect(() => {
         if (card) {
@@ -73,9 +76,6 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
     }, [isOpen, localCard?.title, localCard?.description, localCard?.proposedSolution, isDeleteConfirm]);
 
     if (!localCard) return null;
-
-    // Fix: Use ref for timer to persist across renders
-    const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleChange = (field: keyof OpportunityCardData, value: string) => {
         const updated = { ...localCard, [field]: value };
