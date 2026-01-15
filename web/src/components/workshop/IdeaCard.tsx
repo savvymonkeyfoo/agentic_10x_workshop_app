@@ -54,7 +54,9 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
     const isPromoted = card.promotionStatus === 'PROMOTED';
     // Intelligence Mode: Clean white card, simple left border
     // Ideation Mode: Tier-based styling
-    const isIntelligenceCard = !!card.friction || !!card.strategyAlignment;
+    // Intelligence Mode: Clean white card, simple left border
+    // WORKSHOP_GENERATED: now included to match Market Signal styling per user request
+    const isIntelligenceCard = !!card.friction || !!card.strategyAlignment || card.source === 'WORKSHOP_GENERATED';
 
     // Base Style
     let cardStyle = isIntelligenceCard
@@ -139,8 +141,8 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
                 )}
             </CardContent>
 
-            {/* FOOTER: Delete actions for Ideation Phase only */}
-            {!isIntelligenceCard && !isPromoted && !isSelectMode && (
+            {/* FOOTER: Delete actions active for all cards unless promoted/selecting */}
+            {!isPromoted && !isSelectMode && (
                 <CardFooter className="p-2 bg-slate-50/50 flex items-center justify-between rounded-b-lg border-t border-slate-100">
                     <GripVertical size={14} className="text-slate-300 group-hover:text-slate-500" />
                     <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-md group/trash">
