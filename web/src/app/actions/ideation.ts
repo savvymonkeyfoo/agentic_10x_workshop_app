@@ -201,23 +201,6 @@ export async function createWorkshopOpportunity(
 }
 
 /**
- * Sync is now a no-op since we use a single SQL source of truth.
- * Kept for backward compatibility with UI that calls it.
- */
-export async function syncIdeationWithCapture(workshopId: string) {
-    // With unified SQL storage, there's nothing to sync
-    const count = await prisma.opportunity.count({
-        where: { workshopId, showInCapture: true }
-    });
-
-    return {
-        success: true,
-        count,
-        message: "Using unified SQL storage - no sync needed."
-    };
-}
-
-/**
  * Delete an ideation opportunity
  */
 export async function deleteIdeationOpportunity(opportunityId: string, workshopId: string) {

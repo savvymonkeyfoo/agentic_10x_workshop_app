@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
-import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition, syncIdeationWithCapture } from '@/app/actions/ideation';
+import { createWorkshopOpportunity, initializeIdeationBoard, updateBoardPosition } from '@/app/actions/ideation';
 import { enrichOpportunity, getWorkshopIntelligence, updateOpportunity, deleteIdeationOpportunity } from '@/app/actions/context-engine';
 import { promoteToCapture, demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityModal } from '@/components/workshop/OpportunityModal';
@@ -396,24 +396,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                         <Button onClick={handleNewIdea} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all">
                             <Plus className="w-4 h-4 mr-2" /> New Idea
                         </Button>
-                        <Button variant="outline" size="sm" onClick={async () => {
-                            toast.promise(syncIdeationWithCapture(workshopId), {
-                                loading: 'Syncing with Capture...',
-                                success: (data) => {
-                                    // Refresh local state after sync
-                                    initializeIdeationBoard(workshopId).then(res => {
-                                        if (res.success && res.opportunities) {
-                                            // @ts-ignore
-                                            setOpportunities(res.opportunities);
-                                        }
-                                    });
-                                    return data.message;
-                                },
-                                error: 'Failed to sync'
-                            });
-                        }}>
-                            <RefreshCw className="w-4 h-4 mr-2" /> Sync Grid
-                        </Button>
+
                     </div>
                 </div>
             }

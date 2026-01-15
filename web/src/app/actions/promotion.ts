@@ -48,21 +48,6 @@ export async function promoteToCapture({ workshopId, opportunityIds, keepInIdeat
 }
 
 /**
- * Legacy function signature for backward compatibility
- * Maps the old interface to the new one
- */
-export async function promoteOpportunities(
-    workshopId: string,
-    opportunities: Array<{ id?: string; originalId?: string }>
-) {
-    const ids = opportunities
-        .map(o => o.id || o.originalId)
-        .filter((id): id is string => !!id);
-
-    return promoteToCapture({ workshopId, opportunityIds: ids });
-}
-
-/**
  * DEMOTE FROM CAPTURE
  * 
  * Reverses promotion by setting showInCapture = false
