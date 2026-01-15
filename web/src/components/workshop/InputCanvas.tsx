@@ -638,10 +638,15 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 }) as any;
 
                 if (cvpResult.success && cvpResult.data) {
-                    currentWhyDoIt = cvpResult.data; // Capture for next steps
+                    // Format the object into the expected string structure for the builder
+                    const cvpData = cvpResult.data;
+                    const cvpString = `As a ${cvpData.role}, I want to ${cvpData.outcome}, with ${cvpData.solution}, so that ${cvpData.need}.`;
+
+                    currentWhyDoIt = cvpString; // Capture for next steps
+
                     setData(prev => {
                         if (prev.whyDoIt) return prev; // Safety check again
-                        return { ...prev, whyDoIt: cvpResult.data };
+                        return { ...prev, whyDoIt: cvpString };
                     });
                 }
             }
