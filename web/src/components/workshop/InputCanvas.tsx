@@ -490,6 +490,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [opportunityToDelete, setOpportunityToDelete] = useState<any | null>(null);
     const [isDeletingOpportunity, setIsDeletingOpportunity] = useState(false);
 
+    // Ref to prevent double-save (blur + autosave race condition)
+    const isSavingRef = React.useRef(false);
+
     // Zoom / View Mode State
     const [isZoomedOut, setIsZoomedOut] = useState(false);
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -901,6 +904,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     }, [data]);
 
     const performSave = async (currentData: OpportunityState) => {
+        // Guard: Prevent concurrent saves (blur + autosave race condition)
+        if (isSavingRef.current) {
+            console.log('[AutoSave] Skipped - save already in progress');
+            return;
+        }
+
+        isSavingRef.current = true;
         setSaveStatus('saving');
         try {
             // Format data for DB (join strategicHorizon)
@@ -925,6 +935,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         } catch (e) {
             console.error("Autosave failed", e);
             setSaveStatus('error');
+        } finally {
+            isSavingRef.current = false;
         }
     };
 
