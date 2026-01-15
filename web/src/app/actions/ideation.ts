@@ -1,63 +1,94 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { UnifiedOpportunity } from '@/types/opportunity';
 import { revalidatePath } from 'next/cache';
 
+/**
+ * UNIFIED SQL-BASED IDEATION ACTIONS
+ * 
+ * All ideation operations now use the Opportunity table with showInIdeation = true
+ */
+
+// Grid configuration for initial placement
+const GRID = {
+    COLUMNS: 3,
+    CARD_WIDTH: 320,
+    CARD_HEIGHT: 220,
+    START_X: 50,
+    START_Y: 50
+};
+
+/**
+ * Initialize the ideation board by fetching opportunities with showInIdeation = true
+ * and assigning grid positions to any that don't have them.
+ */
 export async function initializeIdeationBoard(workshopId: string) {
     try {
-        const context = await prisma.workshopContext.findUnique({
-            where: { workshopId },
-            select: { intelligenceAnalysis: true }
+        // Fetch all opportunities visible in ideation view
+        const opportunities = await prisma.opportunity.findMany({
+            where: {
+                workshopId,
+                showInIdeation: true
+            },
+            orderBy: { createdAt: 'asc' }
         });
 
-        // @ts-ignore
-        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
-
+        // Assign positions to any that don't have them
         let hasUpdates = false;
+        const positionedOpportunities = await Promise.all(
+            opportunities.map(async (op, index) => {
+                if (op.boardX === null || op.boardY === null) {
+                    hasUpdates = true;
+                    const col = index % GRID.COLUMNS;
+                    const row = Math.floor(index / GRID.COLUMNS);
 
-        // GRID CONFIGURATION
-        const COLUMNS = 3;
-        const CARD_WIDTH = 320; // Approx card width + gap
-        const CARD_HEIGHT = 220; // Approx card height + gap
-        const START_X = 50;
-        const START_Y = 50;
+                    await prisma.opportunity.update({
+                        where: { id: op.id },
+                        data: {
+                            boardX: GRID.START_X + (col * GRID.CARD_WIDTH),
+                            boardY: GRID.START_Y + (row * GRID.CARD_HEIGHT),
+                            boardStatus: op.boardStatus || 'inbox'
+                        }
+                    });
 
-        const updatedOpportunities = opportunities.map((op, index) => {
-            if (!op.boardPosition) {
-                hasUpdates = true;
-
-                // GRID CALCULATION
-                const col = index % COLUMNS;
-                const row = Math.floor(index / COLUMNS);
-
-                return {
-                    ...op,
-                    boardStatus: 'inbox',
-                    boardPosition: {
-                        x: START_X + (col * CARD_WIDTH),
-                        y: START_Y + (row * CARD_HEIGHT)
-                    }
-                };
-            }
-            return op;
-        });
+                    return {
+                        ...op,
+                        boardX: GRID.START_X + (col * GRID.CARD_WIDTH),
+                        boardY: GRID.START_Y + (row * GRID.CARD_HEIGHT),
+                        boardStatus: op.boardStatus || 'inbox'
+                    };
+                }
+                return op;
+            })
+        );
 
         if (hasUpdates) {
-            await prisma.workshopContext.update({
-                where: { workshopId },
-                data: {
-                    intelligenceAnalysis: {
-                        ...currentData,
-                        opportunities: updatedOpportunities
-                    }
-                }
-            });
             revalidatePath(`/workshop/${workshopId}`);
         }
 
-        return { success: true, opportunities: updatedOpportunities };
+        // Transform to format expected by UI
+        const uiOpportunities = positionedOpportunities.map(op => ({
+            id: op.id,
+            originalId: op.originId || op.id,
+            title: op.projectName,
+            description: op.frictionStatement || '',
+            proposedSolution: op.description || '',
+            source: op.source || 'WORKSHOP_GENERATED',
+            boardPosition: {
+                x: op.boardX || 0,
+                y: op.boardY || 0
+            },
+            boardStatus: op.boardStatus || 'inbox',
+            friction: op.friction,
+            techAlignment: op.techAlignment,
+            strategyAlignment: op.strategyAlignment,
+            tier: op.tier,
+            promotionStatus: op.promotionStatus,
+            showInIdeation: op.showInIdeation,
+            showInCapture: op.showInCapture
+        }));
+
+        return { success: true, opportunities: uiOpportunities };
 
     } catch (error) {
         console.error("Failed to initialize board", error);
@@ -65,39 +96,24 @@ export async function initializeIdeationBoard(workshopId: string) {
     }
 }
 
+/**
+ * Update the X/Y position of an opportunity on the whiteboard
+ */
 export async function updateBoardPosition(
     workshopId: string,
     opportunityId: string,
     position: { x: number, y: number }
 ) {
     try {
-        const context = await prisma.workshopContext.findUnique({
-            where: { workshopId },
-            select: { intelligenceAnalysis: true }
-        });
-
-        // @ts-ignore
-        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
-
-        const updatedOpportunities = opportunities.map(op => {
-            if (op.originalId === opportunityId) {
-                return { ...op, boardPosition: position };
-            }
-            return op;
-        });
-
-        await prisma.workshopContext.update({
-            where: { workshopId },
+        await prisma.opportunity.update({
+            where: { id: opportunityId },
             data: {
-                intelligenceAnalysis: {
-                    ...currentData,
-                    opportunities: updatedOpportunities
-                }
+                boardX: position.x,
+                boardY: position.y
             }
         });
 
-        // We do NOT revalidatePath here to keep the UI smooth (Client State rules)
+        // Don't revalidate to keep UI smooth (client state rules)
         return { success: true };
 
     } catch (error) {
@@ -106,61 +122,77 @@ export async function updateBoardPosition(
     }
 }
 
+/**
+ * Create a new opportunity visible in IDEATION view
+ */
 export async function createWorkshopOpportunity(
     workshopId: string,
-    cardData: Partial<UnifiedOpportunity>
+    cardData: {
+        title?: string;
+        description?: string;
+        proposedSolution?: string;
+        friction?: string;
+        techAlignment?: string;
+        strategyAlignment?: string;
+    }
 ) {
     try {
-        const context = await prisma.workshopContext.findUnique({
-            where: { workshopId },
-            select: { intelligenceAnalysis: true }
+        // Get count of existing ideation opportunities for positioning
+        const existingCount = await prisma.opportunity.count({
+            where: { workshopId, showInIdeation: true }
         });
 
-        // @ts-ignore
-        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
+        const col = existingCount % GRID.COLUMNS;
+        const row = Math.floor(existingCount / GRID.COLUMNS);
 
-        // GRID CALCULATION FIND FIRST EMPTY SLOT OR APPEND
-        const COLUMNS = 3;
-        const CARD_WIDTH = 320;
-        const CARD_HEIGHT = 220;
-        const START_X = 50;
-        const START_Y = 50;
-
-        // Simply append to the end of the grid logic
-        const nextIndex = opportunities.length;
-        const col = nextIndex % COLUMNS;
-        const row = Math.floor(nextIndex / COLUMNS);
-
-        const newOpportunity: UnifiedOpportunity = {
-            id: `work-${Date.now()}`,
-            originalId: `work-${Date.now()}`,
-            title: cardData.title || "Untitled Idea",
-            description: cardData.description || "",
-            proposedSolution: cardData.proposedSolution, // Map Solution
-            source: "WORKSHOP_GENERATED",
-            boardStatus: 'inbox',
-            boardPosition: {
-                x: START_X + (col * CARD_WIDTH),
-                y: START_Y + (row * CARD_HEIGHT)
-            },
-            friction: cardData.friction,
-            techAlignment: cardData.techAlignment,
-            strategyAlignment: cardData.strategyAlignment,
-        };
-
-        await prisma.workshopContext.update({
-            where: { workshopId },
+        const newOpportunity = await prisma.opportunity.create({
             data: {
-                intelligenceAnalysis: {
-                    ...currentData,
-                    opportunities: [...opportunities, newOpportunity]
-                }
+                workshopId,
+                showInIdeation: true,  // Visible on whiteboard
+                showInCapture: false,  // Not yet promoted to capture
+                projectName: cardData.title || 'Untitled Idea',
+                frictionStatement: cardData.description || '',
+                description: cardData.proposedSolution || '',
+                friction: cardData.friction,
+                techAlignment: cardData.techAlignment,
+                strategyAlignment: cardData.strategyAlignment,
+                source: 'WORKSHOP_GENERATED',
+                boardX: GRID.START_X + (col * GRID.CARD_WIDTH),
+                boardY: GRID.START_Y + (row * GRID.CARD_HEIGHT),
+                boardStatus: 'inbox',
+                // Required defaults
+                whyDoIt: '',
+                strategicHorizon: '',
+                scoreValue: 0,
+                scoreCapability: 0,
+                scoreComplexity: 0,
+                tShirtSize: 'M',
+                definitionOfDone: '',
+                keyDecisions: ''
             }
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { success: true, opportunity: newOpportunity };
+
+        // Return in UI format
+        return {
+            success: true,
+            opportunity: {
+                id: newOpportunity.id,
+                originalId: newOpportunity.id,
+                title: newOpportunity.projectName,
+                description: newOpportunity.frictionStatement,
+                proposedSolution: newOpportunity.description,
+                source: newOpportunity.source,
+                boardPosition: {
+                    x: newOpportunity.boardX,
+                    y: newOpportunity.boardY
+                },
+                boardStatus: newOpportunity.boardStatus,
+                showInIdeation: newOpportunity.showInIdeation,
+                showInCapture: newOpportunity.showInCapture
+            }
+        };
 
     } catch (error) {
         console.error("Failed to create workshop opportunity", error);
@@ -168,80 +200,36 @@ export async function createWorkshopOpportunity(
     }
 }
 
+/**
+ * Sync is now a no-op since we use a single SQL source of truth.
+ * Kept for backward compatibility with UI that calls it.
+ */
 export async function syncIdeationWithCapture(workshopId: string) {
+    // With unified SQL storage, there's nothing to sync
+    const count = await prisma.opportunity.count({
+        where: { workshopId, showInCapture: true }
+    });
+
+    return {
+        success: true,
+        count,
+        message: "Using unified SQL storage - no sync needed."
+    };
+}
+
+/**
+ * Delete an ideation opportunity
+ */
+export async function deleteIdeationOpportunity(opportunityId: string, workshopId: string) {
     try {
-        // 1. Get Promoted Opportunities (Source of Truth)
-        const promotedOpps = await prisma.opportunity.findMany({
-            where: { workshopId }
+        await prisma.opportunity.delete({
+            where: { id: opportunityId }
         });
 
-        if (!promotedOpps.length) {
-            return { success: true, count: 0, message: "No promoted items to sync." };
-        }
-
-        // 2. Get Ideation Board JSON
-        const context = await prisma.workshopContext.findUnique({
-            where: { workshopId },
-            select: { intelligenceAnalysis: true }
-        });
-
-        // @ts-ignore
-        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
-        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
-
-        // Map for quick lookup
-        const ideationMap = new Map(opportunities.map(o => [o.originalId, o]));
-        let hasUpdates = false;
-
-        // 3. Process Sync
-        const restoredOpportunities = [...opportunities];
-
-        for (const pOpp of promotedOpps) {
-            const originId = pOpp.originId || pOpp.id;
-
-            if (ideationMap.has(originId)) {
-                // EXISTS: Ensure status is PROMOTED
-                const existing = ideationMap.get(originId);
-                if (existing && existing.promotionStatus !== 'PROMOTED') {
-                    // Update in place (modifying the object in the array reference)
-                    existing.promotionStatus = 'PROMOTED';
-                    hasUpdates = true;
-                }
-            } else {
-                // MISSING: Restore it
-                hasUpdates = true;
-                restoredOpportunities.push({
-                    id: pOpp.id, // Re-use the SQL ID if possible, or fallback
-                    originalId: originId,
-                    title: pOpp.projectName || "Untitled Restored Item",
-                    description: pOpp.frictionStatement || "", // Map back friction to description
-                    source: "WORKSHOP_GENERATED", // Default as we lost the original source
-                    boardStatus: 'placed',
-                    promotionStatus: 'PROMOTED',
-                    // Let initializeIdeationBoard handle positions later if needed
-                    // But to be safe, we can put them in a harmless spot or let user organize
-                } as UnifiedOpportunity);
-            }
-        }
-
-        if (hasUpdates) {
-            await prisma.workshopContext.update({
-                where: { workshopId },
-                data: {
-                    intelligenceAnalysis: {
-                        ...currentData,
-                        opportunities: restoredOpportunities
-                    }
-                }
-            });
-            revalidatePath(`/workshop/${workshopId}`);
-            return { success: true, count: promotedOpps.length, message: "Sync complete. Missing items restored." };
-        }
-
-        return { success: true, count: 0, message: "Already in sync." };
-
+        revalidatePath(`/workshop/${workshopId}`);
+        return { success: true };
     } catch (error) {
-        console.error("Sync Failed", error);
-        return { success: false, error: "Failed to sync" };
+        console.error("Failed to delete ideation opportunity", error);
+        return { success: false };
     }
 }

@@ -1,0 +1,95 @@
+{
+  "exportedAt": "2026-01-15T05:30:06.895Z",
+  "workshopCount": 3,
+  "totalJsonOpportunities": 0,
+  "totalSqlOpportunities": 10,
+  "workshopSummaries": [
+    {
+      "workshopId": "8621f24e-aeea-405a-b28f-d3ad16874455",
+      "workshopName": "Visa Card",
+      "jsonCount": 0
+    },
+    {
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "workshopName": "Zurich Insurance",
+      "jsonCount": 0
+    },
+    {
+      "workshopId": "WS-2025-SEED-001",
+      "workshopName": "Acme Global Logistics",
+      "jsonCount": 0
+    }
+  ],
+  "sqlOpportunities": [
+    {
+      "id": "d9fd7f48-878d-4480-b615-51858e967998",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Policy Renewal Agent",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "fb7b0e2c-5daa-4d79-a4f3-fb589ce0333f",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Fraud Pattern Sentinel",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "386649ef-330b-4164-a1de-6508c3d54082",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Policy Renewal Agent",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "OPP-002",
+      "workshopId": "WS-2025-SEED-001",
+      "projectName": "Supplier Negotiation Bot",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "9208192f-57c5-459b-8a14-a45cf80e9e20",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Smart Claims Triage Bot",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "OPP-001",
+      "workshopId": "WS-2025-SEED-001",
+      "projectName": "Invoice Reconciliation Agent",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "21ca494d-ea80-4288-93d7-87df58caa14e",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Underwriter Co-Pilot",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "6d693b1a-939e-4aaa-bb38-4f642b748871",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Fraud Pattern Sentinel",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "75607555-9dd3-46bc-a6eb-958a6cc5b839",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Smart Claims Triage Bot",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    },
+    {
+      "id": "c8b2f51c-cfcd-4a6d-ac7d-026367cf44cc",
+      "workshopId": "fd5a419e-cd0c-456b-90f2-10f35b444da2",
+      "projectName": "Underwriter Co-Pilot",
+      "originId": null,
+      "promotionStatus": "PROMOTED"
+    }
+  ]
+}

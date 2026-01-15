@@ -240,7 +240,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         const selectedOpps = opportunities.filter(o => selectedItems.has(o.originalId));
 
         try {
-            const result = await promoteToCapture(workshopId, selectedOpps);
+            const result = await promoteToCapture({ workshopId, opportunityIds: selectedOpps.map(o => o.id) });
 
             if (result.success && result.count > 0) {
                 toast.success(`${result.count} Ideas Promoted! Redirecting...`, {
@@ -370,13 +370,15 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                                 >
                                     <IdeaCard
                                         card={{
-                                            ...item,
                                             id: item.originalId,
-                                            // Legacy / Unified Mapping
-                                            source: item.source,
-                                            // @ts-ignore
-                                            tier: item.tier,
-                                            promotionStatus: item.promotionStatus
+                                            title: item.title,
+                                            description: item.description,
+                                            source: item.source ?? 'WORKSHOP_GENERATED',
+                                            tier: item.tier ?? undefined,
+                                            promotionStatus: item.promotionStatus ?? undefined,
+                                            friction: item.friction ?? undefined,
+                                            techAlignment: item.techAlignment ?? undefined,
+                                            strategyAlignment: item.strategyAlignment ?? undefined
                                         }}
                                         onClick={() => handleCardClick(item)}
                                         // SELECTION PROPS

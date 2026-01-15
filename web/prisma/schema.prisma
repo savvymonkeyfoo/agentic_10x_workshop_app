@@ -105,7 +105,24 @@ model Opportunity {
   originId          String? // The ID of the sticky note this came from
   promotionStatus   String? @default("PROMOTED") 
 
+  // NEW: Visibility Flags (where does this item appear?)
+  showInIdeation    Boolean  @default(false)  // Appears on ideation whiteboard
+  showInCapture     Boolean  @default(true)   // Appears in opportunities/capture view
+  
+  // NEW: Whiteboard Position (for ideation view)
+  boardX            Float?
+  boardY            Float?
+  boardStatus       String?  // inbox, placed, archived
+  
+  // NEW: Source Tracking
+  source            String?  // CLIENT_BACKLOG, MARKET_SIGNAL, WORKSHOP_GENERATED, MERGED
+  
+  // NEW: Tier (from ideation scoring)
+  tier              String?  // UNSCORED, AGENTIC_AUTO, TABLE_STAKES, STRATEGIC_BET
+
   @@index([originId])
+  @@index([showInIdeation])
+  @@index([showInCapture])
 }
 
 // 3. Capabilities

@@ -323,30 +323,32 @@ export async function enrichOpportunity(workshopId: string, title: string, descr
     }
 }
 
+/**
+ * Update an opportunity in the database.
+ * Now uses SQL directly instead of JSON blob.
+ */
 export async function updateOpportunity(workshopId: string, opportunity: any) {
     try {
-        const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
+        const opportunityId = opportunity.id || opportunity.originalId;
 
-        // SMART MERGE: Find existing item to preserve spatial data
-        const existingItem = (currentData.opportunities || []).find((o: any) => o.originalId === opportunity.originalId || o.id === opportunity.id);
-        const otherOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== opportunity.originalId && o.id !== opportunity.id);
+        if (!opportunityId) {
+            return { success: false, error: "No opportunity ID provided" };
+        }
 
-        const mergedOpportunity = existingItem ? {
-            ...existingItem, // Keep existing fields (like boardPosition, boardStatus)
-            ...opportunity,  // Overwrite with new edits (title, friction, etc)
-            // Ensure ID consistency
-            id: existingItem.id || opportunity.id,
-            originalId: existingItem.originalId || opportunity.originalId
-        } : opportunity;
-
-        await prisma.workshopContext.update({
-            where: { workshopId },
+        await prisma.opportunity.update({
+            where: { id: opportunityId },
             data: {
-                intelligenceAnalysis: {
-                    ...currentData,
-                    opportunities: [...otherOpportunities, mergedOpportunity]
-                }
+                projectName: opportunity.title,
+                frictionStatement: opportunity.description,
+                description: opportunity.proposedSolution,
+                friction: opportunity.friction,
+                techAlignment: opportunity.techAlignment,
+                strategyAlignment: opportunity.strategyAlignment,
+                boardX: opportunity.boardPosition?.x,
+                boardY: opportunity.boardPosition?.y,
+                boardStatus: opportunity.boardStatus,
+                source: opportunity.source,
+                tier: opportunity.tier
             }
         });
 
@@ -359,7 +361,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
 }
 
 // -----------------------------------------------------------------------------
-// DELETE IDEATION OPPORTUNITY (from JSON, pre-promotion)
+// DELETE IDEATION OPPORTUNITY (Now SQL-based)
 // -----------------------------------------------------------------------------
 interface DeleteIdeationOpportunityOptions {
     workshopId: string;
@@ -367,27 +369,13 @@ interface DeleteIdeationOpportunityOptions {
 }
 
 /**
- * Deletes an IDEATION opportunity from the JSON intelligenceAnalysis field.
- * Use this for opportunities that are still in the ideation/research phase.
- * 
- * For promoted opportunities (in SQL), use `deletePromotedOpportunity` from delete-opportunity.ts
+ * Deletes an opportunity from the SQL table.
+ * Works for opportunities at any stage.
  */
 export async function deleteIdeationOpportunity({ workshopId, originalId }: DeleteIdeationOpportunityOptions) {
     try {
-        const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        const currentData = (currentContext?.intelligenceAnalysis as IntelligenceAnalysisData | null) || { opportunities: [] };
-
-        // Filter OUT the item to delete
-        const filteredOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== originalId);
-
-        await prisma.workshopContext.update({
-            where: { workshopId },
-            data: {
-                intelligenceAnalysis: {
-                    ...currentData,
-                    opportunities: filteredOpportunities
-                } as unknown as Prisma.InputJsonValue
-            }
+        await prisma.opportunity.delete({
+            where: { id: originalId }
         });
 
         revalidatePath(`/workshop/${workshopId}`);
