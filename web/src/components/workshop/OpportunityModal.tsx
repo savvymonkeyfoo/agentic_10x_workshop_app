@@ -74,19 +74,30 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
 
     if (!localCard) return null;
 
+    // Fix: Use ref for timer to persist across renders
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
     const handleChange = (field: keyof OpportunityCardData, value: string) => {
         const updated = { ...localCard, [field]: value };
         setLocalCard(updated);
 
-        setIsSaving(true);
-        const timer = setTimeout(() => {
-            onSave(updated);
-            setIsSaving(false);
-        }, 800);
-        return () => clearTimeout(timer);
+        // CLEAR EXISTING TIMER
+        if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
+        }
+
+        // ONLY AUTO-SAVE IF NOT A DRAFT
+        if (localCard.originalId !== 'draft') {
+            setIsSaving(true);
+            saveTimerRef.current = setTimeout(() => {
+                onSave(updated);
+                setIsSaving(false);
+            }, 1500); // Increased debounce to 1.5s for safety
+        }
     };
 
     const handleManualSave = () => {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         onSave(localCard);
         onClose();
     };
