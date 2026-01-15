@@ -82,26 +82,26 @@ const resolveLabelCollisions = (nodes: Opportunity[], width: number) => {
     // Card Dimensions
     const CARD_W = 240;
     const CARD_H = 100;
-    const PADDING = 20; // Space between cards
+    const PADDING = 15; // Tighter padding
 
-    // 1. Initialize Card Positions at their anchor points
+    // 1. Initialize Card Positions at Bubbles (Orbital Start)
     nodes.forEach(node => {
-        if (node.x !== undefined && node.y !== undefined && node.r !== undefined) {
-            // Start centered above the bubble
+        if (node.x !== undefined && node.y !== undefined) {
+            // Start centered ON the bubble.
+            // This allows the physics to push it to the closest empty space naturally (Top, Bottom, Left or Right)
             node.cardX = node.x;
-            node.cardY = node.y - node.r - 40;
+            node.cardY = node.y;
         }
     });
 
     // 2. Iterative Force Simulation
-    // We run a "simulation" for N ticks to let the cards settle into open spaces.
-    const iterations = 60;
+    const iterations = 80;
 
     for (let k = 0; k < iterations; k++) {
-        // Temperature (decreases over time to settle the layout)
+        // Temperature
         const alpha = 1 - (k / iterations);
 
-        // A. Repulsion (Cards pushing against each other)
+        // A. Repulsion from OTHER CARDS
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < nodes.length; j++) {
                 const a = nodes[i];
@@ -113,64 +113,100 @@ const resolveLabelCollisions = (nodes: Opportunity[], width: number) => {
                 const distX = Math.abs(dx);
                 const distY = Math.abs(dy);
 
-                // Check for overlap + padding
                 const minW = CARD_W + PADDING;
                 const minH = CARD_H + PADDING;
 
                 if (distX < minW && distY < minH) {
-                    // Overlap detected!
-                    // Calculate "overlap amount"
                     const overlapX = minW - distX;
                     const overlapY = minH - distY;
 
-                    // Push apart along the axis of least overlap (easiest escape route)
                     if (overlapX < overlapY) {
                         const nudge = overlapX * 0.5 * alpha;
-                        const sign = dx > 0 ? 1 : -1;
-                        a.cardX += sign * nudge;
-                        b.cardX -= sign * nudge;
+                        if (dx === 0) {
+                            a.cardX += nudge;
+                            b.cardX -= nudge;
+                        } else {
+                            const sign = dx > 0 ? 1 : -1;
+                            a.cardX += sign * nudge;
+                            b.cardX -= sign * nudge;
+                        }
                     } else {
                         const nudge = overlapY * 0.5 * alpha;
-                        const sign = dy > 0 ? 1 : -1;
-                        a.cardY += sign * nudge;
-                        b.cardY -= sign * nudge;
+                        if (dy === 0) {
+                            a.cardY += nudge;
+                            b.cardY -= nudge;
+                        } else {
+                            const sign = dy > 0 ? 1 : -1;
+                            a.cardY += sign * nudge;
+                            b.cardY -= sign * nudge;
+                        }
                     }
                 }
             }
         }
 
-        // B. Attraction (Tether to Anchor)
-        // Pull everyone gently back towards their "ideal" spot to prevent drifting too far
-        nodes.forEach(node => {
-            if (node.x === undefined || node.y === undefined || node.cardX === undefined || node.cardY === undefined || node.r === undefined) return;
+        // B. Repulsion from BUBBLES (Avoid covering the dots!)
+        // This makes cards "orbit" the cluster of dots rather than sitting on top of them.
+        nodes.forEach(cardNode => {
+            nodes.forEach(bubbleNode => {
+                if (cardNode.cardX === undefined || cardNode.cardY === undefined ||
+                    bubbleNode.x === undefined || bubbleNode.y === undefined || bubbleNode.r === undefined) return;
 
-            // Ideal position: Centered above bubble
-            const idealX = node.x;
-            const idealY = node.y - node.r - 40;
+                // Skip if it's my own bubble (I wan't to stay close to it, but maybe not ON TOP if possible? 
+                // Actually, covering my OWN bubble is bad too. Let's repel from ALL bubbles slightly.)
 
-            // Hooke's Law (Spring)
-            const dx = idealX - node.cardX;
-            const dy = idealY - node.cardY;
+                const dx = cardNode.cardX - bubbleNode.x;
+                const dy = cardNode.cardY - bubbleNode.y;
+                const distX = Math.abs(dx);
+                const distY = Math.abs(dy);
 
-            // Strength of the spring
-            const strength = 0.05 * alpha;
+                // Bubble "Box" size (treat bubble as a small rect obstacle)
+                const bubbleObstableW = (bubbleNode.r * 2) + PADDING + 40; // Extra buffer
+                const bubbleObstableH = (bubbleNode.r * 2) + PADDING + 20;
 
-            node.cardX += dx * strength;
-            node.cardY += dy * strength;
+                // Overlap with Bubble?
+                // We check if the CARD BOX overlaps the BUBBLE BOX
+                const combinedHalfW = (CARD_W / 2) + (bubbleObstableW / 2);
+                const combinedHalfH = (CARD_H / 2) + (bubbleObstableH / 2);
+
+                if (distX < combinedHalfW && distY < combinedHalfH) {
+                    const ovX = combinedHalfW - distX;
+                    const ovY = combinedHalfH - distY;
+
+                    // Push card away
+                    if (ovX < ovY) {
+                        const sign = dx > 0 ? 1 : -1;
+                        cardNode.cardX += sign * ovX * 0.1 * alpha; // Gentle push
+                    } else {
+                        const sign = dy > 0 ? 1 : -1;
+                        cardNode.cardY += sign * ovY * 0.1 * alpha;
+                    }
+                }
+            });
         });
 
-        // C. Wall Collision (Keep on screen)
+        // C. Attraction to Anchor (My Bubble)
+        nodes.forEach(node => {
+            if (node.x === undefined || node.y === undefined || node.cardX === undefined || node.cardY === undefined) return;
+
+            // Strong attraction to center
+            const targetX = node.x;
+            const targetY = node.y; // Center!
+
+            const dx = targetX - node.cardX;
+            const dy = targetY - node.cardY;
+
+            // Stronger strength to keep tight
+            node.cardX += dx * 0.08 * alpha;
+            node.cardY += dy * 0.08 * alpha;
+        });
+
+        // D. Wall Collision
         nodes.forEach(node => {
             if (node.cardX !== undefined && node.cardY !== undefined) {
                 const marginX = CARD_W / 2 + 10;
-                const marginY = CARD_H / 2 + 10; // Center-point based
-
-                // Clamp X
                 node.cardX = Math.max(marginX, Math.min(width - marginX, node.cardX));
-
-                // Clamp Y (ensure it doesn't go off top or overlap bottom axis labels too much)
-                // We let it go down to height - 80 to clear "DEPRIORITISE" labels
-                node.cardY = Math.max(CARD_H, Math.min(750 - 80, node.cardY));
+                node.cardY = Math.max(CARD_H / 2 + 10, Math.min(750 - 80, node.cardY));
             }
         });
     }
