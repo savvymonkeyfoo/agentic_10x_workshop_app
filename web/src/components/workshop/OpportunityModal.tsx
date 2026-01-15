@@ -217,7 +217,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 </div>
 
                                 {/* ENRICH BUTTON */}
-                                {onEnrich && (isWorkshop || (!localCard.friction && !localCard.techAlignment)) && (
+                                {onEnrich && (
                                     <button
                                         onClick={handleEnrich}
                                         disabled={isEnriching}
