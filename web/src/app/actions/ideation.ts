@@ -167,3 +167,81 @@ export async function createWorkshopOpportunity(
         return { success: false, error: "Failed to create" };
     }
 }
+
+export async function syncIdeationWithCapture(workshopId: string) {
+    try {
+        // 1. Get Promoted Opportunities (Source of Truth)
+        const promotedOpps = await prisma.opportunity.findMany({
+            where: { workshopId }
+        });
+
+        if (!promotedOpps.length) {
+            return { success: true, count: 0, message: "No promoted items to sync." };
+        }
+
+        // 2. Get Ideation Board JSON
+        const context = await prisma.workshopContext.findUnique({
+            where: { workshopId },
+            select: { intelligenceAnalysis: true }
+        });
+
+        // @ts-ignore
+        const currentData = (context?.intelligenceAnalysis as any) || { opportunities: [] };
+        const opportunities: UnifiedOpportunity[] = (currentData.opportunities || []) as UnifiedOpportunity[];
+
+        // Map for quick lookup
+        const ideationMap = new Map(opportunities.map(o => [o.originalId, o]));
+        let hasUpdates = false;
+
+        // 3. Process Sync
+        const restoredOpportunities = [...opportunities];
+
+        for (const pOpp of promotedOpps) {
+            const originId = pOpp.originId || pOpp.id;
+
+            if (ideationMap.has(originId)) {
+                // EXISTS: Ensure status is PROMOTED
+                const existing = ideationMap.get(originId);
+                if (existing && existing.promotionStatus !== 'PROMOTED') {
+                    // Update in place (modifying the object in the array reference)
+                    existing.promotionStatus = 'PROMOTED';
+                    hasUpdates = true;
+                }
+            } else {
+                // MISSING: Restore it
+                hasUpdates = true;
+                restoredOpportunities.push({
+                    id: pOpp.id, // Re-use the SQL ID if possible, or fallback
+                    originalId: originId,
+                    title: pOpp.projectName || "Untitled Restored Item",
+                    description: pOpp.frictionStatement || "", // Map back friction to description
+                    source: "WORKSHOP_GENERATED", // Default as we lost the original source
+                    boardStatus: 'placed',
+                    promotionStatus: 'PROMOTED',
+                    // Let initializeIdeationBoard handle positions later if needed
+                    // But to be safe, we can put them in a harmless spot or let user organize
+                } as UnifiedOpportunity);
+            }
+        }
+
+        if (hasUpdates) {
+            await prisma.workshopContext.update({
+                where: { workshopId },
+                data: {
+                    intelligenceAnalysis: {
+                        ...currentData,
+                        opportunities: restoredOpportunities
+                    }
+                }
+            });
+            revalidatePath(`/workshop/${workshopId}`);
+            return { success: true, count: promotedOpps.length, message: "Sync complete. Missing items restored." };
+        }
+
+        return { success: true, count: 0, message: "Already in sync." };
+
+    } catch (error) {
+        console.error("Sync Failed", error);
+        return { success: false, error: "Failed to sync" };
+    }
+}

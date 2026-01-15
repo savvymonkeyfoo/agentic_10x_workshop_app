@@ -180,29 +180,15 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                             </div>
 
                             <div className="space-y-3 pb-2">
-                                {/* H1 TITLE + AI BUTTON */}
-                                <div className="flex items-start gap-4">
-                                    <Textarea
-                                        ref={titleRef}
-                                        rows={1}
-                                        className="flex-1 !text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
-                                        placeholder="Opportunity Title"
-                                        value={localCard.title}
-                                        onChange={(e) => handleChange('title', e.target.value)}
-                                    />
-
-                                    {/* ENRICH BUTTON (Relocated) */}
-                                    {onEnrich && (
-                                        <button
-                                            onClick={handleEnrich}
-                                            disabled={isEnriching}
-                                            className="shrink-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 mt-2"
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            {isEnriching ? "Drafting..." : "Generate Solution"}
-                                        </button>
-                                    )}
-                                </div>
+                                {/* H1 TITLE */}
+                                <Textarea
+                                    ref={titleRef}
+                                    rows={1}
+                                    className="!text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
+                                    placeholder="Opportunity Title"
+                                    value={localCard.title}
+                                    onChange={(e) => handleChange('title', e.target.value)}
+                                />
 
                                 {/* DESCRIPTION -> PROBLEM STATEMENT */}
                                 <div className="space-y-1">
@@ -219,8 +205,25 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
 
                                 {/* PROPOSED SOLUTION */}
                                 <div className="space-y-1">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-end mb-1">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
+
+                                        {/* ENRICH BUTTON (Relocated) */}
+                                        {onEnrich && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleEnrich();
+                                                }}
+                                                disabled={isEnriching}
+                                                className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                            >
+                                                <Sparkles className="w-3 h-3" />
+                                                {isEnriching ? "Drafting..." : "Generate Solution"}
+                                            </button>
+                                        )}
                                     </div>
                                     <Textarea
                                         ref={solRef}
