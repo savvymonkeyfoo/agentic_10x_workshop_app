@@ -1,218 +1,127 @@
 # Agentic 10x Workshop Application
 
-A modern, agentic workflow application for managing strategic workshops and opportunities using the **Agentic 10x Protocol**.
+A modern, agentic workflow application for managing strategic workshops, from divergent research to convergent execution, using the **Agentic 10x Protocol**.
 
 ## 🚀 Overview
 
-This application provides a structured interface for facilitating workshops, capturing opportunities, and assessing them against the VRCC (Value, Risk, Complexity, Capability) framework and DFV (Desirability, Feasibility, Viability) metrics. It features a reactive "Input Canvas" with real-time validation, financial modeling, AI-powered recommendations, and strategic visualization.
+This application bridges the gap between **Strategic Divergence** (Research & Ideation) and **Tactical Convergence** (Planning & Execution). It provides a structured interface for facilitating workshops, facilitating deep research, stress-testing ideas, and converting them into execution-ready opportunities.
 
 ### Key Features
 
-- **Opportunity Capture** - Structured input forms with auto-save and completeness tracking
-- **Workflow Builder** - Drag-and-drop phase cards with autonomy level selection (L1-L5)
-- **AI Recommendations** - Gemini-powered capability suggestions and execution plan drafting
-- **Strategic Prioritization** - Matrix and Waves visualizations for portfolio analysis
-- **Canvas Reporting** - A3 PDF export with VRCC Kite charts, DFV diagrams, and ROI calculations
+#### 🧠 Divergent Thinking (Sandbox)
+
+- **Research Interface** - AI-powered "Research Loop" that ingests client context to identifying strategic blind spots.
+- **Ideation Board** - A masonry-style board for mashing up, merging, and stress-testing ideas with AI personas.
+- **Synthetic Stress Testing** - Simulate stakeholder feedback (e.g., "The CFO", "The Security Audit") on specific ideas.
+
+#### 🎯 Convergent Thinking (Workshop)
+
+- **Opportunity Capture** - Structured input forms with auto-save and completeness tracking.
+- **Workflow Builder** - Drag-and-drop phase cards with autonomy level selection (L1-L5).
+- **Strategic Prioritization** - Matrix and Waves visualizations for portfolio analysis.
+- **Canvas Reporting** - A3 PDF export with VRCC Kite charts, DFV diagrams, and ROI calculations.
+
+#### 📜 Project Charter
+
+- **Charter Generation** - Automated generation of project charters based on selected opportunities and workshop context.
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
 - **Language**: TypeScript
-- **Styling**: TailwindCSS
-- **Animations**: Framer Motion
-- **Database**: PostgreSQL
-- **ORM**: Prisma
+- **Styling**: TailwindCSS, Framer Motion, `sonner` for toasts
+- **Database**: PostgreSQL (via Prisma ORM)
+- **Vector Store**: [Pinecone](https://www.pinecone.io/) (for RAG & Research context)
 - **AI**: Google Gemini via [Vercel AI SDK](https://sdk.vercel.ai/)
-- **State Management**: React Hooks & Server Actions
+- **Storage**: Vercel Blob (for file uploads)
 
 ## 📋 Prerequisites
 
-Ensure you have the following installed on your machine:
-
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [npm](https://www.npmjs.com/) (usually comes with Node.js)
-- A running instance of **PostgreSQL** (local or cloud, e.g. [Supabase](https://supabase.com/), [Neon](https://neon.tech/), or local Docker)
-- A **Google AI Studio API Key** (free tier available)
+- [Node.js](https://nodejs.org/) (v18+)
+- [PostgreSQL](https://www.postgresql.org/)
+- **Google AI Studio API Key**
+- **Pinecone API Key** (for Research features)
+- **Vercel Blob Token** (for file uploads)
 
 ## ⚙️ Installation
 
-### 1. Clone the repository
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/savvymonkeyfoo/agentic_10x_workshop_app.git
-cd agentic_10x_workshop_app
-```
-
-### 2. Navigate to the web application directory
-
-```bash
-cd web
-```
-
-### 3. Install dependencies
-
-```bash
+cd agentic_10x_workshop_app/web
 npm install
 ```
 
-### 4. Configure Environment Variables
+### 2. Configure Environment
 
-Copy the example environment file and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-Then edit the `.env` file with your credentials:
+Copy `.env.example` to `.env` and configure:
 
 ```bash
-# web/.env
+# Database
+DATABASE_URL="postgresql://..."
 
-# ============================
-# DATABASE (Required)
-# ============================
-# PostgreSQL connection string
-# Format: postgresql://USER:PASSWORD@HOST:PORT/DATABASE_NAME?schema=public
-DATABASE_URL="postgresql://postgres:password@localhost:5432/workshop_db?schema=public"
+# AI
+GOOGLE_GENERATIVE_AI_API_KEY="AI..."
 
-# ============================
-# AI / GEMINI (Required for AI features)
-# ============================
-# Get your free API key from: https://aistudio.google.com/apikey
-GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-api-key-here"
+# Vector Store (Pinecone)
+PINECONE_API_KEY="pc..."
+PINECONE_INDEX="agentic-10x"
+
+# Storage
+BLOB_READ_WRITE_TOKEN="vercel_blob..."
 ```
 
-#### Getting a Gemini API Key
-
-1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key and paste it into your `.env` file
-
-> **Note**: The free tier includes generous usage limits suitable for development and demos. No credit card required.
-
-### 5. Initialize the Database
-
-Push the Prisma schema to your database and generate the client:
+### 3. Initialize
 
 ```bash
 npx prisma db push
-npx prisma generate
-```
-
-### 6. (Optional) Seed Sample Data
-
-To populate the database with sample workshop data:
-
-```bash
-npm run db:seed
+npm run db:seed  # Optional: Seeds sample workshop data
 ```
 
 ## 🏃‍♂️ Running the Application
-
-Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+Visit [http://localhost:3000](http://localhost:3000).
 
 ## 🧭 Application Workflow
 
-1. **Home** (`/`) - Create or select a workshop
-2. **Capture** (`/workshop/[id]`) - Add opportunities with structured inputs
-3. **Prioritise** (`/workshop/[id]/analysis`) - View Matrix/Waves visualizations
-4. **Canvas** (`/workshop/[id]/reporting`) - Generate A3 PDF reports
-
-## 🤖 AI-Powered Features
-
-The application uses Google Gemini for several intelligent features:
-
-| Feature | Description | Trigger |
-| ------- | ----------- | ------- |
-| **Capability Recommendations** | Suggests missing capabilities based on workflow phases | "Recommend" button in Workflow tab |
-| **Execution Plan Drafting** | Generates Definition of Done, Key Decisions, etc. | "Recommend" button in Execution tab |
-| **Content Optimization** | Polishes and structures canvas text | "AI Polish" button on Canvas page |
-| **Strategic Analysis** | Analyzes portfolio for risks and dependencies | "Analyze" button on Prioritise page |
-
-> **Without an API key**: The application will still function, but AI features will fail gracefully. You can use all core features without AI.
-
-## 🧪 Verification & Utilities
-
-### Verify Data Persistence
-
-```bash
-npx tsx scripts/verify-data.ts
-```
-
-This fetches the most recently updated Opportunity and dumps its raw data to `verification-dump.json` for inspection.
-
-### Run Tests
-
-```bash
-npm test
-```
-
-### Lint Code
-
-```bash
-npm run lint
-```
+1. **Login** - Authenticate to access workspaces.
+2. **Divergent Phase** (`/divergent/...`)
+    - **Research**: Ingest documents, analyze backlog vs. market signals.
+    - **Ideate**: Create, merge, and stress-test ideas on the board.
+    - **Promote**: Select winning ideas to move to the workshop.
+3. **Convergent Phase** (`/workshop/[id]`)
+    - **Capture**: Refine opportunities with structured financial & operational data.
+    - **Prioritise**: Visual analysis (Matrix/Waves).
+    - **Canvas**: Generate detailed reports.
+4. **Charter** - Finalize and export the project charter.
 
 ## 📂 Project Structure
 
 ```text
-web/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── actions/           # Server Actions (AI, CRUD)
-│   │   ├── workshop/[id]/     # Workshop pages
-│   │   └── page.tsx           # Home page
-│   ├── components/
-│   │   ├── analysis/          # Prioritization visualizations
-│   │   ├── reporting/         # Canvas & PDF export
-│   │   ├── shared/            # Reusable chart components
-│   │   ├── ui/                # Generic UI components
-│   │   └── workshop/          # Input forms & navigation
-│   ├── lib/                   # Utilities (Prisma client)
-│   ├── types/                 # TypeScript definitions
-│   └── utils/                 # Helper functions
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── seed.ts               # Sample data seeder
-└── public/                    # Static assets
+web/src/
+├── app/
+│   ├── actions/           # Server Actions
+│   ├── api/               # API Routes
+│   ├── charter/           # Charter generation
+│   ├── divergent/         # Research & Ideation Sandbox
+│   ├── login/             # Authentication
+│   └── workshop/          # Core workshop flow
+├── components/
+│   ├── analysis/          # Matrix/Waves charts
+│   ├── charter/           # Charter components
+│   ├── divergent/         # Ideation board, Research interface
+│   ├── reporting/         # Canvas exports
+│   └── workshop/          # Capture forms & Workflow builder
+└── lib/                   # Utilities (Prisma, AI, Pinecone)
 ```
 
-## 🐛 Troubleshooting
+## 🧪 Verification
 
-### "GOOGLE_GENERATIVE_AI_API_KEY is not set"
-
-Make sure your `.env` file exists in the `web/` directory and contains the API key. Restart the dev server after adding it.
-
-### "Database connection failed"
-
-1. Ensure PostgreSQL is running
-2. Verify your `DATABASE_URL` is correct
-3. Run `npx prisma db push` to create tables
-
-### "Module not found" errors
-
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### Charts not rendering correctly
-
-Clear your browser cache or try an incognito window. The app uses dynamic imports that can sometimes be cached incorrectly.
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- Built with the [Agentic 10x Protocol](https://www.10xworkshop.com/)
-- Powered by [Google Gemini](https://ai.google.dev/)
-- UI inspired by modern design systems
+- **Verify Data**: `npx tsx scripts/verify-data.ts`
+- **Lint**: `npm run lint`
+- **Tests**: `npm test`
