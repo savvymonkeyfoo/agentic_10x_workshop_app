@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 
 const INITIAL_STATE: OpportunityState = {
     projectName: '',
+    description: '', // [NEW] Description specific to the opportunity
     frictionStatement: '',
     strategicHorizon: [], // Default empty
     whyDoIt: '',
@@ -845,6 +846,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 // Map partial DB data to state shape for calculator
                 const mockState = {
                     projectName: opp.projectName,
+                    description: opp.description, // [NEW] Description
                     frictionStatement: opp.frictionStatement,
                     workflowPhases: Array.isArray(opp.workflowPhases) ? opp.workflowPhases : [],
                     definitionOfDone: opp.definitionOfDone,
@@ -936,6 +938,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             // Map DB to State
             setData({
                 projectName: selected.projectName || '',
+                description: selected.description || '', // [NEW] Description
                 frictionStatement: selected.frictionStatement || '',
                 strategicHorizon: selected.strategicHorizon ? selected.strategicHorizon.split(',').map((s: string) => s.trim()) : [],
                 whyDoIt: selected.whyDoIt || '',
@@ -1361,6 +1364,20 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 placeholder="e.g. Invoice Reconciliation Bot"
                                             />
                                         </div>
+
+                                        <div>
+                                            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</label>
+                                            <MarkdownTextarea
+                                                id="description"
+                                                name="description"
+                                                value={data.description}
+                                                onChange={(val) => handleInputChange('description', val)}
+                                                className="min-h-[100px]"
+                                                placeholder="Describe the opportunity..."
+                                                minHeight="100px"
+                                            />
+                                        </div>
+
                                         <div>
                                             <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction Statement</label>
                                             <MarkdownTextarea

@@ -13,6 +13,7 @@ export interface WorkflowPhase {
 export interface OpportunityState {
     // Tab A
     projectName: string;
+    description: string; // [NEW] Description specific to the opportunity
     frictionStatement: string;
     strategicHorizon: string[]; // Changed to array for multi-select, will join on save
     whyDoIt: string; // Stored concatenated string

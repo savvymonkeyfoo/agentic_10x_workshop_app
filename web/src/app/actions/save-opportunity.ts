@@ -12,6 +12,7 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
     const opportunityData = {
         workshopId,
         projectName: data.projectName || "Untitled Opportunity",
+        description: data.description || "",
         frictionStatement: data.frictionStatement || "",
         strategicHorizon: data.strategicHorizon || "",
         whyDoIt: data.whyDoIt || "",
