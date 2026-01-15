@@ -221,10 +221,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     <button
                                         onClick={handleEnrich}
                                         disabled={isEnriching}
-                                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors w-fit"
+                                        className="text-xs font-bold text-white shadow-md shadow-emerald-200 hover:shadow-lg flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full transition-all w-fit mt-1"
                                     >
                                         <Sparkles className="w-3 h-3" />
-                                        {isEnriching ? "Analyzing Context..." : "Enrich with AI"}
+                                        {isEnriching ? "Analyzing Context..." : "Generate Solution & Analysis"}
                                     </button>
                                 )}
                             </div>
