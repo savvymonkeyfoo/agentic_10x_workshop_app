@@ -223,24 +223,56 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
     // --- SELECTION LOGIC ---
 
-    const _toggleSelectionMode = () => {
-        if (isSelectMode) {
-            // Exit Mode -> Clear selection
-            setIsSelectMode(false);
-            setSelectedItems(new Set());
-        } else {
-            setIsSelectMode(true);
-        }
+    // Enter/Exit selection mode - pre-populate from showInCapture state
+    const handleEnterSelectMode = () => {
+        // Pre-populate selection with items already in Capture
+        const alreadyPromoted = opportunities
+            .filter(o => o.showInCapture === true)
+            .map(o => o.originalId);
+        setSelectedItems(new Set(alreadyPromoted));
+        setIsSelectMode(true);
     };
 
-    const handleToggleItem = (id: string) => {
+    const handleExitSelectMode = () => {
+        setIsSelectMode(false);
+        setSelectedItems(new Set());
+    };
+
+    // Toggle item selection and immediately sync to DB
+    const handleToggleItem = async (id: string) => {
+        const opportunity = opportunities.find(o => o.originalId === id);
+        if (!opportunity) return;
+
+        const wasSelected = selectedItems.has(id);
         const newSet = new Set(selectedItems);
-        if (newSet.has(id)) {
+
+        if (wasSelected) {
+            // DESELECT -> Demote from Capture
             newSet.delete(id);
+            setSelectedItems(newSet);
+
+            // Optimistic UI update
+            setOpportunities(prev => prev.map(o =>
+                o.originalId === id ? { ...o, showInCapture: false, promotionStatus: undefined } : o
+            ));
+
+            // Server call
+            await demoteFromCapture({ workshopId, opportunityIds: [opportunity.id] });
+            toast.success(`"${opportunity.title}" removed from Capture`);
         } else {
+            // SELECT -> Promote to Capture
             newSet.add(id);
+            setSelectedItems(newSet);
+
+            // Optimistic UI update
+            setOpportunities(prev => prev.map(o =>
+                o.originalId === id ? { ...o, showInCapture: true, promotionStatus: 'PROMOTED' } : o
+            ));
+
+            // Server call
+            await promoteToCapture({ workshopId, opportunityIds: [opportunity.id] });
+            toast.success(`"${opportunity.title}" added to Capture`);
         }
-        setSelectedItems(newSet);
     };
 
     const handlePromoteSelection = async () => {
@@ -327,16 +359,11 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
     const handleTopBarAction = () => {
         if (isSelectMode) {
-            // If items selected, treat 'Done' as Promote
-            if (selectedItems.size > 0) {
-                handlePromoteSelection();
-            } else {
-                // Zero items -> Just Cancel/Exit
-                setIsSelectMode(false);
-            }
+            // Exit Select Mode
+            handleExitSelectMode();
         } else {
-            // Enter Select Mode
-            setIsSelectMode(true);
+            // Enter Select Mode (pre-populating promoted items)
+            handleEnterSelectMode();
         }
     };
 
@@ -361,10 +388,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                             onClick={handleTopBarAction}
                         >
                             {isSelectMode ? <Check className="w-4 h-4 mr-2" /> : <MousePointer2 className="w-4 h-4 mr-2" />}
-                            {isSelectMode
-                                ? (selectedItems.size > 0 ? `Promote Selected (${selectedItems.size})` : "Done Selecting")
-                                : "Select Ideas"
-                            }
+                            {isSelectMode ? "Done Selecting" : "Select Ideas"}
                         </Button>
 
                         <div className="h-6 w-px bg-slate-200 mx-2" />
@@ -443,50 +467,20 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                     </CanvasBoard>
                 </DndContext>
 
-                {/* FLOATING ACTION BAR */}
-                {selectedItems.size > 0 && (() => {
-                    const selectedOpps = opportunities.filter(o => selectedItems.has(o.originalId));
-                    const hasPromotedInSelection = selectedOpps.some(o => o.showInCapture === true);
-                    const hasUnpromotedInSelection = selectedOpps.some(o => o.showInCapture !== true);
-
-                    return (
-                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                            <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-slate-700">
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
-                                        {selectedItems.size}
-                                    </div>
-                                    <span className="font-semibold text-sm">Ideas Selected</span>
+                {/* FLOATING STATUS BAR - Shows current selection count */}
+                {isSelectMode && selectedItems.size > 0 && (
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                        <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-slate-700">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                                    {selectedItems.size}
                                 </div>
-
-                                {/* DEMOTE BUTTON - Only show if any selected are promoted */}
-                                {hasPromotedInSelection && (
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="bg-transparent border-slate-500 text-slate-300 hover:bg-slate-700 hover:text-white rounded-full px-4 font-bold"
-                                        onClick={handleDemoteSelection}
-                                        disabled={isPromoting}
-                                    >
-                                        Remove from Capture ↩️
-                                    </Button>
-                                )}
-
-                                {/* PROMOTE BUTTON - Only show if any selected are unpromoted */}
-                                {hasUnpromotedInSelection && (
-                                    <Button
-                                        size="sm"
-                                        className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-6 font-bold shadow-lg shadow-blue-900/50"
-                                        onClick={handlePromoteSelection}
-                                        disabled={isPromoting}
-                                    >
-                                        {isPromoting ? "Working..." : "Promote to Capture 🚀"}
-                                    </Button>
-                                )}
+                                <span className="font-semibold text-sm">Ideas in Capture</span>
                             </div>
+                            <span className="text-slate-400 text-xs">Click cards to add/remove</span>
                         </div>
-                    );
-                })()}
+                    </div>
+                )}
 
                 {/* SHARED MODAL FOR EDITING */}
                 <OpportunityModal
