@@ -99,6 +99,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
             if (result.success && result.data) {
                 const updated = {
                     ...localCard,
+                    proposedSolution: result.data.proposedSolution || localCard.proposedSolution,
                     friction: result.data.friction,
                     techAlignment: result.data.techAlignment,
                     strategyAlignment: result.data.strategyAlignment

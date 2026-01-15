@@ -171,6 +171,7 @@ CONTEXT:
 I will provide the Idea and an Enterprise Dossier. Use the Dossier to validate the idea.
 
 OUTPUT JSON: { 
+    "proposedSolution": "string (concise paragraph describing the solution approach)",
     "friction": "string (bullet points of potential challenges)", 
     "techAlignment": "string (bullet points of required tech or alignment)", 
     "strategyAlignment": "string (bullet points of strategic value)" 
