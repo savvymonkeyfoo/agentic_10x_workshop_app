@@ -273,18 +273,43 @@ export async function analyzeBacklogItem(
         opportunity.originalId = item.id;
         opportunity.strategyAlignment = opportunity.strategyAlignment || "- Aligns with core modernisation goals.";
 
-        const currentContext = await prisma.workshopContext.findUnique({ where: { workshopId }, select: { intelligenceAnalysis: true } });
-        const currentData = (currentContext?.intelligenceAnalysis as any) || { opportunities: [] };
-        const cleanOpportunities = (currentData.opportunities || []).filter((o: any) => o.originalId !== item.id);
+        // Save to SQL Opportunity table (not JSON blob)
+        await prisma.opportunity.upsert({
+            where: { id: item.id },
+            update: {
+                projectName: opportunity.title,
+                frictionStatement: opportunity.description,
+                friction: opportunity.friction,
+                techAlignment: opportunity.techAlignment,
+                strategyAlignment: opportunity.strategyAlignment,
+                source: opportunity.source,
+            },
+            create: {
+                id: item.id,
+                workshopId,
+                // Core fields from analysis
+                projectName: opportunity.title,
+                frictionStatement: opportunity.description,
+                friction: opportunity.friction,
+                techAlignment: opportunity.techAlignment,
+                strategyAlignment: opportunity.strategyAlignment,
+                source: opportunity.source,
 
-        await prisma.workshopContext.update({
-            where: { workshopId },
-            data: {
-                intelligenceAnalysis: {
-                    ...currentData,
-                    opportunities: [...cleanOpportunities, opportunity]
-                }
-            }
+                // Required fields with sensible defaults
+                strategicHorizon: '',
+                whyDoIt: '',
+                scoreValue: 3,
+                scoreCapability: 3,
+                scoreComplexity: 3,
+                tShirtSize: 'M',
+                definitionOfDone: '',
+                keyDecisions: '',
+
+                // Visibility: appears in Intelligence + Ideation, NOT in Capture yet
+                showInIdeation: true,
+                showInCapture: false,
+                boardStatus: 'inbox',
+            },
         });
 
         return { success: true, opportunity };
@@ -484,14 +509,28 @@ export async function fetchAnalysisContext(workshopId: string) {
 
 export async function getWorkshopIntelligence(workshopId: string) {
     try {
-        const context = await prisma.workshopContext.findUnique({
+        // Read from SQL Opportunity table (not JSON blob)
+        const opportunities = await prisma.opportunity.findMany({
             where: { workshopId },
-            select: { intelligenceAnalysis: true }
+            orderBy: { createdAt: 'desc' },
         });
-        // TYPE FIX: Cast intelligenceAnalysis to any
-        const data = context?.intelligenceAnalysis as any;
-        return { success: true, opportunities: data?.opportunities || [] };
-    } catch (error) {
+
+        // Map SQL records to the expected UI format
+        const mapped = opportunities.map((opp) => ({
+            id: opp.id,
+            originalId: opp.id,
+            title: opp.projectName || '',
+            description: opp.frictionStatement || '',
+            friction: opp.friction || '',
+            techAlignment: opp.techAlignment || '',
+            strategyAlignment: opp.strategyAlignment || '',
+            source: opp.source || 'CLIENT_BACKLOG',
+            showInIdeation: opp.showInIdeation,
+            showInCapture: opp.showInCapture,
+        }));
+
+        return { success: true, opportunities: mapped };
+    } catch (_error) {
         return { success: false, error: "Failed to load" };
     }
 }
