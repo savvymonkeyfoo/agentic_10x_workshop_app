@@ -11,7 +11,8 @@ import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
 
 export type OpportunityCardData = {
     title: string;
-    description: string;
+    description: string; // The "Problem Statement"
+    proposedSolution?: string; // The "Proposed Solution"
     friction?: string;
     techAlignment?: string;
     strategyAlignment?: string;
@@ -39,7 +40,8 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
 
     // Refs for auto-growing standard textareas
     const titleRef = useRef<HTMLTextAreaElement>(null);
-    const descRef = useRef<HTMLTextAreaElement>(null);
+    const probRef = useRef<HTMLTextAreaElement>(null);
+    const solRef = useRef<HTMLTextAreaElement>(null);
 
     // 1. SYNC STATE
     useEffect(() => {
@@ -63,11 +65,12 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
         if (isOpen && localCard && !isDeleteConfirm) {
             const timer = setTimeout(() => {
                 adjustHeight(titleRef.current);
-                adjustHeight(descRef.current);
+                adjustHeight(probRef.current);
+                adjustHeight(solRef.current);
             }, 10);
             return () => clearTimeout(timer);
         }
-    }, [isOpen, localCard?.title, localCard?.description, isDeleteConfirm]);
+    }, [isOpen, localCard?.title, localCard?.description, localCard?.proposedSolution, isDeleteConfirm]);
 
     if (!localCard) return null;
 
@@ -186,16 +189,29 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     onChange={(e) => handleChange('title', e.target.value)}
                                 />
 
-                                {/* DESCRIPTION -> SOLUTION */}
+                                {/* PROBLEM STATEMENT (Legacy Description) */}
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Problem Statement</Label>
+                                    <Textarea
+                                        ref={probRef}
+                                        rows={1}
+                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
+                                        placeholder="Describe the problem..."
+                                        value={localCard.description || ''}
+                                        onChange={(e) => handleChange('description', e.target.value)}
+                                    />
+                                </div>
+
+                                {/* PROPOSED SOLUTION (New Field) */}
                                 <div className="space-y-1">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
                                     <Textarea
-                                        ref={descRef}
+                                        ref={solRef}
                                         rows={1}
                                         className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
                                         placeholder="Describe the proposed solution..."
-                                        value={localCard.description}
-                                        onChange={(e) => handleChange('description', e.target.value)}
+                                        value={localCard.proposedSolution || ''}
+                                        onChange={(e) => handleChange('proposedSolution', e.target.value)}
                                     />
                                 </div>
 

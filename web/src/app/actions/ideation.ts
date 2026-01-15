@@ -137,6 +137,7 @@ export async function createWorkshopOpportunity(
             originalId: `work-${Date.now()}`,
             title: cardData.title || "Untitled Idea",
             description: cardData.description || "",
+            proposedSolution: cardData.proposedSolution, // Map Solution
             source: "WORKSHOP_GENERATED",
             boardStatus: 'inbox',
             boardPosition: {

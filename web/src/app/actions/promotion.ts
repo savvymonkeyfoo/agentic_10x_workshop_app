@@ -32,9 +32,9 @@ export async function promoteToCapture(workshopId: string, opportunities: Unifie
                 data: {
                     workshopId,
                     projectName: opp.title,
-                    description: opp.description || '', // Map Description
-                    // Map legacy 'friction' to 'frictionStatement' as primary
-                    frictionStatement: opp.friction || '',
+                    description: opp.proposedSolution || '', // Map Proposed Solution to Description
+                    // Map Problem (ideation.description) to Friction Statement.
+                    frictionStatement: opp.description || opp.friction || '',
                     whyDoIt: '',
 
                     // Rich Intelligence Fields

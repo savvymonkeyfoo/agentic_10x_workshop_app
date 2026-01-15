@@ -37,6 +37,7 @@ interface GenerationResult {
 interface OpportunityCardData {
     title: string;
     description: string;
+    proposedSolution?: string;
     friction?: string;
     techAlignment?: string;
     strategyAlignment?: string;

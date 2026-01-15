@@ -3,7 +3,8 @@ export interface UnifiedOpportunity {
     id: string; // The "card-id" used in the UI
     originalId: string; // The ID from the Analysis or Backlog
     title: string;
-    description: string;
+    description: string; // The Problem / Backlog Description
+    proposedSolution?: string; // The Proposed Solution
     source: "CLIENT_BACKLOG" | "MARKET_SIGNAL" | "WORKSHOP_GENERATED" | "MERGED";
 
     // Intelligence Layer (Rich Text)
