@@ -6,8 +6,12 @@ export async function getOpportunities(workshopId: string) {
     if (!workshopId) return [];
 
     try {
+        // CRITICAL FIX: Only return opportunities that have been promoted to Capture
         const opportunities = await prisma.opportunity.findMany({
-            where: { workshopId },
+            where: {
+                workshopId,
+                showInCapture: true  // Only show items that have been explicitly promoted
+            },
             orderBy: { updatedAt: 'desc' }
         });
         return opportunities;
