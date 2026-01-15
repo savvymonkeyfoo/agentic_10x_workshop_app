@@ -56,7 +56,7 @@ const TIER_DISPLAY = {
     STRATEGIC_BET: { label: '🌟 Strategic Bet', class: 'bg-amber-100 text-amber-800 border-amber-300' }
 } as const;
 
-export function IdeaCardDetail({ card, onSave, onClose }: IdeaCardDetailProps) {
+export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDetailProps) {
     // Local state for editing
     const [title, setTitle] = useState(card.title);
     const [description, setDescription] = useState(card.description);
@@ -90,10 +90,10 @@ export function IdeaCardDetail({ card, onSave, onClose }: IdeaCardDetailProps) {
         }, 1000); // 1-second debounce
 
         return () => clearTimeout(timer);
-    }, [title, description, source, cluster, score, scorecardData, effectiveTier]);
+    }, [title, description, source, cluster, score, scorecardData, effectiveTier, onSave]);
 
     // Auto-save callback - does NOT close the modal
-    const handleScorecardAutoSave = (scores: Record<string, number>, avgScore: number, tier: string) => {
+    const handleScorecardAutoSave = (scores: Record<string, number>, avgScore: number, _tier: string) => {
         setScorecardData(scores);
         setScore(avgScore);
         // Do NOT close modal here - auto-save keeps modal open

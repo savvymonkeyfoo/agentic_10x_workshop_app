@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";

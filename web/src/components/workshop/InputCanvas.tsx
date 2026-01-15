@@ -501,7 +501,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
     const [isDraftingExec, setIsDraftingExec] = useState(false);
     const [showOverwriteModal, setShowOverwriteModal] = useState(false);
     const [isEnriching, setIsEnriching] = useState<EnrichmentMode | null>(null);
-    const [suggestedCapabilities, setSuggestedCapabilities] = useState<string[]>([]);
+    const [_suggestedCapabilities, setSuggestedCapabilities] = useState<string[]>([]);
 
     const handleEnrichment = async (mode: EnrichmentMode, e?: React.MouseEvent) => {
         if (e) {
@@ -531,11 +531,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     toast.success("CVP Drafted ✨");
 
                 } else if (mode === 'WORKFLOW' && res.type === 'json') {
-                    // @ts-ignore
                     setData(prev => ({ ...prev, workflowPhases: res.data }));
                     toast.success("Workflow Generated ✨");
                 } else if (mode === 'EXECUTION' && res.type === 'markdown') {
-                    // @ts-ignore
                     setData(prev => ({ ...prev, executionPlan: res.data }));
                     toast.success("Execution Plan Drafted ✨");
                 } else if (mode === 'BUSINESS_CASE' && (res.type === 'markdown' || res.type === 'business_case_full')) {

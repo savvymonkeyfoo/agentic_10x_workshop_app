@@ -32,6 +32,7 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
         if (value !== currentStr) {
             setItems(parse(value));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally sync only on external value changes
     }, [value]);
 
     const handleChange = (index: number, newVal: string) => {

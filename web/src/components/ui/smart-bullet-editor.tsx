@@ -31,6 +31,7 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
         if (value && items.length === 1 && items[0] === '' && value.length > 0) {
             setItems(parseValue(value));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only sync on initial hydration
     }, [value]);
 
     // Force auto-grow on every render/update

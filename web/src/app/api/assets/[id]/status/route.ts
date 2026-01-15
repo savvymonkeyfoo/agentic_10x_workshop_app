@@ -18,7 +18,7 @@ export async function GET(
         }
 
         return NextResponse.json({ status: asset.status });
-    } catch (error) {
+    } catch (_error) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
