@@ -182,6 +182,41 @@ const SmartTextarea = ({
     );
 };
 
+// --- HELPER COMPONENT: Simple Auto-Growing Textarea for Titles ---
+const TitleTextarea = ({
+    value,
+    onChange,
+    placeholder,
+    className
+}: {
+    value: string;
+    onChange: (val: string) => void;
+    placeholder: string;
+    className?: string;
+}) => {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    // Auto-Resize on EVERY value change
+    React.useLayoutEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto'; // Reset to shrink if needed
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [value]);
+
+    return (
+        <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={className}
+            placeholder={placeholder}
+            rows={1}
+            onPointerDown={(e) => e.stopPropagation()} // Important for dnd-kit dragging
+        />
+    );
+};
+
 // --- Subcomponent: Phase Card (Deprecated/Unused if loop is inline, but kept for safety reference) ---
 const AUTONOMY_LABELS: Record<string, string> = {
     'L1': 'Human executes, AI has no role.',
@@ -565,6 +600,118 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             toast.error("Enrichment error");
         } finally {
             setIsEnriching(null);
+        }
+    };
+
+    // --- MAGIC FILL LOGIC ---
+    const [magicFillStatus, setMagicFillStatus] = useState({
+        workflow: 'idle' as 'idle' | 'loading' | 'complete',
+        execution: 'idle' as 'idle' | 'loading' | 'complete',
+        businessCase: 'idle' as 'idle' | 'loading' | 'complete'
+    });
+    const [isMagicFilling, setIsMagicFilling] = useState(false);
+
+    const handleMagicFill = async () => {
+        if (!data.projectName || !data.whyDoIt) {
+            toast.error("Please fill in Title and Description first.");
+            return;
+        }
+
+        setIsMagicFilling(true);
+        toast.info("Magic Fill Started! Analyzing Opportunity...");
+
+        try {
+            // PHASE 1: WORKFLOW
+            setMagicFillStatus(prev => ({ ...prev, workflow: 'loading' }));
+
+            // Safe Mode: Only fill if empty
+            if (data.workflowPhases.length === 0) {
+                const wfResult = await agenticEnrichment(workshopId, 'WORKFLOW', {
+                    title: data.projectName,
+                    description: data.whyDoIt,
+                    currentData: data
+                }) as any;
+
+                if (wfResult.success && wfResult.data) {
+                    setData(prev => {
+                        if (prev.workflowPhases.length > 0) return prev;
+                        return { ...prev, workflowPhases: wfResult.data };
+                    });
+                }
+            }
+            setMagicFillStatus(prev => ({ ...prev, workflow: 'complete' }));
+
+            // PHASE 2: EXECUTION
+            setMagicFillStatus(prev => ({ ...prev, execution: 'loading' }));
+
+            const [narrativeResult, execParamsResult] = await Promise.all([
+                agenticEnrichment(workshopId, 'EXECUTION', {
+                    title: data.projectName,
+                    description: data.whyDoIt,
+                    currentData: data
+                }),
+                agenticEnrichment(workshopId, 'EXECUTION_PARAMS', {
+                    title: data.projectName,
+                    description: data.whyDoIt,
+                    currentData: data
+                })
+            ]) as any[];
+
+            setData(prev => {
+                let next = { ...prev };
+                if (!next.executionPlan && narrativeResult.success) {
+                    next.executionPlan = narrativeResult.data;
+                }
+                if (execParamsResult.success && execParamsResult.data) {
+                    const p = execParamsResult.data;
+                    if (!next.definitionOfDone) next.definitionOfDone = p.definitionOfDone;
+                    if (!next.keyDecisions) next.keyDecisions = p.keyDecisions;
+                    if (!next.changeManagement) next.changeManagement = p.changeManagement;
+                    if (!next.trainingRequirements) next.trainingRequirements = p.trainingRequirements;
+                    if (!next.aiOpsRequirements) next.aiOpsRequirements = p.aiOpsRequirements;
+                    if (!next.systemGuardrails) next.systemGuardrails = p.systemGuardrails;
+                }
+                return next;
+            });
+            setMagicFillStatus(prev => ({ ...prev, execution: 'complete' }));
+
+            // PHASE 3: BUSINESS CASE
+            setMagicFillStatus(prev => ({ ...prev, businessCase: 'loading' }));
+
+            const bcResult = await agenticEnrichment(workshopId, 'BUSINESS_CASE', {
+                title: data.projectName,
+                description: data.whyDoIt,
+                currentData: data
+            }) as any;
+
+            if (bcResult.success && bcResult.data) {
+                setData(prev => {
+                    let next = { ...prev };
+                    if (!next.businessCase) {
+                        next.businessCase = bcResult.data;
+                    }
+                    if (bcResult.params) {
+                        const p = bcResult.params;
+                        if (!next.tShirtSize) next.tShirtSize = p.tShirtSize;
+                        if (next.benefitRevenue === undefined) next.benefitRevenue = p.benefitRevenue;
+                        if (next.benefitCostAvoidance === undefined) next.benefitCostAvoidance = p.benefitCostAvoidance;
+                        if (next.benefitEfficiency === undefined) next.benefitEfficiency = p.benefitEfficiency;
+                        if (next.benefitEstCost === undefined) next.benefitEstCost = p.benefitEstCost;
+                    }
+                    return next;
+                });
+            }
+            setMagicFillStatus(prev => ({ ...prev, businessCase: 'complete' }));
+            toast.success("Magic Fill Complete! 🚀");
+
+        } catch (error) {
+            console.error("Magic Fill Error", error);
+            toast.error("Something went wrong during Magic Fill");
+        } finally {
+            setIsMagicFilling(false);
+            setTimeout(() => {
+                setMagicFillStatus({ workflow: 'idle', execution: 'idle', businessCase: 'idle' });
+            }, 3000);
         }
     };
 
@@ -1061,6 +1208,11 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-brand-blue' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
                                 >
+                                    {/* Loading Indicator for Tab */}
+                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+
                                     {tab.label}
                                     {isTabValid && <span className="w-1.5 h-1.5 rounded-full bg-status-safe" />}
 
@@ -1076,6 +1228,27 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             {activeTab === 'A' && (
                                 <motion.div key="A" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
+                                        {/* Magic Fill Banner */}
+                                        <div className="flex justify-between items-center bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                                    <Sparkles size={16} className="animate-pulse" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-bold text-indigo-900 dark:text-indigo-200">Magic Fill</div>
+                                                    <div className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">Auto-generate Workflow, Execution, and Value Case from your description.</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleMagicFill}
+                                                disabled={isMagicFilling}
+                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isMagicFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                {isMagicFilling ? "Analysing..." : "Start Magic Fill"}
+                                            </button>
+                                        </div>
+
                                         <div>
                                             <label htmlFor="projectName" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Opportunity Name</label>
                                             <input
@@ -1238,13 +1411,11 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         </div>
                                                                     ) : (
                                                                         <>
-                                                                            <input
-                                                                                type="text"
+                                                                            <TitleTextarea
                                                                                 value={phase.name}
-                                                                                onChange={(e) => updatePhase(phase.id, 'name', e.target.value)}
-                                                                                className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50"
+                                                                                onChange={(val) => updatePhase(phase.id, 'name', val)}
+                                                                                className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50 resize-none overflow-hidden"
                                                                                 placeholder="Phase Name..."
-                                                                                onPointerDown={(e) => e.stopPropagation()}
                                                                             />
                                                                             <button
                                                                                 onPointerDown={(e) => e.stopPropagation()}
