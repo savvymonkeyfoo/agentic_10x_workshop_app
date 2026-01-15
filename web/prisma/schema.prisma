@@ -24,7 +24,6 @@ model Workshop {
   
   // Divergent Extension Relations
   context              WorkshopContext?
-  ideaCards            IdeaCard[]
   assets               Asset[]
 }
 
@@ -165,41 +164,6 @@ model WorkshopContext {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-}
-
-model IdeaCard {
-  id              String   @id @default(uuid())
-  workshopId      String
-  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  
-  title           String
-  description     String   @db.Text
-  tier            String   // Enum: STRATEGIC_BET, TABLE_STAKES, AGENTIC_AUTO
-  source          String   // Enum: CLIENT_BACKLOG, MARKET_SIGNAL, WORKSHOP_GENERATED
-  status          String   @default("ACTIVE") // ACTIVE, ARCHIVED, PROMOTED
-  
-  // Canvas Position (Whiteboard X/Y)
-  xPosition       Float    @default(0)
-  yPosition       Float    @default(0)
-  
-  // Metadata
-  simulationResult  Json?
-  genealogyMetadata Json?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  versions        IdeaVersion[]
-}
-
-model IdeaVersion {
-  id              String   @id @default(uuid())
-  ideaCardId      String
-  ideaCard        IdeaCard @relation(fields: [ideaCardId], references: [id], onDelete: Cascade)
-  
-  timestamp       DateTime @default(now())
-  descriptionSnapshot String @db.Text
-  changeReason    String?
 }
 
 // 5. RAG Engine (New)
