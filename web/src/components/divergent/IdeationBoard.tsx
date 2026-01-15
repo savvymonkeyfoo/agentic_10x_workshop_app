@@ -99,6 +99,9 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [isPromoting, setIsPromoting] = useState(false);
 
+    // DELETE CONFIRMATION STATE
+    const [itemToDelete, setItemToDelete] = useState<UnifiedOpportunity | null>(null);
+
     // Sensors for DND
     const sensors = useSensors(
         useSensor(MouseSensor, {
@@ -385,6 +388,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                                         isSelectMode={isSelectMode}
                                         isSelected={selectedItems.has(item.originalId)}
                                         onToggleSelect={() => handleToggleItem(item.originalId)}
+                                        onDelete={() => setItemToDelete(item)}
                                     />
                                 </DraggableCard>
                             );
@@ -425,6 +429,46 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                     onEnrich={handleEnrich}
                     onDelete={handleDelete}
                 />
+
+                {/* DELETE CONFIRMATION DIALOG */}
+                <Dialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Delete Opportunity?</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center justify-center py-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                <AlertTriangle className="w-8 h-8 text-red-600" strokeWidth={2.5} />
+                            </div>
+                            <p className="text-slate-500 mb-8 leading-relaxed">
+                                Are you sure you want to delete <span className="font-bold text-slate-800">"{itemToDelete?.title || 'this item'}"</span>?
+                                <br />
+                                This action cannot be undone.
+                            </p>
+                            <div className="flex gap-4 w-full">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setItemToDelete(null)}
+                                    className="flex-1 font-bold text-slate-600"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => {
+                                        if (itemToDelete) {
+                                            handleDelete(itemToDelete);
+                                            setItemToDelete(null);
+                                        }
+                                    }}
+                                    className="flex-1 font-bold shadow-lg shadow-red-200"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" /> Yes, Delete
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </WorkshopPageShell>
     );
