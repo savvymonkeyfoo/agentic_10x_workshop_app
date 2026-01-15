@@ -1382,6 +1382,19 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 type="text"
                                                 value={data.projectName}
                                                 onChange={(e) => handleInputChange('projectName', e.target.value)}
+                                                onBlur={() => {
+                                                    // Auto-create on blur if new opportunity with 3+ char name
+                                                    if (!opportunityId && data.projectName.trim().length >= 3) {
+                                                        performSave(data);
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    // Also create on Enter key for keyboard users
+                                                    if (e.key === 'Enter' && !opportunityId && data.projectName.trim().length >= 3) {
+                                                        e.preventDefault();
+                                                        performSave(data);
+                                                    }
+                                                }}
                                                 className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none transition-all"
                                                 placeholder="e.g. Invoice Reconciliation Bot"
                                             />

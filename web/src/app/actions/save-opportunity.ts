@@ -68,13 +68,20 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
             update: opportunityData,
             create: {
                 ...opportunityData,
-                id: opportunityId // Force specific ID to keep client sync
+                id: opportunityId, // Force specific ID to keep client sync
+                // Visibility: if restoring, keep current flags (handled by upsert logic)
+                showInCapture: true,
+                showInIdeation: false
             }
         });
     } else {
-        // Create new (DB generates ID)
+        // Create new (DB generates ID) - Created from Capture page
         result = await prisma.opportunity.create({
-            data: opportunityData
+            data: {
+                ...opportunityData,
+                showInCapture: true,   // Visible in Capture (where it's being created)
+                showInIdeation: false  // NOT from Ideation (allows permanent delete)
+            }
         });
     }
 
