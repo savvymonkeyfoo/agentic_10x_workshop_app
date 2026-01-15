@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+// revalidatePath removed - not currently used
 
 /**
  * Update the X/Y position of an IdeaCard on the whiteboard canvas.

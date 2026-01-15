@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     DndContext,
     DragEndEvent,
@@ -13,9 +13,9 @@ import {
 } from '@dnd-kit/core';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, ArrowLeft, RefreshCw, Layers, Plus, Sparkles, MousePointer2, Check } from 'lucide-react';
+import { LayoutGrid, ArrowLeft, RefreshCw, Plus, MousePointer2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
 import { cn } from '@/lib/utils';
 import { UnifiedOpportunity } from '@/types/opportunity';
@@ -92,7 +92,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
     const router = useRouter();
     const [opportunities, setOpportunities] = useState<UnifiedOpportunity[]>([]);
     const [selectedCard, setSelectedCard] = useState<UnifiedOpportunity | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
+    const [_isSaving, _setIsSaving] = useState(false);
 
     // SELECTION MODE STATE
     const [isSelectMode, setIsSelectMode] = useState(false);
@@ -213,7 +213,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
     // --- SELECTION LOGIC ---
 
-    const toggleSelectionMode = () => {
+    const _toggleSelectionMode = () => {
         if (isSelectMode) {
             // Exit Mode -> Clear selection
             setIsSelectMode(false);

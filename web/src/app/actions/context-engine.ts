@@ -45,7 +45,7 @@ interface OpportunityCardData {
     originalId: string;
 }
 
-interface IntelligenceAnalysisData {
+interface _IntelligenceAnalysisData {
     opportunities: OpportunityCardData[];
 }
 
@@ -68,7 +68,7 @@ export async function preWarmContext(workshopId: string) {
         const namespace = getWorkshopNamespace(workshopId);
         await namespace.describeIndexStats();
         return { success: true };
-    } catch (error) {
+    } catch (_error) {
         return { success: false };
     }
 }
@@ -340,7 +340,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
             data: {
                 projectName: opportunity.title,
                 frictionStatement: opportunity.description,
-                description: opportunity.proposedSolution,
+                // Note: proposedSolution maps to frictionStatement - no separate description field in schema
                 friction: opportunity.friction,
                 techAlignment: opportunity.techAlignment,
                 strategyAlignment: opportunity.strategyAlignment,

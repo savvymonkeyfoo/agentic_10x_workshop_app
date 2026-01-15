@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit, AlertTriangle, Layers, ShieldCheck, HelpCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -16,9 +16,9 @@ import { generateBrief, analyzeBacklogItem, hydrateBacklog, getWorkshopIntellige
 import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { OpportunityModal, OpportunityCardData } from '@/components/workshop/OpportunityModal';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+// Dialog components removed - not currently used
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { RotateCcw, AlertCircle, Sparkles as SparklesIcon } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 
 interface ResearchInterfaceProps {

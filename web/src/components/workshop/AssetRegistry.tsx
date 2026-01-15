@@ -1,7 +1,7 @@
 'use client';
 
 import { Asset } from '@prisma/client';
-import { Loader2, Trash2, FileText, CheckCircle2, UploadCloud } from 'lucide-react';
+import { Loader2, Trash2, FileText, UploadCloud } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
