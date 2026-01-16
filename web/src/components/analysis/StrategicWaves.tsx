@@ -116,7 +116,7 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
     };
 
     return (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
             <defs>
                 {/* Standard Grey Marker */}
                 <marker id="wave-arrow-grey" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
