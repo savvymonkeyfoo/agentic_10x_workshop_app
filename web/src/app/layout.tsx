@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Merriweather, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { StyleProvider } from "@/components/providers/style-provider";
 import { ThemePicker } from "@/components/settings/ThemePicker";
@@ -11,6 +11,15 @@ import logoDark from '@/assets/images/logo_dark_transparent.png';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  variable: "--font-merriweather",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+});
 
 export const metadata: Metadata = {
   title: "Agentic 10x Workshop",
@@ -23,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${merriweather.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body className="font-sans" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"

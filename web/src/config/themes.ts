@@ -2,22 +2,26 @@ export type ThemeConfig = {
     value: string;
     label: string;
     description: string;
+    color: string;
 }
 
 export const themes: ThemeConfig[] = [
     {
         value: "capgemini",
-        label: "Capgemini",
-        description: "Corporate, trustworthy navy and cyan."
+        label: "Default",
+        description: "Capgemini Corporate",
+        color: "bg-[#0070AD]"
     },
     {
-        value: "anthropic",
-        label: "Warm",
-        description: "Paper-like tones with serif typography."
+        value: "claude",
+        label: "Claude",
+        description: "Digital Manuscript. Warm and literary.",
+        color: "bg-[#D97757]"
     },
     {
         value: "linear",
         label: "Modern",
-        description: "High contrast technical dark mode."
+        description: "Linear High-Contrast",
+        color: "bg-[#5E6AD2]"
     }
 ]

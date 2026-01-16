@@ -15,6 +15,8 @@ import {
 import { useStyle } from "@/components/providers/style-provider"
 import { cn } from "@/lib/utils"
 
+import { themes } from "@/config/themes"
+
 export function ThemePicker() {
     const { setTheme, theme } = useTheme()
     const { style, setStyle } = useStyle()
@@ -61,32 +63,28 @@ export function ThemePicker() {
                     <div className="space-y-2">
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-0">THEME STYLE</DropdownMenuLabel>
                         <div className="grid grid-cols-1 gap-2">
-                            {[
-                                { id: 'capgemini', label: 'Default', sub: 'Capgemini Corporate', color: 'bg-[#0070AD]' },
-                                { id: 'anthropic', label: 'Warm', sub: 'Anthropic Serenity', color: 'bg-[#D97757]' },
-                                { id: 'linear', label: 'Modern', sub: 'Linear High-Contrast', color: 'bg-[#5E6AD2]' }
-                            ].map((item) => (
+                            {themes.map((item) => (
                                 <div
-                                    key={item.id}
-                                    onClick={() => setStyle(item.id as any)}
+                                    key={item.value}
+                                    onClick={() => setStyle(item.value as any)}
                                     className={cn(
                                         "relative flex items-center justify-between px-3 py-3 rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
-                                        style === item.id
+                                        style === item.value
                                             ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                                             : "border-border"
                                     )}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={cn("h-8 w-8 rounded-full shadow-sm flex items-center justify-center", item.color)}>
-                                            {style === item.id && <div className="h-2.5 w-2.5 bg-white rounded-full" />}
+                                            {style === item.value && <div className="h-2.5 w-2.5 bg-white rounded-full" />}
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-sm font-semibold">{item.label}</span>
-                                            <span className="text-xs text-muted-foreground">{item.sub}</span>
+                                            <span className="text-xs text-muted-foreground">{item.description}</span>
                                         </div>
                                     </div>
 
-                                    {style === item.id && (
+                                    {style === item.value && (
                                         <div className="h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px]">
                                             ✓
                                         </div>
