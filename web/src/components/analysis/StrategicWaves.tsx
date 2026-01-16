@@ -79,58 +79,63 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
                 const el = document.getElementById(`card-${node.id}`);
                 if (el) {
                     const rect = el.getBoundingClientRect();
-                    // We need coordinates relative to the CONTAINER, but usually overlays are absolute.
-                    // The easiest way for a precise overlay in a scrolling/relative container is to find the Container's rect too.
-                    // Or just rely on offsetLeft/Top if the parent is relative.
-                    const container = el.offsetParent as HTMLElement;
+                    // We need coordinates relative to the CONTAINER
+                    const container = document.getElementById('waves-container');
                     if (container) {
-                        // This logic assumes `el.offsetParent` is the column, and the column is inside the relative grid.
-                        // Actually, DraggableCard's offsetParent is often the Column's inner div or the Columns div.
-
-                        // Let's use getBoundingClientRect relative to the ROOT container of this component.
-                        // We will capture the root container ref in the parent and pass a measuring callback,
-                        // or simpler: Just assume full absolute positioning relative to the main relative wrapper.
+                        const containerRect = container.getBoundingClientRect();
+                        newPos[node.id] = {
+                            x: rect.left - containerRect.left,
+                            y: rect.top - containerRect.top,
+                            // @ts-ignore
+                            width: rect.width,
+                            // @ts-ignore
+                            height: rect.height
+                        };
                     }
                 }
             });
+            setPositions(newPos);
         };
 
         // Wait for layout
-        const timer = setTimeout(() => {
-            const container = document.getElementById('waves-container');
-            if (!container) return;
-            const containerRect = container.getBoundingClientRect();
-
-            const newPos: Record<string, { x: number, y: number }> = {};
-            nodes.forEach(node => {
-                const el = document.getElementById(`card-${node.id}`);
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    // Center-Right of Source
-                    // Center-Left of Target
-
-                    newPos[node.id] = {
-                        // Relative to container
-                        x: rect.left - containerRect.left,
-                        y: rect.top - containerRect.top,
-                        // Store dimensions too if needed, but for now just raw rect relative to container
-                        // @ts-ignore
-                        width: rect.width,
-                        // @ts-ignore
-                        height: rect.height
-                    };
-                }
-            });
-            setPositions(newPos);
-        }, 100); // Small delay for rendering
+        const timer = setTimeout(updatePositions, 100);
 
         return () => clearTimeout(timer);
-    }, [nodes, edges]); // Re-run when nodes move
+    }, [nodes, edges]);
+
+    const getTargetColor = (targetId: string) => {
+        const target = nodes.find(n => n.id === targetId);
+        const rank = target?.rank || target?.sequenceRank || 4;
+        switch (rank) {
+            case 1: return "#10b981"; // Emerald-500
+            case 2: return "#3b82f6"; // Blue-500
+            case 3: return "#8b5cf6"; // Violet-500
+            case 4: return "#94a3b8"; // Slate-400
+            default: return "#94a3b8";
+        }
+    };
 
     return (
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
             <defs>
-                <marker id="wave-arrow" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                {/* Standard Grey Marker */}
+                <marker id="wave-arrow-grey" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                    <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
+                </marker>
+                {/* Wave 1 Emerald */}
+                <marker id="wave-arrow-1" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                    <polygon points="0 0, 6 2, 0 4" fill="#10b981" />
+                </marker>
+                {/* Wave 2 Blue */}
+                <marker id="wave-arrow-2" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                    <polygon points="0 0, 6 2, 0 4" fill="#3b82f6" />
+                </marker>
+                {/* Wave 3 Violet */}
+                <marker id="wave-arrow-3" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                    <polygon points="0 0, 6 2, 0 4" fill="#8b5cf6" />
+                </marker>
+                {/* Wave 4 Slate */}
+                <marker id="wave-arrow-4" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
                 </marker>
             </defs>
@@ -152,16 +157,21 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
                 // @ts-ignore
                 const ey = end.y + end.height / 2;
 
+                // Determine color based on TARGET rank
+                const targetNode = nodes.find(n => n.id === edge.to);
+                const rank = targetNode?.rank || targetNode?.sequenceRank || 4;
+                const color = getTargetColor(edge.to);
+                const markerId = `url(#wave-arrow-${rank})`;
+
                 return (
                     <path
                         key={`w-${edge.from}-${edge.to}`}
                         d={getWaveCurve({ x: sx, y: sy }, { x: ex, y: ey })}
                         fill="none"
-                        stroke="#94a3b8"
-                        strokeWidth="1.5"
-                        strokeDasharray="4 4"
-                        markerEnd="url(#wave-arrow)"
-                        opacity="0.5"
+                        stroke={color}
+                        strokeWidth="2"
+                        markerEnd={markerId}
+                        opacity="0.6"
                     />
                 );
             })}
