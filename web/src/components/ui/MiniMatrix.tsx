@@ -19,12 +19,24 @@ export function MiniMatrix({ complexity, value }: MiniMatrixProps) {
             {/* Background Labels */}
             <div className="absolute inset-0 pointer-events-none flex flex-col p-4">
                 <div className="flex-1 flex justify-between items-start">
-                    <span className="text-[8px] uppercase font-bold text-slate-300">Quick Win</span>
-                    <span className="text-[8px] uppercase font-bold text-slate-300">Major Project</span>
+                    <div className="flex flex-col items-start">
+                        <span className="text-[8px] uppercase font-bold text-slate-300">Quick Win</span>
+                        <span className="text-[6px] text-slate-400">High Val, Low Cplx</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[8px] uppercase font-bold text-slate-300">Major Project</span>
+                        <span className="text-[6px] text-slate-400">High Val, High Cplx</span>
+                    </div>
                 </div>
                 <div className="flex-1 flex justify-between items-end">
-                    <span className="text-[8px] uppercase font-bold text-slate-300">Incremental</span>
-                    <span className="text-[8px] uppercase font-bold text-slate-300">Money Pit</span>
+                    <div className="flex flex-col items-start">
+                        <span className="text-[8px] uppercase font-bold text-slate-300">Tactical</span>
+                        <span className="text-[6px] text-slate-400">Low Val, Low Cplx</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[8px] uppercase font-bold text-slate-300">Deprioritise</span>
+                        <span className="text-[6px] text-slate-400">Low Val, High Cplx</span>
+                    </div>
                 </div>
             </div>
 

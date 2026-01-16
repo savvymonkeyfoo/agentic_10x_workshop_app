@@ -32,10 +32,23 @@ export function MatrixChart({ x, y, className = '' }: MatrixChartProps) {
                 <div />
             </div>
             {/* Labels */}
-            <span className="absolute top-1 left-2 text-[7px] font-bold text-gray-900 uppercase">Quick Win</span>
-            <span className="absolute top-1 right-2 text-[7px] font-bold text-gray-900 uppercase">Major Bet</span>
-            <span className="absolute bottom-1 left-2 text-[7px] font-bold text-gray-900 uppercase">Fill-In</span>
-            <span className="absolute bottom-1 right-2 text-[7px] font-bold text-gray-900 uppercase">Deprioritise</span>
+            {/* Labels */}
+            <div className="absolute top-1 left-2 flex flex-col items-start">
+                <span className="text-[7px] font-bold text-gray-900 uppercase">Quick Win</span>
+                <span className="text-[6px] text-gray-500">High Val, Low Cplx</span>
+            </div>
+            <div className="absolute top-1 right-2 flex flex-col items-end">
+                <span className="text-[7px] font-bold text-gray-900 uppercase">Major Project</span>
+                <span className="text-[6px] text-gray-500">High Val, High Cplx</span>
+            </div>
+            <div className="absolute bottom-1 left-2 flex flex-col items-start">
+                <span className="text-[7px] font-bold text-gray-900 uppercase">Tactical</span>
+                <span className="text-[6px] text-gray-500">Low Val, Low Cplx</span>
+            </div>
+            <div className="absolute bottom-1 right-2 flex flex-col items-end">
+                <span className="text-[7px] font-bold text-gray-900 uppercase">Deprioritise</span>
+                <span className="text-[6px] text-gray-500">Low Val, High Cplx</span>
+            </div>
             {/* The Dot */}
             <div
                 className="absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 translate-y-1/2 transition-all duration-500"
