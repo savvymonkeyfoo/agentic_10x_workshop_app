@@ -1583,7 +1583,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                 onClick={() => {
                                                                     if (isZoomedOut) setIsZoomedOut(false);
                                                                 }}
-                                                                className={`bg-card rounded-sm shadow-md border-t border-border flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none text-card-foreground
+                                                                // STYLING: "Post-it" Note Style (Primary Tint)
+                                                                className={`bg-primary/10 border border-primary/20 rounded-md shadow-md flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none text-card-foreground
                                                                     ${isZoomedOut
                                                                         ? 'w-[150px] h-[150px] p-3 justify-center items-center text-center cursor-pointer hover:shadow-lg hover:border-primary/50' // OVERVIEW STYLE
                                                                         : 'w-[320px] p-4' // DETAIL STYLE
@@ -1591,7 +1592,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             >
 
                                                                 {/* HEADER (Title) */}
-                                                                <div className={`w-full ${isZoomedOut ? 'flex items-center justify-center h-full' : 'border-b border-border pb-2 mb-1 flex justify-between items-start'}`}>
+                                                                <div className={`w-full ${isZoomedOut ? 'flex items-center justify-center h-full' : 'border-b border-primary/10 pb-2 mb-1 flex justify-between items-start'}`}>
                                                                     {isZoomedOut ? (
                                                                         <div className="font-kalam font-bold text-card-foreground text-sm leading-tight line-clamp-4 select-none">
                                                                             {phase.name || "Untitled Phase"}
