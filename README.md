@@ -169,3 +169,15 @@ web/src/
 - Conditional demote (back to Ideation) vs. delete (permanent) based on item origin
 - Auto-create opportunities when user enters a name on Capture page
 - Fixed race conditions between blur and autosave triggers
+
+### Analysis & Visualization (v2.1)
+
+- **True Dependency Waves**: Visualizes dependencies between projects in the Waves view.
+  - **Solid Colored Lines**: Lines connect dependent cards, colored by the *destination wave* (Emerald, Blue, Violet, Slate) to clearly indicate direction.
+  - **Smart Geometry**: Arrowheads anchor precisely to card edges for clean readability.
+- **AI Strategist**: Auto-generates dependency graphs (Requires/Enables) with strategic reasoning.
+- **Standardized Strategic Matrix**: Consistent terminology and definitions across all views (Matrix, Sidebar, Canvas):
+  - **Quick Win** (High Value, Low Complexity)
+  - **Major Project** (High Value, High Complexity)
+  - **Tactical** (Low Value, Low Complexity)
+  - **Deprioritise** (Low Value, High Complexity)
