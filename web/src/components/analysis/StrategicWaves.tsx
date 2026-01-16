@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { DndContext, useDraggable, useDroppable, DragOverlay, DragEndEvent } from '@dnd-kit/core';
 import { updateProjectWave } from '@/app/actions/update-wave';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 // Type definitions
 interface ProjectNode {
@@ -255,8 +256,8 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
                             autoFocus
                         />
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/50 rounded transition-colors">Cancel</button>
-                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded shadow-sm transition-colors">Save Override</button>
+                            <Button variant="ghost" onClick={() => setModalOpen(false)} className="text-muted-foreground hover:bg-muted/50">Cancel</Button>
+                            <Button variant="default" onClick={handleSave}>Save Override</Button>
                         </div>
                     </div>
                 </div>

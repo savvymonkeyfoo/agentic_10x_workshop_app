@@ -393,7 +393,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
 
                         <div className="h-6 w-px bg-slate-200 mx-2" />
 
-                        <Button onClick={handleNewIdea} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all">
+                        <Button onClick={handleNewIdea} className="shadow-sm hover:shadow-md transition-all">
                             <Plus className="w-4 h-4 mr-2" /> New Idea
                         </Button>
 

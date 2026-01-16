@@ -433,7 +433,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                                     <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto text-purple-600"><Sparkles className="w-8 h-8" /></div>
                                     <h2 className="text-2xl font-black text-slate-800">Ready to Analyse Backlog?</h2>
                                     <p className="text-slate-500">The Deep-Chain Engine will forensically audit each item, cross-reference it with our research, and generate strategic opportunity cards.</p>
-                                    <Button size="lg" onClick={handleStartAnalysis} className="h-14 px-8 text-lg bg-purple-600 hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all hover:scale-105">
+                                    <Button variant="ai" size="lg" onClick={handleStartAnalysis} className="h-14 px-8 text-lg shadow-xl shadow-purple-500/20 hover:scale-105 transition-all">
                                         <Zap className="mr-2 h-5 w-5" /> Initialize Deep-Chain Sequence
                                     </Button>
                                     <div className="flex items-center justify-center gap-4 text-xs font-mono text-slate-400">

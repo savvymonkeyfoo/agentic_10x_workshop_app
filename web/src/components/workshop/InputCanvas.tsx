@@ -17,6 +17,7 @@ import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVA
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
+import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
 import { BulletListEditor } from '@/components/ui/BulletListEditor';
 import { MarkdownTextarea } from '@/components/ui/MarkdownTextarea';
@@ -1393,14 +1394,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     <div className="text-[10px] text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
                                                 </div>
                                             </div>
-                                            <button
+                                            <Button
+                                                variant="ai"
+                                                size="sm"
                                                 onClick={handleMagicFill}
                                                 disabled={isMagicFilling}
-                                                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-sm transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="gap-2 text-xs font-bold"
                                             >
                                                 {isMagicFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                                 {isMagicFilling ? "Analysing..." : "Start Magic Fill"}
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         <div>
@@ -1504,14 +1507,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                                     Customer Value Proposition
                                                 </h3>
-                                                <button
-                                                    onClick={(e) => handleEnrichment('VALUE_PROP', e)}
+                                                <Button
+                                                    variant="ai"
+                                                    size="sm"
+                                                    onClick={(e: React.MouseEvent) => handleEnrichment('VALUE_PROP', e)}
                                                     disabled={isEnriching === 'VALUE_PROP'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                                    className="gap-2 text-xs font-bold"
                                                 >
                                                     {isEnriching === 'VALUE_PROP' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'VALUE_PROP' ? "Drafting..." : "Generate CVP"}
-                                                </button>
+                                                </Button>
                                             </div>
 
                                             <div role="group" aria-labelledby="cvp-label">

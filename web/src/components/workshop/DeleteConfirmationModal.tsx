@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { deleteWorkshop } from '@/app/actions/delete-workshop';
+import { Button } from '@/components/ui/button';
 
 interface DeleteConfirmationModalProps {
     workshopId: string;
@@ -40,19 +41,21 @@ export function DeleteConfirmationModal({ workshopId, clientName, onClose }: Del
                 </p>
 
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="flex-1 py-3 text-muted-foreground font-bold hover:bg-muted rounded-xl transition-colors"
+                        className="flex-1 text-muted-foreground font-bold hover:bg-muted"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="destructive"
                         onClick={handleDelete}
                         disabled={deleting}
-                        className="flex-1 py-3 bg-destructive text-destructive-foreground font-bold rounded-xl shadow-lg hover:shadow-red-500/30 transition-all disabled:opacity-50"
+                        className="flex-1 shadow-lg hover:shadow-red-500/30 transition-all font-bold"
                     >
                         {deleting ? 'Deleting...' : 'Delete'}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

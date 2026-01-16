@@ -167,11 +167,11 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     };
 
-    const sectionTitleClass = "text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-200 pb-1 block";
-    const bodyTextClass = "text-sm leading-relaxed text-slate-700";
+    const sectionTitleClass = "text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 border-b border-border pb-1 block";
+    const bodyTextClass = "text-sm leading-relaxed text-foreground";
 
     return (
-        <div id="workspace-wrapper" className="w-full flex flex-col items-center py-8 bg-slate-100/50 dark:bg-black/20 min-h-full overflow-hidden relative font-sans">
+        <div id="workspace-wrapper" className="w-full flex flex-col items-center py-8 bg-muted/20 min-h-full overflow-hidden relative font-sans">
 
 
 
@@ -187,16 +187,16 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                 {/* A3 Content */}
                 <div
                     id="canvas-export-target"
-                    className="w-full h-full bg-white shadow-2xl grid grid-cols-[380px_1fr] overflow-hidden text-slate-800 border border-slate-200"
+                    className="w-full h-full bg-card shadow-2xl grid grid-cols-[380px_1fr] overflow-hidden text-card-foreground border border-border"
                 >
                     {/* --- LEFT SIDEBAR --- */}
-                    <div className="bg-slate-50 border-r border-slate-200 p-10 flex flex-col gap-10">
+                    <div className="bg-muted/50 border-r border-border p-10 flex flex-col gap-10">
                         <div className="shrink-0 w-full pr-4">
                             <EditableText
                                 id={data.id}
                                 field="projectName"
                                 value={data.projectName}
-                                className="text-3xl font-black uppercase tracking-tight text-brand-navy block leading-tight text-left break-words whitespace-normal"
+                                className="text-3xl font-black uppercase tracking-tight text-primary block leading-tight text-left break-words whitespace-normal"
                                 placeholder="UNTITLED PROJECT"
                             />
                         </div>
@@ -264,8 +264,8 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                     <div className="flex flex-col h-full">
 
                         {/* --- TOP DASHBOARD: 4-Column Strategic Profile (Height: 220px) --- */}
-                        <div className="h-[220px] border-b border-slate-200 p-4">
-                            <div className="text-[9px] font-bold text-slate-400 uppercase mb-3">Strategic Profile</div>
+                        <div className="h-[220px] border-b border-border p-4">
+                            <div className="text-[9px] font-bold text-muted-foreground uppercase mb-3">Strategic Profile</div>
 
                             {/* Main Container: 4 Columns, Equal Height */}
                             <div className="grid grid-cols-4 gap-4 h-[170px] items-stretch">
@@ -334,10 +334,10 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                         </div>
 
                         {/* Row 2: Workflow (Post-its) */}
-                        <div className="h-[240px] border-b border-slate-200 bg-slate-50/50 p-6 flex flex-col">
+                        <div className="h-[240px] border-b border-border bg-muted/30 p-6 flex flex-col">
                             <div className="flex items-center gap-2 mb-2 px-4">
-                                <Layers size={16} className="text-slate-400" />
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">The Workflow Engine</h3>
+                                <Layers size={16} className="text-muted-foreground" />
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">The Workflow Engine</h3>
                             </div>
                             <div className="flex-1 w-full overflow-hidden">
                                 <StaticWorkflow phases={data.workflowPhases as WorkflowPhase[]} />
@@ -345,7 +345,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                         </div>
 
                         {/* Row 3: The Bento Box */}
-                        <div className="flex-1 grid grid-cols-4 divide-x bg-white border-b border-slate-200">
+                        <div className="flex-1 grid grid-cols-4 divide-x bg-card border-b border-border">
                             {/* Box 1: DoD */}
                             <div className="p-8 flex flex-col gap-2">
                                 <div className="flex items-center gap-2 text-green-600 mb-2">
@@ -411,7 +411,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                             </span>
                                         ))}
                                         {(!data.capabilitiesMissing || data.capabilitiesMissing.length === 0) && (
-                                            <span className="text-xs text-slate-300 italic">None</span>
+                                            <span className="text-xs text-muted-foreground italic">None</span>
                                         )}
                                     </div>
                                 </div>
@@ -426,7 +426,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                             </span>
                                         ))}
                                         {(!data.capabilitiesExisting || data.capabilitiesExisting.length === 0) && (
-                                            <span className="text-xs text-slate-300 italic">None</span>
+                                            <span className="text-xs text-muted-foreground italic">None</span>
                                         )}
                                     </div>
                                 </div>

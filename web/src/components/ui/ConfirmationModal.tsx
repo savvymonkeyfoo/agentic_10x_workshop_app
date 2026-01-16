@@ -43,7 +43,7 @@ export function ConfirmationModal({
                     <Button variant="outline" onClick={onClose} disabled={isLoading}>
                         {cancelLabel}
                     </Button>
-                    <Button onClick={onConfirm} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700">
+                    <Button onClick={onConfirm} disabled={isLoading} variant="default">
                         {isLoading ? 'Processing...' : confirmLabel}
                     </Button>
                 </DialogFooter>

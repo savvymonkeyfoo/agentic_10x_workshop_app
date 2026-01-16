@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { CharterPDF } from '@/components/charter/CharterPDF';
 import { getCharterData } from '@/app/actions/get-charter';
+import { Button } from '@/components/ui/button';
 
 // Note: In real app, we fetch server side and pass as props. 
 // For simplicity in this iteration, we'll fetch on mount or use a server action.
@@ -43,14 +44,14 @@ export default function CharterPage() {
 
                 <PDFDownloadLink document={<CharterPDF data={data} />} fileName={`Charter-${data.id}.pdf`}>
                     {({ loading: pdfLoading }) => (
-                        <button className="px-6 py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                        <Button size="lg" className="shadow-lg hover:shadow-xl transition-all gap-2">
                             {pdfLoading ? 'Preparing PDF...' : 'Export PDF'}
                             {!pdfLoading && (
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                             )}
-                        </button>
+                        </Button>
                     )}
                 </PDFDownloadLink>
             </header>

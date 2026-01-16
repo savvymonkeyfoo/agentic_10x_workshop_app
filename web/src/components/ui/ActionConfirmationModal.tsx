@@ -3,6 +3,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 interface ActionModalProps {
     isOpen: boolean;
@@ -62,20 +63,22 @@ export function ActionConfirmationModal({
                         </div>
 
                         <div className="flex justify-end gap-3 mt-6">
-                            <button
+                            <Button
+                                variant="ghost"
                                 onClick={onClose}
                                 disabled={isLoading}
-                                className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
+                                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="default"
                                 onClick={onConfirm}
                                 disabled={isLoading}
-                                className="px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                className="gap-2 shadow-sm"
                             >
                                 {isLoading ? 'Processing...' : confirmLabel}
-                            </button>
+                            </Button>
                         </div>
                     </motion.div>
                 </div>

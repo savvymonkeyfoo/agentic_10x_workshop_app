@@ -35,7 +35,7 @@
 
     --radius: 0.5rem;
 
-    /* Font assignments */
+    /* Font Abstractions (Default: Inter) */
     --font-heading: var(--font-inter);
     --font-body: var(--font-inter);
 
@@ -112,10 +112,6 @@
     --input: 20 5.9% 90%;
     --ring: 20 14.3% 4.1%;
     --radius: 0.75rem;
-
-    /* Font assignments */
-    --font-heading: var(--font-inter);
-    --font-body: var(--font-inter);
   }
 
   /* ANTHROPIC DARK */
@@ -184,9 +180,6 @@
     --ring: 252 56% 57%;
     --radius: 0.3rem;
     /* Tighter radius */
-
-    --font-heading: var(--font-inter);
-    --font-body: var(--font-inter);
   }
 
   /* LINEAR DARK */

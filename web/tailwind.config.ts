@@ -64,8 +64,8 @@ const config: Config = {
 				}
 			},
 			fontFamily: {
-				sans: ['var(--font-body)', 'Inter', 'system-ui', 'sans-serif'],
-				heading: ['var(--font-heading)', 'Inter', 'system-ui', 'sans-serif'],
+				sans: ['var(--font-body)', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+				heading: ['var(--font-heading)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
