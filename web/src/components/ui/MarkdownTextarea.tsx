@@ -53,7 +53,7 @@ export function MarkdownTextarea({
                 onBlur={() => setIsEditing(false)}
                 placeholder={placeholder}
                 className={cn(
-                    'w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-brand-cyan outline-none transition-all',
+                    'w-full bg-input/50 border border-input rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all text-foreground',
                     className
                 )}
                 style={{ minHeight }}
@@ -65,14 +65,14 @@ export function MarkdownTextarea({
         <div
             onClick={() => setIsEditing(true)}
             className={cn(
-                'w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 cursor-text hover:border-blue-300 transition-all',
-                !hasContent && 'text-slate-400',
+                'w-full bg-input/50 border border-input rounded-lg p-3 cursor-text hover:border-ring transition-all',
+                !hasContent && 'text-muted-foreground',
                 className
             )}
             style={{ minHeight }}
         >
             {hasContent ? (
-                <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-800 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-slate-700">
+                <article className="prose dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-foreground prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:my-2 prose-p:text-foreground prose-ul:my-2 prose-ul:text-foreground prose-li:my-1 prose-strong:text-foreground">
                     <ReactMarkdown>{value}</ReactMarkdown>
                 </article>
             ) : (

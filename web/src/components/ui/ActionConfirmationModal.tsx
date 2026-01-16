@@ -39,7 +39,7 @@ export function ActionConfirmationModal({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
                     />
 
                     {/* Modal Content */}
@@ -47,15 +47,15 @@ export function ActionConfirmationModal({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative z-10 overflow-hidden"
+                        className="bg-card rounded-2xl shadow-2xl w-full max-w-md p-6 relative z-10 overflow-hidden border border-border"
                     >
                         <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-                                <AlertCircle className="w-5 h-5 text-indigo-600" />
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <AlertCircle className="w-5 h-5 text-primary" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-                                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                                <h3 className="text-lg font-bold text-foreground">{title}</h3>
+                                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                                     {description}
                                 </p>
                             </div>
@@ -65,14 +65,14 @@ export function ActionConfirmationModal({
                             <button
                                 onClick={onClose}
                                 disabled={isLoading}
-                                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={onConfirm}
                                 disabled={isLoading}
-                                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg shadow-sm transition-colors flex items-center gap-2"
                             >
                                 {isLoading ? 'Processing...' : confirmLabel}
                             </button>

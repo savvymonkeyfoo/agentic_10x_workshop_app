@@ -80,7 +80,7 @@ export function AIStrategistPanel({
     const hasData = displayNarrative || displaySequence.length > 0;
 
     const renderContent = (text: string) => {
-        if (!text) return <p className="text-slate-400 italic">No analysis available.</p>;
+        if (!text) return <p className="text-muted-foreground italic">No analysis available.</p>;
 
         // Convert inline bullet characters to paragraph breaks (no bullets, just spacing)
         // This handles cases where AI outputs "text. • Item1 • Item2" 
@@ -89,30 +89,30 @@ export function AIStrategistPanel({
             .trim();
 
         return (
-            <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-700 prose-p:my-3 prose-strong:text-slate-700">
+            <article className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-foreground prose-p:my-3 prose-strong:text-foreground">
                 <ReactMarkdown>{processedText}</ReactMarkdown>
             </article>
         );
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-2xl w-[420px] overflow-hidden">
-            <header className="p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800">
+        <div className="flex flex-col h-full bg-card dark:bg-card border-l border-border dark:border-border shadow-2xl w-[420px] overflow-hidden">
+            <header className="p-6 border-b border-border dark:border-border bg-muted/30">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-sm border border-primary/20">
+                        <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white">Agentic Council Recommendation</h2>
+                        <h2 className="text-lg font-bold text-foreground">Agentic Council Recommendation</h2>
                     </div>
                 </div>
 
                 {!hasData && !isLoading && (
                     <button
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                        className="w-full mt-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
                     >
                         <span>Generate Strategy</span>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,7 +124,7 @@ export function AIStrategistPanel({
                 {hasData && (
                     <button
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-2 text-indigo-600 hover:bg-indigo-50 font-semibold rounded-lg border border-indigo-200 transition-all text-sm"
+                        className="w-full mt-4 py-2 text-primary hover:bg-primary/10 font-semibold rounded-lg border border-primary/20 transition-all text-sm"
                     >
                         ↻ Re-analyse
                     </button>
@@ -134,14 +134,14 @@ export function AIStrategistPanel({
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {isLoading && (
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-indigo-600">
-                            <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="flex items-center gap-3 text-primary">
+                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                             <span className="text-sm font-semibold">Analyzing portfolio...</span>
                         </div>
                         <div className="space-y-3 animate-pulse">
-                            <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                            <div className="h-20 bg-slate-100 rounded-xl"></div>
-                            <div className="h-20 bg-slate-100 rounded-xl"></div>
+                            <div className="h-4 bg-muted rounded w-3/4"></div>
+                            <div className="h-20 bg-muted/50 rounded-xl"></div>
+                            <div className="h-20 bg-muted/50 rounded-xl"></div>
                         </div>
                     </div>
                 )}
@@ -152,8 +152,8 @@ export function AIStrategistPanel({
                         {/* Executive Summary */}
                         {displayNarrative && (
                             <div className="mb-6">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Executive Summary</h3>
-                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-xl border border-indigo-100 dark:border-slate-700">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Executive Summary</h3>
+                                <p className="text-sm text-foreground/90 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border">
                                     {displayNarrative}
                                 </p>
                             </div>
@@ -162,7 +162,7 @@ export function AIStrategistPanel({
                         {/* Council Analysis (Expandable) */}
                         {(displayDependencies || displayRisks) && (
                             <details className="mb-6 group">
-                                <summary className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 cursor-pointer list-none flex items-center gap-2">
+                                <summary className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 cursor-pointer list-none flex items-center gap-2">
                                     <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
@@ -170,16 +170,16 @@ export function AIStrategistPanel({
                                 </summary>
                                 <div className="space-y-4 mt-3 pl-6">
                                     {displayDependencies && (
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-5 rounded-r-lg shadow-sm mb-4">
-                                            <h4 className="text-blue-700 dark:text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">Dependency Analysis</h4>
+                                        <div className="bg-blue-500/10 border-l-4 border-blue-500 p-5 rounded-r-lg shadow-sm mb-4">
+                                            <h4 className="text-blue-600 dark:text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">Dependency Analysis</h4>
                                             <div className="text-sm">
                                                 {renderContent(displayDependencies)}
                                             </div>
                                         </div>
                                     )}
                                     {displayRisks && (
-                                        <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-5 rounded-r-lg shadow-sm mb-6">
-                                            <h4 className="text-amber-700 dark:text-amber-400 font-bold uppercase text-xs tracking-widest mb-3">Risk Mitigation Strategy</h4>
+                                        <div className="bg-amber-500/10 border-l-4 border-amber-500 p-5 rounded-r-lg shadow-sm mb-6">
+                                            <h4 className="text-amber-600 dark:text-amber-400 font-bold uppercase text-xs tracking-widest mb-3">Risk Mitigation Strategy</h4>
                                             <div className="text-sm">
                                                 {renderContent(displayRisks)}
                                             </div>
@@ -191,9 +191,9 @@ export function AIStrategistPanel({
 
                         {/* Execution Sequence - Grouped by Wave */}
                         <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center justify-between">
                                 <span>Execution Waves</span>
-                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">Optimised</span>
+                                <span className="px-2 py-0.5 bg-green-500/10 text-green-600 rounded text-[10px]">Optimised</span>
                             </h3>
 
                             {/* Group items by rank */}
@@ -211,21 +211,21 @@ export function AIStrategistPanel({
                                     <div key={waveNum} className="mb-4">
                                         {/* Wave Header */}
                                         <div className="flex items-center gap-2 mb-2">
-                                            <div className={`w-6 h-6 rounded-lg ${waveColors[waveNum - 1]} flex items-center justify-center text-white text-xs font-bold`}>
+                                            <div className={`w-6 h-6 rounded-lg ${waveColors[waveNum - 1]} flex items-center justify-center text-primary-foreground text-xs font-bold`}>
                                                 {waveNum}
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                                 {waveNames[waveNum - 1]}
                                             </span>
                                             {waveItems.length > 1 && (
-                                                <span className="text-[10px] text-slate-400 ml-auto">
+                                                <span className="text-[10px] text-muted-foreground ml-auto">
                                                     ⇄ Parallel
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Wave Items */}
-                                        <div className="space-y-2 pl-2 border-l-2 border-slate-100 dark:border-slate-700 ml-3">
+                                        <div className="space-y-2 pl-2 border-l-2 border-border ml-3">
                                             {waveItems.map((item: SequenceItem, index: number) => {
                                                 // Find dependencies
                                                 const requires = edges
@@ -254,38 +254,38 @@ export function AIStrategistPanel({
                                                         initial={{ opacity: 0, x: -10 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: index * 0.05 }}
-                                                        className="group bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                                                        className="group bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                                                     >
                                                         <summary className="flex items-center gap-2 p-2.5 cursor-pointer list-none select-none">
                                                             <div className="flex-1 min-w-0">
-                                                                <h4 className="font-semibold text-slate-800 dark:text-gray-100 text-sm truncate">{item.projectName}</h4>
+                                                                <h4 className="font-semibold text-foreground text-sm truncate">{item.projectName}</h4>
                                                             </div>
-                                                            <svg className="w-4 h-4 text-slate-400 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            <svg className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7 7" />
                                                             </svg>
                                                         </summary>
-                                                        <div className="px-3 pb-3 pt-1 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700">
+                                                        <div className="px-3 pb-3 pt-1 bg-muted/30 border-t border-border">
                                                             {/* Dependency Links */}
                                                             {(requires.length > 0 || enables.length > 0) && (
-                                                                <div className="mb-3 flex flex-col gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                                                                <div className="mb-3 flex flex-col gap-2 pb-3 border-b border-border">
                                                                     {requires.length > 0 && (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded w-fit">REQUIRES</span>
+                                                                            <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.5 rounded w-fit">REQUIRES</span>
                                                                             {requires.map((req, i) => (
-                                                                                <div key={i} className="text-xs text-slate-600 dark:text-slate-400 pl-1 border-l-2 border-amber-200 ml-1">
+                                                                                <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-amber-500/30 ml-1">
                                                                                     <span className="font-semibold">{req.name}</span>
-                                                                                    {req.reason && <span className="block text-[10px] text-slate-500 italic mt-0.5">"{req.reason}"</span>}
+                                                                                    {req.reason && <span className="block text-[10px] text-muted-foreground italic mt-0.5">"{req.reason}"</span>}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
                                                                     )}
                                                                     {enables.length > 0 && (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded w-fit">ENABLES</span>
+                                                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.5 rounded w-fit">ENABLES</span>
                                                                             {enables.map((enb, i) => (
-                                                                                <div key={i} className="text-xs text-slate-600 dark:text-slate-400 pl-1 border-l-2 border-emerald-200 ml-1">
+                                                                                <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-emerald-500/30 ml-1">
                                                                                     <span className="font-semibold">{enb.name}</span>
-                                                                                    {enb.reason && <span className="block text-[10px] text-slate-500 italic mt-0.5">"{enb.reason}"</span>}
+                                                                                    {enb.reason && <span className="block text-[10px] text-muted-foreground italic mt-0.5">"{enb.reason}"</span>}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
@@ -293,8 +293,8 @@ export function AIStrategistPanel({
                                                                 </div>
                                                             )}
 
-                                                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Strategic Logic</p>
-                                                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                            <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Strategic Logic</p>
+                                                            <p className="text-xs text-muted-foreground leading-relaxed">
                                                                 {item.rationale || "No rationale provided."}
                                                             </p>
                                                         </div>

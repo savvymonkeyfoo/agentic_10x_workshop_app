@@ -31,8 +31,8 @@ const TShirtIcon = ({ size, isActive, scale }: { size: string; isActive: boolean
         {/* T-Shirt Shape */}
         <path
             d="M10 4L3 10L6 14L10 12V40H30V12L34 14L37 10L30 4H26C26 6.20914 23.3137 8 20 8C16.6863 8 14 6.20914 14 4H10Z"
-            fill={isActive ? '#1BB1E7' : '#E2E8F0'}
-            stroke={isActive ? '#0891B2' : '#94A3B8'}
+            fill={isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted))'}
+            stroke={isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}
             strokeWidth="2"
             strokeLinejoin="round"
             className="transition-colors duration-200"
@@ -43,7 +43,7 @@ const TShirtIcon = ({ size, isActive, scale }: { size: string; isActive: boolean
             y="26"
             textAnchor="middle"
             dominantBaseline="middle"
-            className={`font-bold text-[10px] transition-colors duration-200 ${isActive ? 'fill-white' : 'fill-slate-500'}`}
+            className={`font-bold text-[10px] transition-colors duration-200 ${isActive ? 'fill-primary-foreground' : 'fill-muted-foreground'}`}
             style={{ fontSize: 10 / scale }}
         >
             {size}
@@ -61,8 +61,8 @@ export function TShirtSizeSelector({ value, onChange }: TShirtSizeSelectorProps)
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onChange(size)}
                     className={`relative cursor-pointer transition-all duration-200 ${value === size
-                            ? 'drop-shadow-lg'
-                            : 'opacity-70 hover:opacity-100'
+                        ? 'drop-shadow-lg'
+                        : 'opacity-70 hover:opacity-100'
                         }`}
                     title={`Size ${size}`}
                 >

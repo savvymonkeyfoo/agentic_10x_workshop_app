@@ -29,16 +29,16 @@ interface WorkshopPageShellProps {
  */
 export function WorkshopPageShell({ header, children, className }: WorkshopPageShellProps) {
     return (
-        <div className="min-h-screen bg-[var(--bg-core)] text-[var(--text-primary)] font-sans flex flex-col relative">
+        <div className="min-h-screen bg-background text-foreground font-sans flex flex-col relative">
             {/* 1. Global Header Injection - Sticky with blur */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
+            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
                 {header}
             </div>
 
             {/* 2. The Standardized "Fluid" Container */}
             <main className="grid gap-6 flex-1 pb-8 pt-8 px-8 w-full">
                 {/* 3. The Standardized "Glass Card" */}
-                <div className={`glass-panel p-8 flex flex-col h-full min-h-[calc(100vh-140px)] ${className || ''}`}>
+                <div className={`bg-card/50 backdrop-blur-xl border border-border rounded-2xl shadow-xl p-8 flex flex-col h-full min-h-[calc(100vh-140px)] ${className || ''}`}>
                     {children}
                 </div>
             </main>

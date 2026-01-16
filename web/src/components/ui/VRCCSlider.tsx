@@ -54,18 +54,18 @@ export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSli
     return (
         <div className="w-full mb-6">
             <div className="flex justify-between mb-2 items-baseline">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
                 <div className="text-right">
-                    <span className="text-sm font-bold text-brand-navy">{value} / 5</span>
+                    <span className="text-sm font-bold text-foreground">{value} / 5</span>
                 </div>
             </div>
 
             {/* Track Container */}
-            <div className="relative h-4 rounded-full bg-slate-200" ref={constraintsRef}>
+            <div className="relative h-4 rounded-full bg-secondary" ref={constraintsRef}>
 
                 {/* Fill Gradient */}
                 <div
-                    className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan"
+                    className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-primary to-accent"
                     style={{ width: `${getPercent(value)}%` }}
                 />
 
@@ -86,7 +86,7 @@ export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSli
 
                 {/* Visual Thumb for User */}
                 <div
-                    className="absolute top-1/2 -ml-3 w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 pointer-events-none z-10"
+                    className="absolute top-1/2 -ml-3 w-6 h-6 rounded-full bg-background shadow-md border border-border pointer-events-none z-10"
                     style={{
                         left: `${getPercent(value)}%`,
                         transform: 'translateY(-50%)'
@@ -97,7 +97,7 @@ export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSli
 
             {/* Rubric Label (Dynamic) */}
             <div className="mt-2 text-center h-4">
-                <span key={value} className="text-xs font-medium text-brand-blue animate-in fade-in slide-in-from-top-1 duration-200 block">
+                <span key={value} className="text-xs font-medium text-primary animate-in fade-in slide-in-from-top-1 duration-200 block">
                     {rubricText}
                 </span>
             </div>
@@ -106,8 +106,8 @@ export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSli
             <div className="flex justify-between mt-1 px-1">
                 {[1, 2, 3, 4, 5].map(tick => (
                     <div key={tick} className="flex flex-col items-center">
-                        <div className="h-1 w-px bg-slate-300 mb-1"></div>
-                        <span className="text-[10px] text-slate-400">{tick}</span>
+                        <div className="h-1 w-px bg-muted-foreground/30 mb-1"></div>
+                        <span className="text-[10px] text-muted-foreground">{tick}</span>
                     </div>
                 ))}
             </div>

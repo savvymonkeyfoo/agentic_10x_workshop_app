@@ -99,7 +99,7 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
     return (
         <div className="flex flex-col gap-1 w-full">
             {label && (
-                <label htmlFor={id} className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
                     {label}
                 </label>
             )}
@@ -107,7 +107,7 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
                 {items.map((item, i) => (
                     <div key={i} className="flex gap-2 items-start group w-full">
                         {/* The Bullet - Fixed Width, preventing wrap under */}
-                        <span className="text-slate-400 font-bold mt-[4px] select-none text-sm">•</span>
+                        <span className="text-muted-foreground font-bold mt-[4px] select-none text-sm">•</span>
 
                         {/* The Input - Flex Grow */}
                         <textarea
@@ -119,7 +119,7 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
                             onKeyDown={(e) => handleKeyDown(e, i)}
                             rows={1}
                             placeholder={i === 0 ? placeholder : ''}
-                            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 leading-relaxed resize-none overflow-hidden placeholder-slate-300 p-0 m-0"
+                            className="flex-1 bg-transparent border-none outline-none text-sm text-foreground leading-relaxed resize-none overflow-hidden placeholder:text-muted-foreground/50 p-0 m-0 font-sans"
                             style={{ minHeight: '24px' }}
                         />
                     </div>

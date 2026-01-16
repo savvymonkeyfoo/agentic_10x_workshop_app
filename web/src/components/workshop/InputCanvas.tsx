@@ -159,7 +159,7 @@ const SmartTextarea = ({
 
     return (
         <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <label htmlFor={id} className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider block mb-1">
+            <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
                 {label}
             </label>
             <textarea
@@ -176,7 +176,7 @@ const SmartTextarea = ({
                     // Allow override or use default yellow
                     props.className
                         ? props.className
-                        : "w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700 font-medium"
+                        : "w-full text-sm leading-relaxed bg-muted/50 border-b border-border focus:border-primary outline-none resize-none overflow-hidden min-h-[28px] placeholder-muted-foreground/40 text-foreground font-medium"
                 }
                 placeholder={placeholder}
                 rows={1}
@@ -411,15 +411,15 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
     };
 
     return (
-        <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+        <div className="space-y-4 bg-muted/30 dark:bg-muted/10 p-4 rounded-xl border border-dashed border-border">
             {/* Live Preview (Moved to Top) */}
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-black/20 p-4 rounded border border-slate-200 dark:border-slate-700 leading-relaxed shadow-sm">
-                &quot;{value || <span className="text-slate-400 italic font-normal">Start typing below to build your value proposition...</span>}&quot;
+            <div className="text-sm font-medium text-foreground bg-card p-4 rounded border border-border leading-relaxed shadow-sm">
+                &quot;{value || <span className="text-muted-foreground italic font-normal">Start typing below to build your value proposition...</span>}&quot;
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">As a [Role]...</label>
+                    <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">As a [Role]...</label>
                     <textarea
                         ref={roleRef}
                         id="vp_role"
@@ -427,12 +427,12 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.role}
                         onChange={(e) => handleInput(e, 'role')}
-                        className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none resize-none overflow-hidden min-h-[38px]"
+                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. Insurance Broker"
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">I want to [Outcome]...</label>
+                    <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">I want to [Outcome]...</label>
                     <textarea
                         ref={outcomeRef}
                         id="vp_outcome"
@@ -440,12 +440,12 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.outcome}
                         onChange={(e) => handleInput(e, 'outcome')}
-                        className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none resize-none overflow-hidden min-h-[38px]"
+                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. Submit a request via email..."
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">With [Solution]...</label>
+                    <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">With [Solution]...</label>
                     <textarea
                         ref={solutionRef}
                         id="vp_solution"
@@ -453,12 +453,12 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.solution}
                         onChange={(e) => handleInput(e, 'solution')}
-                        className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none resize-none overflow-hidden min-h-[38px]"
+                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. an Agentic Workflow"
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">So that [Need]...</label>
+                    <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">So that [Need]...</label>
                     <textarea
                         ref={needRef}
                         id="vp_need"
@@ -466,7 +466,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.need}
                         onChange={(e) => handleInput(e, 'need')}
-                        className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none resize-none overflow-hidden min-h-[38px]"
+                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. I have a quote in under 2 hours."
                     />
                 </div>
@@ -1222,7 +1222,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
 
     return (
-        <div className="min-h-screen bg-[var(--bg-core)] text-[var(--text-primary)] font-sans flex flex-col relative">
+        <div className="min-h-screen bg-background text-foreground font-sans flex flex-col relative">
 
             {/* Confirmation Modal (Opportunity) - Conditional Demote vs Delete */}
             <DeleteConfirmationModal
@@ -1292,16 +1292,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             </AnimatePresence>
 
             {/* --- HEADER SECTION --- */}
-            <div className="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center sticky top-0 z-30">
+            <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-8 py-5 flex justify-between items-center sticky top-0 z-30">
                 <div className="flex items-baseline gap-3">
                     {/* DYNAMIC TITLE */}
                     <h1 className="flex items-baseline gap-3">
                         {data.projectName ? (
-                            <span className="text-2xl font-black text-slate-800 tracking-tight animate-in fade-in">
+                            <span className="text-2xl font-black text-foreground tracking-tight animate-in fade-in">
                                 {data.projectName}
                             </span>
                         ) : (
-                            <span className="text-2xl font-black text-slate-300 tracking-tight italic">
+                            <span className="text-2xl font-black text-muted-foreground/50 tracking-tight italic">
                                 New Opportunity
                             </span>
                         )}
@@ -1319,7 +1319,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     {/* Completeness Ring */}
                     <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
                         ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
-                        : 'bg-transparent border-slate-200 dark:border-slate-700 text-emerald-600'
+                        : 'bg-transparent border-input text-emerald-600'
                         }`}>
                         {isComplete || isGlobalReady ? (
                             <Check className="w-5 h-5 text-white" strokeWidth={3} />
@@ -1347,9 +1347,9 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             <main className={`grid gap-6 flex-1 pb-8 pt-8 px-8 transition-all duration-300 ${activeTab === 'D' ? 'grid-cols-[3fr_1fr]' : 'grid-cols-1'}`}>
 
                 {/* Left Panel: Input Tabs */}
-                <div className="glass-panel p-8 flex flex-col h-full">
+                <div className="bg-background/50 backdrop-blur-xl border border-border rounded-2xl shadow-xl p-8 flex flex-col h-full">
                     {/* Tabs Header */}
-                    <div className="flex space-x-6 border-b border-[var(--glass-border)] mb-6 pb-2">
+                    <div className="flex space-x-6 border-b border-border mb-6 pb-2">
                         {TABS.map((tab) => {
                             let isTabValid = false;
                             if (tab.id === 'A') isTabValid = completenessStatus.tabs.opportunity;
@@ -1360,7 +1360,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-brand-blue' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
+                                    className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
                                     {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
                                     {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
@@ -1383,20 +1383,20 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                 <motion.div key="A" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.2 }}>
                                     <div className="space-y-6">
                                         {/* Magic Fill Banner */}
-                                        <div className="flex justify-between items-center bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 mb-2">
+                                        <div className="flex justify-between items-center bg-primary/10 p-4 rounded-xl border border-primary/20 mb-2">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                                                     <Sparkles size={16} className="animate-pulse" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-indigo-900 dark:text-indigo-200">Magic Fill</div>
-                                                    <div className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
+                                                    <div className="text-sm font-bold text-foreground">Magic Fill</div>
+                                                    <div className="text-[10px] text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
                                                 </div>
                                             </div>
                                             <button
                                                 onClick={handleMagicFill}
                                                 disabled={isMagicFilling}
-                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-sm transition-all text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 {isMagicFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                                 {isMagicFilling ? "Analysing..." : "Start Magic Fill"}
@@ -1404,7 +1404,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         </div>
 
                                         <div>
-                                            <label htmlFor="projectName" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Opportunity Name</label>
+                                            <label htmlFor="projectName" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Opportunity Name</label>
                                             <input
                                                 id="projectName"
                                                 name="projectName"
@@ -1425,13 +1425,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         performSave(data);
                                                     }
                                                 }}
-                                                className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-brand-cyan outline-none transition-all"
+                                                className="w-full bg-input/50 border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none transition-all"
                                                 placeholder="e.g. Invoice Reconciliation Bot"
                                             />
                                         </div>
 
                                         <div>
-                                            <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friction / Problem</label>
+                                            <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Friction / Problem</label>
                                             <MarkdownTextarea
                                                 id="frictionStatement"
                                                 name="frictionStatement"
@@ -1443,7 +1443,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         </div>
 
                                         <div>
-                                            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Proposed Solution</label>
+                                            <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Proposed Solution</label>
                                             <MarkdownTextarea
                                                 id="description"
                                                 name="description"
@@ -1458,7 +1458,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         {/* AI Analysis Fields */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Strategy Alignment
                                                 </label>
                                                 <MarkdownTextarea
@@ -1469,7 +1469,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Tech Alignment
                                                 </label>
                                                 <MarkdownTextarea
@@ -1483,7 +1483,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
 
                                         <div className="mb-6">
-                                            <h3 id="strategic-horizon-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Strategic Horizon</h3>
+                                            <h3 id="strategic-horizon-label" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Strategic Horizon</h3>
                                             <div role="group" aria-labelledby="strategic-horizon-label" className="flex gap-2 flex-wrap">
                                                 {HORIZONS.map((h) => (
                                                     <button
@@ -1491,7 +1491,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         onClick={() => toggleHorizon(h.id)}
                                                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${data.strategicHorizon.includes(h.id)
                                                             ? `${h.color} border-transparent shadow-md`
-                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                                            : 'bg-muted border-border text-muted-foreground hover:border-ring/50'}`}
                                                     >
                                                         {h.label}
                                                     </button>
@@ -1501,13 +1501,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         <div>
                                             {/* Header with Magic Button for CVP */}
                                             <div className="flex justify-between items-end mb-2">
-                                                <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                <h3 id="cvp-label" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                                     Customer Value Proposition
                                                 </h3>
                                                 <button
                                                     onClick={(e) => handleEnrichment('VALUE_PROP', e)}
                                                     disabled={isEnriching === 'VALUE_PROP'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                                                 >
                                                     {isEnriching === 'VALUE_PROP' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'VALUE_PROP' ? "Drafting..." : "Generate CVP"}
@@ -1531,7 +1531,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     <div>
                                         {/* --- SECTION HEADER --- */}
                                         <div className="flex justify-between items-end mb-4 px-1">
-                                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                                 Workflow Definition (Phase Cards)
                                             </h3>
 
@@ -1540,7 +1540,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <button
                                                     onClick={(e) => handleEnrichment('WORKFLOW', e)}
                                                     disabled={isEnriching === 'WORKFLOW'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50"
                                                 >
                                                     {isEnriching === 'WORKFLOW' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     Suggest Workflow
@@ -1549,7 +1549,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 {/* VIEW TOGGLE (Replaces old Add Button) */}
                                                 <button
                                                     onClick={() => setIsZoomedOut(!isZoomedOut)}
-                                                    className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded border border-slate-200"
+                                                    className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors bg-muted/50 hover:bg-muted px-3 py-1.5 rounded border border-input"
                                                 >
                                                     {isZoomedOut ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
                                                     {isZoomedOut ? "Zoom In (Detail)" : "Zoom Out (Overview)"}
@@ -1578,17 +1578,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                 onClick={() => {
                                                                     if (isZoomedOut) setIsZoomedOut(false);
                                                                 }}
-                                                                className={`bg-[#fff9c4] rounded-sm shadow-md border-t border-yellow-200 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none
+                                                                className={`bg-card rounded-sm shadow-md border-t border-border flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none text-card-foreground
                                                                     ${isZoomedOut
-                                                                        ? 'w-[150px] h-[150px] p-3 justify-center items-center text-center cursor-pointer hover:shadow-lg hover:border-blue-400' // OVERVIEW STYLE
+                                                                        ? 'w-[150px] h-[150px] p-3 justify-center items-center text-center cursor-pointer hover:shadow-lg hover:border-primary/50' // OVERVIEW STYLE
                                                                         : 'w-[320px] p-4' // DETAIL STYLE
                                                                     }`}
                                                             >
 
                                                                 {/* HEADER (Title) */}
-                                                                <div className={`w-full ${isZoomedOut ? 'flex items-center justify-center h-full' : 'border-b border-yellow-200/50 pb-2 mb-1 flex justify-between items-start'}`}>
+                                                                <div className={`w-full ${isZoomedOut ? 'flex items-center justify-center h-full' : 'border-b border-border pb-2 mb-1 flex justify-between items-start'}`}>
                                                                     {isZoomedOut ? (
-                                                                        <div className="font-kalam font-bold text-slate-800 text-sm leading-tight line-clamp-4 select-none">
+                                                                        <div className="font-kalam font-bold text-card-foreground text-sm leading-tight line-clamp-4 select-none">
                                                                             {phase.name || "Untitled Phase"}
                                                                         </div>
                                                                     ) : (
@@ -1596,13 +1596,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                             <TitleTextarea
                                                                                 value={phase.name}
                                                                                 onChange={(val) => updatePhase(phase.id, 'name', val)}
-                                                                                className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50 resize-none overflow-hidden"
+                                                                                className="font-bold text-card-foreground text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-muted-foreground/50 resize-none overflow-hidden"
                                                                                 placeholder="Phase Name..."
                                                                             />
                                                                             <button
                                                                                 onPointerDown={(e) => e.stopPropagation()}
                                                                                 onClick={() => requestDeletePhase(phase.id)}
-                                                                                className="text-yellow-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                                                             >
                                                                                 <X size={16} />
                                                                             </button>
@@ -1640,21 +1640,21 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                     {/* Autonomy Footer */}
                                                                     <div className="pt-3 mt-auto" onPointerDown={(e) => e.stopPropagation()}>
                                                                         <div className="flex flex-col gap-2">
-                                                                            <div className="flex gap-1 justify-between bg-white/30 p-1 rounded-full">
+                                                                            <div className="flex gap-1 justify-between bg-muted/50 p-1 rounded-full">
                                                                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map((level) => (
                                                                                     <button
                                                                                         key={level}
                                                                                         onClick={() => updatePhase(phase.id, 'autonomy', level as WorkflowPhase['autonomy'])}
                                                                                         className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
-                                                                                            ? 'bg-slate-800 text-white shadow-sm scale-110'
-                                                                                            : 'text-yellow-800 hover:bg-yellow-200'
+                                                                                            ? 'bg-primary text-primary-foreground shadow-sm scale-110'
+                                                                                            : 'text-muted-foreground hover:bg-muted'
                                                                                             }`}
                                                                                     >
                                                                                         {level}
                                                                                     </button>
                                                                                 ))}
                                                                             </div>
-                                                                            <div className="text-[10px] text-center text-yellow-800/80 font-medium h-4">
+                                                                            <div className="text-[10px] text-center text-muted-foreground font-medium h-4">
                                                                                 {AUTONOMY_LABELS[phase.autonomy] || 'Select autonomy level'}
                                                                             </div>
                                                                         </div>
@@ -1670,13 +1670,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             {/* --- GHOST ADD BUTTON (Resizes dynamically) --- */}
                                             <button
                                                 onClick={addPhase}
-                                                className={`shrink-0 rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/30 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-blue-500 transition-all group
+                                                className={`shrink-0 rounded-lg border-2 border-dashed border-input hover:border-primary/50 bg-muted/30 hover:bg-muted/50 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-all group
                                                     ${isZoomedOut
                                                         ? 'w-[150px] h-[150px]' // Small Square
                                                         : 'w-[320px] h-[420px]' // Full Size
                                                     }`}
                                             >
-                                                <div className="w-12 h-12 rounded-full bg-white border border-slate-200 group-hover:border-blue-300 flex items-center justify-center shadow-sm">
+                                                <div className="w-12 h-12 rounded-full bg-card border border-input group-hover:border-primary/50 flex items-center justify-center shadow-sm">
                                                     <Plus size={24} />
                                                 </div>
                                                 <span className="font-semibold text-sm">{isZoomedOut ? "Add" : "Add Next Phase"}</span>
@@ -1686,7 +1686,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     </div>
 
                                     {/* --- CAPABILITY MANAGER --- */}
-                                    <div className="mt-8 pt-8 border-t border-slate-100">
+                                    <div className="mt-8 pt-8 border-t border-border">
                                         <CapabilitiesManager
                                             existingCaps={data.capabilitiesExisting || []}
                                             missingCaps={data.capabilitiesMissing || []}
@@ -1711,17 +1711,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         <div className="space-y-6">
 
                                             {/* Header with Recommend Button */}
-                                            <div className="flex justify-between items-end border-b border-slate-100 pb-4">
+                                            <div className="flex justify-between items-end border-b border-input pb-4">
                                                 <div>
-                                                    <h2 className="text-lg font-bold text-slate-800">Execution Strategy</h2>
-                                                    <p className="text-sm text-slate-400">Define how this solution will be built, governed, and adopted.</p>
+                                                    <h2 className="text-lg font-bold text-foreground">Execution Strategy</h2>
+                                                    <p className="text-sm text-muted-foreground">Define how this solution will be built, governed, and adopted.</p>
                                                 </div>
 
                                                 {/* AI Button */}
                                                 <button
                                                     onClick={(e) => handleEnrichment('EXECUTION', e)}
                                                     disabled={isEnriching === 'EXECUTION'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {isEnriching === 'EXECUTION' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION' ? "Drafting..." : "Draft Execution Plan"}
@@ -1729,8 +1729,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             </div>
 
                                             {/* Execution Plan Narrative */}
-                                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                                <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
+                                            <div className="bg-muted/30 p-4 rounded-xl border border-input">
+                                                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
                                                 <MarkdownTextarea
                                                     id="executionPlan"
                                                     name="executionPlan"
@@ -1742,15 +1742,15 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             </div>
 
                                             {/* Execution Parameters Header with AI Button */}
-                                            <div className="flex justify-between items-end border-b border-slate-100 pb-4 mt-6">
+                                            <div className="flex justify-between items-end border-b border-input pb-4 mt-6">
                                                 <div>
-                                                    <h3 className="text-md font-bold text-slate-700">Execution Parameters</h3>
-                                                    <p className="text-xs text-slate-400">Define success criteria, decisions, and operational requirements.</p>
+                                                    <h3 className="text-md font-bold text-foreground">Execution Parameters</h3>
+                                                    <p className="text-xs text-muted-foreground">Define success criteria, decisions, and operational requirements.</p>
                                                 </div>
                                                 <button
                                                     onClick={(e) => handleEnrichment('EXECUTION_PARAMS', e)}
                                                     disabled={isEnriching === 'EXECUTION_PARAMS'}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {isEnriching === 'EXECUTION_PARAMS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION_PARAMS' ? "Drafting..." : "Draft Execution Parameters"}
@@ -1767,7 +1767,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     { label: 'AI Ops / Infrastructure', field: 'aiOpsRequirements', placeholder: '• GPU Instances...' },
                                                     { label: 'System Guardrails', field: 'systemGuardrails', placeholder: '• Human review for >$1M...' },
                                                 ].map((item) => (
-                                                    <div key={item.field} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-100 h-full min-h-[160px]">
+                                                    <div key={item.field} className="p-4 bg-muted/30 rounded-xl border border-input hover:border-primary/50 transition-colors focus-within:ring-2 focus-within:ring-ring/20 h-full min-h-[160px]">
                                                         <BulletListEditor
                                                             label={item.label}
                                                             id={item.field}
@@ -1788,12 +1788,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     <div className="space-y-6">
 
                                         {/* Header with Magic Button for Business Case */}
-                                        <div className="flex justify-between items-end border-b border-slate-100 pb-2">
-                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500">Business Case & Value</h3>
+                                        <div className="flex justify-between items-end border-b border-input pb-2">
+                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Business Case & Value</h3>
                                             <button
                                                 onClick={(e) => handleEnrichment('BUSINESS_CASE', e)}
                                                 disabled={isEnriching === 'BUSINESS_CASE'}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                                             >
                                                 {isEnriching === 'BUSINESS_CASE' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                                 {isEnriching === 'BUSINESS_CASE' ? "Authoring..." : "Draft Business Case"}
@@ -1801,8 +1801,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         </div>
 
                                         {/* Business Case Narrative */}
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                            <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider mb-2">Business Case Narrative</h3>
+                                        <div className="bg-muted/30 p-4 rounded-xl border border-input">
+                                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
                                             <MarkdownTextarea
                                                 id="businessCase"
                                                 name="businessCase"
@@ -1818,7 +1818,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             {/* Left Column: T-Shirt Size */}
                                             {/* --- T-SHIRT SIZE SELECTOR (Clean, Centered, Scaled) --- */}
                                             <div className="flex flex-col h-full min-h-[160px]">
-                                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
                                                     T-Shirt Size (Estimate)
                                                 </h3>
 
@@ -1851,7 +1851,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         <svg
                                                                             viewBox="0 0 24 24"
                                                                             fill="currentColor"
-                                                                            className={isSelected ? 'text-blue-600' : 'text-slate-600'}
+                                                                            className={isSelected ? 'text-primary' : 'text-muted-foreground'}
                                                                             width={iconSize}
                                                                             height={iconSize}
                                                                         >
@@ -1860,12 +1860,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                     </div>
 
                                                                     {/* Label */}
-                                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-blue-600' : 'text-slate-300 group-hover:text-slate-500'}`}>
+                                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-primary' : 'text-muted-foreground/60 group-hover:text-muted-foreground'}`}>
                                                                         {size}
                                                                     </span>
 
                                                                     {/* Active Dot (Subtle Indicator) */}
-                                                                    <div className={`w-1.5 h-1.5 rounded-full mt-1 transition-colors ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                                    <div className={`w-1.5 h-1.5 rounded-full mt-1 transition-colors ${isSelected ? 'bg-primary' : 'bg-transparent'}`} />
                                                                 </button>
                                                             );
                                                         })}
@@ -1875,17 +1875,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                             {/* Right Column: Estimated Benefit */}
                                             <div>
-                                                <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Estimated Benefit</h3>
+                                                <h3 className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Estimated Benefit</h3>
 
                                                 {/* Timeframe Toggle */}
-                                                <div className="flex gap-1 mb-4 bg-slate-100 dark:bg-slate-800 rounded-full p-1 w-fit">
+                                                <div className="flex gap-1 mb-4 bg-muted/50 rounded-full p-1 w-fit">
                                                     {['Monthly', 'Annually'].map((tf) => (
                                                         <button
                                                             key={tf}
                                                             onClick={() => handleInputChange('benefitTimeframe', tf)}
                                                             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${data.benefitTimeframe === tf
-                                                                ? 'bg-brand-cyan text-white shadow-md'
-                                                                : 'text-slate-500 hover:text-slate-700'
+                                                                ? 'bg-primary text-primary-foreground shadow-md'
+                                                                : 'text-muted-foreground hover:text-foreground'
                                                                 }`}
                                                         >
                                                             {tf}
@@ -1896,29 +1896,29 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 {/* Stacked Benefit Inputs */}
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label htmlFor="benefitRevenue" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rev. Uplift ($)</label>
+                                                        <label htmlFor="benefitRevenue" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Rev. Uplift ($)</label>
                                                         <CurrencyInput
                                                             id="benefitRevenue"
                                                             name="benefitRevenue"
                                                             value={data.benefitRevenue}
                                                             onChange={(val) => handleInputChange('benefitRevenue', val)}
-                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitCostAvoidance" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Cost Avoid. ($)</label>
+                                                        <label htmlFor="benefitCostAvoidance" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Cost Avoid. ($)</label>
                                                         <CurrencyInput
                                                             id="benefitCostAvoidance"
                                                             name="benefitCostAvoidance"
                                                             value={data.benefitCostAvoidance}
                                                             onChange={(val) => handleInputChange('benefitCostAvoidance', val)}
-                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitEfficiency" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Hrs Saved</label>
+                                                        <label htmlFor="benefitEfficiency" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Hrs Saved</label>
                                                         <CurrencyInput
                                                             id="benefitEfficiency"
                                                             name="benefitEfficiency"
@@ -1926,18 +1926,18 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             onChange={(val) => handleInputChange('benefitEfficiency', val)}
                                                             prefix=""
                                                             suffix="hrs"
-                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
-                                                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 mt-2">
-                                                        <label htmlFor="benefitEstCost" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Est. Implementation Cost ($)</label>
+                                                    <div className="pt-2 border-t border-input mt-2">
+                                                        <label htmlFor="benefitEstCost" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Est. Implementation Cost ($)</label>
                                                         <CurrencyInput
                                                             id="benefitEstCost"
                                                             name="benefitEstCost"
                                                             value={data.benefitEstCost}
                                                             onChange={(val) => handleInputChange('benefitEstCost', val)}
-                                                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan"
+                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="One-time cost..."
                                                         />
                                                     </div>
@@ -1947,7 +1947,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         {/* VRCC Sliders - UNCHANGED */}
                                         <div className="space-y-2">
-                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">VRCC Scores</h3>
+                                            <h3 className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">VRCC Scores</h3>
                                             <VRCCSlider label="Value" value={data.vrcc.value} onChange={(val) => setData(prev => ({ ...prev, vrcc: { ...prev.vrcc, value: val } }))} />
                                             <div>
                                                 <VRCCSlider

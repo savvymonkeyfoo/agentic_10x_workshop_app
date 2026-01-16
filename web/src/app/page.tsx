@@ -19,6 +19,8 @@ async function getWorkshops() {
 import { NewWorkshopButton } from '@/components/workshop/NewWorkshopButton';
 import { WorkshopCard } from '@/components/workshop/WorkshopCard';
 
+import { SettingsSheet } from '@/components/settings/SettingsSheet';
+
 export default async function Dashboard() {
   const workshops = await getWorkshops();
 
@@ -31,7 +33,10 @@ export default async function Dashboard() {
           <p className="text-slate-500">Manage your strategic planning sessions</p>
         </div>
 
-        <NewWorkshopButton />
+        <div className="flex items-center gap-3">
+          <SettingsSheet />
+          <NewWorkshopButton />
+        </div>
       </header>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

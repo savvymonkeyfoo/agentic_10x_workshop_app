@@ -30,8 +30,8 @@ export function DeleteConfirmationModal({
     const buttonColor = isDemote ? 'bg-amber-500 hover:bg-amber-600' : 'bg-red-600 hover:bg-red-700';
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md p-6 animate-in zoom-in-95 duration-200 mx-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-md p-6 animate-in zoom-in-95 duration-200 mx-4">
 
                 <div className="flex items-start gap-4">
                     <div className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center shrink-0`}>
@@ -42,8 +42,8 @@ export function DeleteConfirmationModal({
                         )}
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-                        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                        <h3 className="text-lg font-bold text-foreground">{title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                             {description}
                         </p>
                     </div>
@@ -52,14 +52,14 @@ export function DeleteConfirmationModal({
                     <button
                         onClick={onClose}
                         disabled={isDeleting}
-                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={onConfirm}
                         disabled={isDeleting}
-                        className={`px-4 py-2 text-sm font-semibold text-white ${buttonColor} rounded-lg shadow-sm transition-colors flex items-center gap-2`}
+                        className={`px-4 py-2 text-sm font-semibold text-primary-foreground ${buttonColor} rounded-lg shadow-sm transition-colors flex items-center gap-2`}
                     >
                         {isDeleting ? 'Processing...' : confirmLabel}
                     </button>

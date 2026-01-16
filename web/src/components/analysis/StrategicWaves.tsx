@@ -30,12 +30,12 @@ const DraggableCard = ({ project }: { project: ProjectNode }) => {
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
     return (
-        <div id={`card-${project.id}`} ref={setNodeRef} style={style} {...listeners} {...attributes} className="bg-white dark:bg-slate-700 p-3 rounded shadow-sm border border-slate-200 dark:border-slate-600 hover:shadow-md cursor-grab active:cursor-grabbing mb-3 group relative z-10">
+        <div id={`card-${project.id}`} ref={setNodeRef} style={style} {...listeners} {...attributes} className="bg-card dark:bg-card p-3 rounded shadow-sm border border-border hover:shadow-md cursor-grab active:cursor-grabbing mb-3 group relative z-10">
             <div className="flex justify-between items-start mb-2">
-                <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">{project.name || project.projectName}</span>
-                <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-500 dark:text-slate-400 shrink-0 ml-2">{project.tShirtSize || '-'}</span>
+                <span className="font-bold text-foreground text-sm leading-tight">{project.name || project.projectName}</span>
+                <span className="text-[10px] font-mono bg-muted px-1 rounded text-muted-foreground shrink-0 ml-2">{project.tShirtSize || '-'}</span>
             </div>
-            <div className="text-[10px] text-slate-500 dark:text-slate-400">Val: {project.scoreValue}/5 • Cplx: {project.scoreComplexity}/5</div>
+            <div className="text-[10px] text-muted-foreground">Val: {project.scoreValue}/5 • Cplx: {project.scoreComplexity}/5</div>
         </div>
     );
 };
@@ -45,8 +45,8 @@ const DroppableColumn = ({ rank, title, projects, color, bg }: DroppableColumnPr
     const { setNodeRef } = useDroppable({ id: rank.toString() });
     return (
         <div ref={setNodeRef} className={`flex flex-col h-full rounded-lg border-t-4 ${color} ${bg} p-3 transition-colors`}>
-            <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-4 uppercase">{title}</h3>
-            <div className="flex-1 overflow-y-auto min-h-[100px] scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-600">
+            <h3 className="text-xs font-bold tracking-widest text-muted-foreground mb-4 uppercase">{title}</h3>
+            <div className="flex-1 overflow-y-auto min-h-[100px] scrollbar-thin scrollbar-thumb-border">
                 {projects.map((p: ProjectNode) => <DraggableCard key={p.id} project={p} />)}
             </div>
         </div>
@@ -182,10 +182,10 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
 
     // Headers configuration
     const columns = [
-        { rank: 1, title: "WAVE 1: MOBILISE", color: "border-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
-        { rank: 2, title: "WAVE 2: SCALE", color: "border-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
-        { rank: 3, title: "WAVE 3: OPTIMISE", color: "border-violet-500", bg: "bg-violet-50 dark:bg-violet-900/10" },
-        { rank: 4, title: "WAVE 4: DEFER", color: "border-slate-300", bg: "bg-slate-50 dark:bg-slate-800/50" },
+        { rank: 1, title: "WAVE 1: MOBILISE", color: "border-emerald-500", bg: "bg-emerald-500/10" },
+        { rank: 2, title: "WAVE 2: SCALE", color: "border-blue-500", bg: "bg-blue-500/10" },
+        { rank: 3, title: "WAVE 3: OPTIMISE", color: "border-violet-500", bg: "bg-violet-500/10" },
+        { rank: 4, title: "WAVE 4: DEFER", color: "border-border", bg: "bg-muted/30" },
     ];
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -234,8 +234,8 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
                 {/* Drag Overlay (Visual feedback) */}
                 <DragOverlay>
                     {activeId ? (
-                        <div className="bg-white dark:bg-slate-700 p-3 rounded shadow-xl border border-blue-500 rotate-3 cursor-grabbing w-[200px]">
-                            <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Moving Project...</span>
+                        <div className="bg-card p-3 rounded shadow-xl border border-blue-500 rotate-3 cursor-grabbing w-[200px]">
+                            <span className="font-bold text-sm text-foreground">Moving Project...</span>
                         </div>
                     ) : null}
                 </DragOverlay>
@@ -243,20 +243,20 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
 
             {/* --- OVERRIDE MODAL --- */}
             {modalOpen && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl">
-                    <div className="bg-white dark:bg-slate-800 w-[400px] p-6 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in zoom-in-95">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Recommendation Override</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You are moving a project against the AI recommendation. Please document the reason for the Board.</p>
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-xl">
+                    <div className="bg-card w-[400px] p-6 rounded-lg shadow-2xl border border-border animate-in zoom-in-95">
+                        <h3 className="text-lg font-bold text-foreground mb-2">Recommendation Override</h3>
+                        <p className="text-sm text-muted-foreground mb-4">You are moving a project against the AI recommendation. Please document the reason for the Board.</p>
                         <textarea
-                            className="w-full h-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4 resize-none"
+                            className="w-full h-24 border border-input bg-background/50 text-foreground rounded p-3 text-sm focus:ring-2 focus:ring-primary outline-none mb-4 resize-none"
                             placeholder="e.g. 'Board mandated immediate start despite risk...'"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             autoFocus
                         />
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">Cancel</button>
-                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-colors">Save Override</button>
+                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/50 rounded transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded shadow-sm transition-colors">Save Override</button>
                         </div>
                     </div>
                 </div>

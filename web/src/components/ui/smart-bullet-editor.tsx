@@ -12,7 +12,7 @@ interface SmartBulletEditorProps {
     placeholder?: string;
 }
 
-export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-700", placeholder }: SmartBulletEditorProps) {
+export function SmartBulletEditor({ value, onChange, colorClass = "text-foreground", placeholder }: SmartBulletEditorProps) {
     // Helper: Parse raw markdown into lines, stripping bullets AND formatting chars
     const parseValue = (val: string) => {
         if (!val) return [''];
@@ -118,7 +118,7 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-slate-70
                     const newItems = [...items, ''];
                     setItems(newItems);
                 }}
-                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 ml-1 px-2 py-1 rounded hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground ml-1 px-2 py-1 rounded hover:bg-accent transition-colors"
             >
                 <Plus className="w-3 h-3" /> Add Point
             </button>

@@ -29,16 +29,16 @@ interface ScorecardModalProps {
 // Pastel color config for 3-step selections
 const STEP_STYLES = {
     left: {
-        active: 'bg-slate-100 text-slate-700 border border-slate-200 shadow-sm',
-        inactive: 'text-slate-500 hover:text-slate-700'
+        active: 'bg-muted text-foreground border border-border shadow-sm',
+        inactive: 'text-muted-foreground hover:text-foreground'
     },
     mid: {
-        active: 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm',
-        inactive: 'text-slate-500 hover:text-slate-700'
+        active: 'bg-blue-500/10 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-sm',
+        inactive: 'text-muted-foreground hover:text-foreground'
     },
     right: {
-        active: 'bg-amber-50 text-amber-700 border border-amber-200 shadow-sm',
-        inactive: 'text-slate-500 hover:text-slate-700'
+        active: 'bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-sm',
+        inactive: 'text-muted-foreground hover:text-foreground'
     }
 };
 
@@ -75,10 +75,10 @@ function ThreeStepPicker({
 
     return (
         <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-700">{question.label}</p>
+            <p className="text-sm font-medium text-foreground">{question.label}</p>
 
             {/* Toggle Track with Pastel Colors */}
-            <div className="flex items-center gap-1 bg-slate-50 rounded-full p-1">
+            <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
                 {steps.map((step, idx) => (
                     <button
                         key={step.value}
@@ -96,7 +96,7 @@ function ThreeStepPicker({
             </div>
 
             {/* Explainer Text */}
-            <p className="text-xs text-slate-500 italic pl-1 min-h-[2rem]">
+            <p className="text-xs text-muted-foreground italic pl-1 min-h-[2rem]">
                 💡 {activeExplainer}
             </p>
         </div>
@@ -123,9 +123,9 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
 
     // Dynamic header background based on tier
     const headerBg = useMemo(() => {
-        if (projectedTier === 'STRATEGIC_BET') return 'bg-amber-50';
-        if (projectedTier === 'TABLE_STAKES') return 'bg-blue-50';
-        return 'bg-slate-50';
+        if (projectedTier === 'STRATEGIC_BET') return 'bg-amber-500/10';
+        if (projectedTier === 'TABLE_STAKES') return 'bg-blue-500/10';
+        return 'bg-muted/30';
     }, [projectedTier]);
 
     // Auto-Save Effect with debounce
@@ -149,13 +149,13 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
     return (
         <div className="flex flex-col h-full max-h-[85vh]">
             {/* Header with Back Button + Speedometer */}
-            <div className={cn("pb-4 border-b border-slate-200 transition-colors duration-500 rounded-t-lg -m-6 mb-0 p-6", headerBg)}>
+            <div className={cn("pb-4 border-b border-border transition-colors duration-500 rounded-t-lg -m-6 mb-0 p-6", headerBg)}>
                 <div className="flex items-center gap-4">
                     {/* Back Button */}
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full flex-shrink-0"
+                        className="h-8 w-8 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full flex-shrink-0"
                         onClick={onClose}
                         title="Back to Idea Details"
                     >
@@ -166,17 +166,17 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                     <div className="flex-1 flex justify-between items-start">
                         <div className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-2">
-                                <div className="bg-indigo-100 p-1 rounded-md text-indigo-600">
+                                <div className="bg-indigo-500/10 p-1 rounded-md text-indigo-600">
                                     <Brain size={16} />
                                 </div>
-                                <h2 className="text-lg font-bold text-slate-900 leading-none">Strategic Assessment</h2>
+                                <h2 className="text-lg font-bold text-foreground leading-none">Strategic Assessment</h2>
                             </div>
                             {/* Auto-Save Indicator */}
-                            <div className="flex items-center gap-2 text-xs text-slate-500 pl-8">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground pl-8">
                                 <span className="truncate max-w-[200px]">{cardTitle}</span>
-                                <span className="text-slate-300">|</span>
+                                <span className="text-border">|</span>
                                 {saveStatus === 'saving' ? (
-                                    <span className="flex items-center gap-1 text-slate-400">
+                                    <span className="flex items-center gap-1 text-muted-foreground">
                                         <Loader2 className="w-3 h-3 animate-spin" /> Saving...
                                     </span>
                                 ) : (
@@ -202,12 +202,12 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                         <AccordionItem
                             key={dimension.id}
                             value={dimension.id}
-                            className="border border-slate-200 rounded-lg px-4 bg-white"
+                            className="border border-border rounded-lg px-4 bg-card"
                         >
                             <AccordionTrigger className="py-3 hover:no-underline">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-800">{dimension.category}</span>
-                                    <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-500">
+                                    <span className="font-bold text-foreground">{dimension.category}</span>
+                                    <Badge variant="outline" className="text-[10px] bg-muted/50 text-muted-foreground">
                                         {dimension.questions.length} factors
                                     </Badge>
                                 </div>

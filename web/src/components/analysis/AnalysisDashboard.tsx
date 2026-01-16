@@ -87,7 +87,7 @@ export default function AnalysisDashboard({
     const edges = analysis?.edges || initialEdges;
 
     return (
-        <div className="flex h-screen w-screen bg-[var(--bg-core)]">
+        <div className="flex h-screen w-screen bg-background">
             {/* LEFT: AI Strategist Panel (F-Pattern: Read first) */}
             <div className="h-full z-20 shrink-0">
                 <AIStrategistPanel
@@ -103,15 +103,15 @@ export default function AnalysisDashboard({
             </div>
 
             {/* RIGHT: Strategy Visualization */}
-            <div className="flex-1 h-full min-w-0 relative border-l border-slate-200 dark:border-slate-800 flex flex-col">
+            <div className="flex-1 h-full min-w-0 relative border-l border-border flex flex-col">
                 {/* View Toggle Header */}
                 <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
-                    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-1 bg-card rounded-lg p-1 shadow-lg border border-border">
                         <button
                             onClick={() => setViewMode('MATRIX')}
                             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'MATRIX'
-                                ? 'bg-blue-500 text-white shadow'
-                                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+                                ? 'bg-primary text-primary-foreground shadow'
+                                : 'text-muted-foreground hover:bg-muted/50'
                                 }`}
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,8 +124,8 @@ export default function AnalysisDashboard({
                         <button
                             onClick={() => setViewMode('WAVES')}
                             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'WAVES'
-                                ? 'bg-blue-500 text-white shadow'
-                                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+                                ? 'bg-primary text-primary-foreground shadow'
+                                : 'text-muted-foreground hover:bg-muted/50'
                                 }`}
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

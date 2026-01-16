@@ -35,7 +35,7 @@ const StarIcon = ({ filled, onClick }: { filled: boolean; onClick: () => void })
             fill={filled ? 'currentColor' : 'none'}
             stroke="currentColor"
             strokeWidth="2"
-            className={`transition-colors ${filled ? 'text-brand-cyan' : 'text-slate-300 hover:text-slate-400'}`}
+            className={`transition-colors ${filled ? 'text-primary' : 'text-muted hover:text-muted-foreground'}`}
         >
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
         </svg>
@@ -63,7 +63,7 @@ export function StarRatingInput({ label, dimension, onChange, color }: StarRatin
             {/* Justification Toggle */}
             <button
                 onClick={() => setShowJustification(!showJustification)}
-                className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1"
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
                 <span>{showJustification ? '▼' : '▶'}</span>
                 <span>Add justification (optional)</span>
@@ -82,7 +82,7 @@ export function StarRatingInput({ label, dimension, onChange, color }: StarRatin
                             value={dimension.justification}
                             onChange={(e) => onChange({ ...dimension, justification: e.target.value })}
                             placeholder="Why this score?"
-                            className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-brand-cyan resize-none h-16"
+                            className="w-full bg-input/50 border border-input rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-ring resize-none h-16 text-foreground placeholder:text-muted-foreground"
                         />
                     </motion.div>
                 )}
@@ -100,8 +100,8 @@ interface DFVAssessmentInputProps {
 export function DFVAssessmentInput({ value, onChange }: DFVAssessmentInputProps) {
     return (
         <div className="space-y-4">
-            <h3 className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">DFV Assessment</h3>
-            <div className="space-y-4 bg-white/30 dark:bg-black/10 rounded-xl p-4 border border-slate-200/50 dark:border-slate-700/50">
+            <h3 className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">DFV Assessment</h3>
+            <div className="space-y-4 bg-muted/30 rounded-xl p-4 border border-border/50">
                 <StarRatingInput
                     label="Desirability"
                     dimension={value.desirability}

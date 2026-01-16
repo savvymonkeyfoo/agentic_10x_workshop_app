@@ -20,10 +20,10 @@ function CopyButton({ content }: { content: string }) {
         <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 bg-white/50 hover:bg-white text-slate-400 hover:text-indigo-600 transition-all ml-2"
+            className="h-8 w-8 bg-background/50 hover:bg-background text-muted-foreground hover:text-primary transition-all ml-2"
             onClick={handleCopy}
         >
-            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
         </Button>
     );
 }
@@ -36,7 +36,7 @@ export function ResearchBriefList({ briefs }: ResearchBriefListProps) {
             {briefs.map((brief, index) => (
                 <div
                     key={index}
-                    className="relative bg-white border border-slate-200 rounded-xl shadow-sm p-8 hover:shadow-md transition-all group"
+                    className="relative bg-card border border-border rounded-xl shadow-sm p-8 hover:shadow-md transition-all group"
                 >
                     {/* Header Actions */}
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -44,7 +44,7 @@ export function ResearchBriefList({ briefs }: ResearchBriefListProps) {
                     </div>
 
                     {/* Markdown Content */}
-                    <article className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-lg prose-h3:text-base prose-p:text-slate-600 prose-li:text-slate-600">
+                    <article className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-bold prose-h2:text-lg prose-h3:text-base prose-p:text-muted-foreground prose-li:text-muted-foreground">
                         <ReactMarkdown>{brief}</ReactMarkdown>
                     </article>
                 </div>

@@ -122,9 +122,9 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-slate-100 dark:border-slate-700">
-                <h2 className="text-2xl font-bold text-brand-navy dark:text-white mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card text-card-foreground rounded-2xl shadow-2xl p-8 max-w-md w-full border border-border">
+                <h2 className="text-2xl font-bold text-foreground mb-6">
                     {isEditMode ? 'Edit Workshop' : 'Create New Workshop'}
                 </h2>
 
@@ -132,40 +132,40 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
 
                     {/* Client Name */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-500 mb-2">Client Name</label>
+                        <label className="block text-sm font-bold text-muted-foreground mb-2">Client Name</label>
                         <input
                             type="text"
                             required
                             value={clientName}
                             onChange={(e) => setClientName(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                            className="w-full px-4 py-3 rounded-xl border border-input bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                             placeholder="e.g. Acme Corp"
                         />
                     </div>
 
                     {/* Workshop Date */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-500 mb-2">Workshop Date</label>
+                        <label className="block text-sm font-bold text-muted-foreground mb-2">Workshop Date</label>
                         <input
                             type="date"
                             required
                             value={workshopDate}
                             onChange={(e) => setWorkshopDate(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue [color-scheme:light] dark:[color-scheme:dark]"
+                            className="w-full px-4 py-3 rounded-xl border border-input bg-muted/50 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                     </div>
 
                     {/* Logo Upload */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-500 mb-2">Client Logo (Optional)</label>
+                        <label className="block text-sm font-bold text-muted-foreground mb-2">Client Logo (Optional)</label>
                         <div className="flex items-center gap-4">
                             {logoUrl ? (
-                                <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden relative">
-                                    <Image src={logoUrl} alt="Logo Preview" fill className="object-contain" sizes="64px" />
+                                <div className="w-16 h-16 rounded-xl border border-border overflow-hidden relative">
+                                    <Image src={logoUrl as string} alt="Logo Preview" fill className="object-contain" sizes="64px" />
                                     <button
                                         type="button"
                                         onClick={() => setLogoUrl(null)}
-                                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-lg text-xs z-10"
+                                        className="absolute top-0 right-0 bg-destructive text-destructive-foreground p-1 rounded-bl-lg text-xs z-10 hover:bg-destructive/90 transition-colors"
                                     >
                                         ✕
                                     </button>
@@ -173,14 +173,14 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                             ) : (
                                 <div
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 transition-colors"
+                                    className="w-16 h-16 rounded-xl border-2 border-dashed border-input flex items-center justify-center cursor-pointer hover:border-ring hover:bg-muted/50 transition-colors"
                                 >
-                                    <span className="text-2xl text-slate-400">+</span>
+                                    <span className="text-2xl text-muted-foreground">+</span>
                                 </div>
                             )}
 
                             <div className="flex-1">
-                                <p className="text-xs text-slate-400 mb-2">JPG or PNG. Max 200px (auto-resized).</p>
+                                <p className="text-xs text-muted-foreground mb-2">JPG or PNG. Max 200px (auto-resized).</p>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -188,7 +188,7 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                                     onChange={handleFileChange}
                                     className="hidden"
                                 />
-                                {uploading && <span className="text-xs text-brand-blue animate-pulse">Uploading...</span>}
+                                {uploading && <span className="text-xs text-primary animate-pulse">Uploading...</span>}
                             </div>
                         </div>
                     </div>
@@ -198,14 +198,14 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-slate-500 font-semibold hover:text-brand-navy transition-colors"
+                            className="px-4 py-2 text-muted-foreground font-semibold hover:text-foreground transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={uploading || submitting || !clientName}
-                            className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Workshop')}
                         </button>

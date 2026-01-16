@@ -129,35 +129,35 @@ export default function StrategicMap({ opportunities, edges: _edges = [] }: { op
     };
 
     return (
-        <div className="w-full h-full bg-slate-50/50 rounded-xl border border-slate-200 relative shadow-inner overflow-visible">
+        <div className="w-full h-full bg-muted/20 rounded-xl border border-border relative shadow-inner overflow-visible">
 
             {/* --- SVG LAYER (Lines & Grid) --- */}
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-h-[600px] absolute inset-0 overflow-visible pointer-events-none">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-h-[600px] absolute inset-0 overflow-visible pointer-events-none text-muted-foreground">
                 {/* Defines for Arrowhead */}
                 <defs>
                     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+                        <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
                     </marker>
                 </defs>
 
                 {/* Grid */}
-                <g opacity="0.1">
-                    {[0.5].map(p => <line key={`v-${p}`} x1={width * p} y1="0" x2={width * p} y2={height} stroke="black" strokeWidth="2" strokeDasharray="5 5" />)}
-                    {[0.5].map(p => <line key={`h-${p}`} x1="0" y1={height * p} x2={width} y2={height * p} stroke="black" strokeWidth="2" strokeDasharray="5 5" />)}
+                <g opacity="0.1" className="text-foreground">
+                    {[0.5].map(p => <line key={`v-${p}`} x1={width * p} y1="0" x2={width * p} y2={height} stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" />)}
+                    {[0.5].map(p => <line key={`h-${p}`} x1="0" y1={height * p} x2={width} y2={height * p} stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" />)}
                 </g>
 
                 {/* Quadrant Labels */}
-                <text x="30" y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">QUICK WINS</text>
-                <text x="30" y="55" fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="start">High Val, Low Cplx</text>
+                <text x="30" y="40" fill="currentColor" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">QUICK WINS</text>
+                <text x="30" y="55" fill="currentColor" fontSize="10" opacity="0.8" textAnchor="start">High Val, Low Cplx</text>
 
-                <text x={width - 30} y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">MAJOR PROJECTS</text>
-                <text x={width - 30} y="55" fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="end">High Val, High Cplx</text>
+                <text x={width - 30} y="40" fill="currentColor" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">MAJOR PROJECTS</text>
+                <text x={width - 30} y="55" fill="currentColor" fontSize="10" opacity="0.8" textAnchor="end">High Val, High Cplx</text>
 
-                <text x="30" y={height - 40} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">TACTICAL</text>
-                <text x="30" y={height - 25} fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="start">Low Val, Low Cplx</text>
+                <text x="30" y={height - 40} fill="currentColor" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">TACTICAL</text>
+                <text x="30" y={height - 25} fill="currentColor" fontSize="10" opacity="0.8" textAnchor="start">Low Val, Low Cplx</text>
 
-                <text x={width - 30} y={height - 40} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
-                <text x={width - 30} y={height - 25} fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="end">Low Val, High Cplx</text>
+                <text x={width - 30} y={height - 40} fill="currentColor" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
+                <text x={width - 30} y={height - 25} fill="currentColor" fontSize="10" opacity="0.8" textAnchor="end">Low Val, High Cplx</text>
 
                 {/* Strategy Dependency Edge Paths - REMOVED per user request */}
                 {/* {edges.map((edge, i) => ...)} */}

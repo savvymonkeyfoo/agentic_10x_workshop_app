@@ -7,16 +7,16 @@ import { cn } from '@/lib/utils';
 import { GripVertical, Infinity, Trash2, Info, Zap, CheckCircle } from 'lucide-react';
 
 const TIER_CONFIG = {
-    UNSCORED: { label: '❓ Needs Scoring', badgeClass: 'bg-white text-slate-500 border-slate-300', cardClass: 'border border-slate-300 bg-white shadow-sm' },
-    AGENTIC_AUTO: { label: '🤖 Agentic Auto', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300', cardClass: 'border border-slate-300 bg-slate-50 shadow-md' },
-    TABLE_STAKES: { label: '🛡️ Table Stakes', badgeClass: 'bg-blue-100 text-blue-800 border-blue-300', cardClass: 'border border-blue-200 bg-blue-50/50 shadow-lg' },
-    STRATEGIC_BET: { label: '🌟 Strategic Bet', badgeClass: 'bg-amber-100 text-amber-800 border-amber-300', cardClass: 'border-2 border-amber-400 bg-amber-50 shadow-lg' }
+    UNSCORED: { label: '❓ Needs Scoring', badgeClass: 'bg-card text-muted-foreground border-border', cardClass: 'border border-border bg-card shadow-sm' },
+    AGENTIC_AUTO: { label: '🤖 Agentic Auto', badgeClass: 'bg-muted text-muted-foreground border-border', cardClass: 'border border-border bg-muted/50 shadow-md' },
+    TABLE_STAKES: { label: '🛡️ Table Stakes', badgeClass: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800', cardClass: 'border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 shadow-lg' },
+    STRATEGIC_BET: { label: '🌟 Strategic Bet', badgeClass: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800', cardClass: 'border-2 border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10 shadow-lg' }
 } as const;
 
 const SOURCE_CONFIG = {
-    MARKET_SIGNAL: { label: 'Market Signal', class: 'bg-purple-100 text-purple-700 border-purple-200', icon: <Zap className="w-3 h-3 mr-1" /> },
-    CLIENT_BACKLOG: { label: 'Backlog Item', class: 'bg-slate-100 text-slate-700 border-slate-200', icon: <CheckCircle className="w-3 h-3 mr-1" /> },
-    WORKSHOP_GENERATED: { label: 'Workshop Idea', class: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <Info className="w-3 h-3 mr-1" /> }
+    MARKET_SIGNAL: { label: 'Market Signal', class: 'bg-purple-500/10 text-purple-600 border-purple-200', icon: <Zap className="w-3 h-3 mr-1" /> },
+    CLIENT_BACKLOG: { label: 'Backlog Item', class: 'bg-muted text-muted-foreground border-border', icon: <CheckCircle className="w-3 h-3 mr-1" /> },
+    WORKSHOP_GENERATED: { label: 'Workshop Idea', class: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', icon: <Info className="w-3 h-3 mr-1" /> }
 } as const;
 
 export interface IdeaCardProps {
@@ -60,13 +60,13 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
 
     // Base Style
     let cardStyle = isIntelligenceCard
-        ? "shadow-sm hover:shadow-md transition-all group mb-4 bg-white border-l-4 border-l-slate-300 hover:border-l-brand-blue"
+        ? "shadow-sm hover:shadow-md transition-all group mb-4 bg-card border-l-4 border-l-border hover:border-l-primary"
         : tierConfig.cardClass;
 
     // Selection Overrides
     if (isSelectMode) {
         if (isSelected) {
-            cardStyle = cn(cardStyle, "ring-4 ring-blue-500/20 border-blue-500 bg-blue-50/10 z-10");
+            cardStyle = cn(cardStyle, "ring-4 ring-primary/20 border-primary bg-primary/5 z-10");
         } else {
             // Dim unselected
             cardStyle = cn(cardStyle, "opacity-50 grayscale-[0.8] hover:opacity-100 hover:grayscale-0");
@@ -98,8 +98,8 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
                     <div className={cn(
                         "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shadow-sm",
                         isSelected
-                            ? "bg-blue-600 border-blue-600 text-white"
-                            : "bg-white border-slate-300 text-transparent hover:border-blue-400"
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "bg-card border-border text-transparent hover:border-primary/50"
                     )}>
                         <CheckCircle size={14} className="fill-current" />
                     </div>
@@ -110,7 +110,7 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
                 {/* HEADER: BADGES */}
                 <div className="flex justify-between items-start gap-2 max-w-[85%]">
                     {isPromoted ? (
-                        <Badge className="bg-slate-100 text-slate-500 border-slate-200">
+                        <Badge className="bg-muted text-muted-foreground border-border">
                             🔒 Promoted
                         </Badge>
                     ) : (
@@ -129,24 +129,24 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
 
                 {/* CONTENT */}
                 <div className={cn(isPromoted && "opacity-70")}>
-                    <h4 className="font-bold text-slate-900 text-sm mb-1 leading-tight line-clamp-2">{card.title}</h4>
-                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{card.description}</p>
+                    <h4 className="font-bold text-foreground text-sm mb-1 leading-tight line-clamp-2">{card.title}</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{card.description}</p>
                 </div>
 
                 {/* IDEATION LENSES (Legacy Support) */}
                 {!isIntelligenceCard && card.lenses && card.lenses.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-2">
-                        {card.lenses.includes('infinite_capacity') && <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[9px]"><Infinity size={10} className="mr-1" /> Scale</Badge>}
+                        {card.lenses.includes('infinite_capacity') && <Badge className="bg-indigo-500/10 text-indigo-600 border-indigo-200 text-[9px]"><Infinity size={10} className="mr-1" /> Scale</Badge>}
                     </div>
                 )}
             </CardContent>
 
             {/* FOOTER: Delete actions active for all cards unless promoted/selecting */}
             {!isPromoted && !isSelectMode && (
-                <CardFooter className="p-2 bg-slate-50/50 flex items-center justify-between rounded-b-lg border-t border-slate-100">
-                    <GripVertical size={14} className="text-slate-300 group-hover:text-slate-500" />
-                    <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-md group/trash">
-                        <Trash2 size={16} className="text-slate-400 group-hover/trash:text-red-500" />
+                <CardFooter className="p-2 bg-muted/30 flex items-center justify-between rounded-b-lg border-t border-border">
+                    <GripVertical size={14} className="text-muted-foreground group-hover:text-foreground" />
+                    <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded-md group/trash">
+                        <Trash2 size={16} className="text-muted-foreground group-hover/trash:text-destructive" />
                     </button>
                 </CardFooter>
             )}

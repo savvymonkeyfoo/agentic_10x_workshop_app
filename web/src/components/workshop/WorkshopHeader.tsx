@@ -46,17 +46,17 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
     return createPortal(
         <div className="flex items-center gap-4 animate-fade-in">
             {/* Workshop Badge */}
-            <div className="flex items-center gap-2 pl-4 border-l border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 pl-4 border-l border-border">
                 {clientLogoUrl ? (
-                    <div className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-600 bg-white overflow-hidden flex items-center justify-center relative">
+                    <div className="w-7 h-7 rounded-full border border-border bg-card overflow-hidden flex items-center justify-center relative">
                         <Image src={clientLogoUrl} alt={`${clientName} logo`} fill className="object-contain" sizes="28px" />
                     </div>
                 ) : (
-                    <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold">
+                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[10px] font-bold">
                         {clientName?.substring(0, 2).toUpperCase() || 'WK'}
                     </div>
                 )}
-                <span className="font-semibold text-brand-navy dark:text-white text-sm hidden md:block">
+                <span className="font-semibold text-foreground text-sm hidden md:block">
                     {clientName}
                 </span>
             </div>
@@ -74,8 +74,8 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
                         className={`
                             flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
                             ${active
-                                ? 'bg-slate-100 dark:bg-slate-800 text-brand-blue dark:text-brand-cyan'
-                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                                ? 'bg-accent text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                             }
                         `}
                     >

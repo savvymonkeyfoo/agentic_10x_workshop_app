@@ -33,36 +33,39 @@ export function SpeedometerGauge({ score, size = 200 }: SpeedometerGaugeProps) {
                 <path
                     d="M 20 100 A 80 80 0 0 1 56.8 36.8"
                     fill="none"
-                    stroke="#e2e8f0"
+                    stroke="hsl(var(--muted))"
                     strokeWidth="16"
                     strokeLinecap="round"
+                    className="opacity-50"
                 />
 
                 {/* Arc Background - Blue zone (40-75) */}
                 <path
                     d="M 56.8 36.8 A 80 80 0 0 1 143.2 36.8"
                     fill="none"
-                    stroke="#bfdbfe"
+                    stroke="hsl(var(--primary))"
                     strokeWidth="16"
                     strokeLinecap="round"
+                    className="opacity-30"
                 />
 
                 {/* Arc Background - Gold zone (75-100) */}
                 <path
                     d="M 143.2 36.8 A 80 80 0 0 1 180 100"
                     fill="none"
-                    stroke="#fde68a"
+                    stroke="hsl(var(--accent))" // Assuming accent is gold-ish or distinct, logic below handles needle
                     strokeWidth="16"
                     strokeLinecap="round"
+                    className="opacity-50"
                 />
 
                 {/* Zone Labels - Properly positioned */}
-                <text x="25" y="80" className="text-[9px] font-bold" fill="#64748b">AUTO</text>
-                <text x="100" y="18" textAnchor="middle" className="text-[9px] font-bold" fill="#3b82f6">TABLE STAKES</text>
-                <text x="175" y="80" textAnchor="end" className="text-[9px] font-bold" fill="#d97706">BIG BET</text>
+                <text x="25" y="80" className="text-[9px] font-bold text-muted-foreground fill-current">AUTO</text>
+                <text x="100" y="18" textAnchor="middle" className="text-[9px] font-bold text-primary fill-current">TABLE STAKES</text>
+                <text x="175" y="80" textAnchor="end" className="text-[9px] font-bold text-amber-500 fill-current">BIG BET</text>
 
                 {/* Center Point */}
-                <circle cx="100" cy="100" r="8" fill="white" stroke="#1e293b" strokeWidth="2" />
+                <circle cx="100" cy="100" r="8" className="fill-background stroke-foreground" strokeWidth="2" />
 
                 {/* Needle */}
                 <g
