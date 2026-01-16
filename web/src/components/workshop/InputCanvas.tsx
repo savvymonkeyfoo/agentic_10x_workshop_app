@@ -176,10 +176,11 @@ const SmartTextarea = ({
                 className={
                     // Allow override or use default yellow
                     props.className
+                        ? props.className
                         : "w-full text-sm leading-relaxed bg-input border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none resize-none overflow-hidden min-h-[40px] placeholder-muted-foreground/40 text-foreground font-medium transition-all"
                 }
-            placeholder={placeholder}
-            rows={1}
+                placeholder={placeholder}
+                rows={1}
             />
         </div>
     );
