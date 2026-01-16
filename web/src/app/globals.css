@@ -169,72 +169,102 @@
     --ring: 16 68% 64%;
   }
 
-  /* LINEAR / MODERN (Light) */
-  [data-theme='linear'] {
+  /* NEXUS / GPT (Swiss Modern) */
+  [data-theme='nexus'] {
+    /* Light Mode: "The Laboratory" */
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* #FFFFFF - Pure White */
+    --foreground: 220 5% 13%;
+    /* #202123 - Ink Primary */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    /* Change: Use F7F7F8 for standard cards to differentiate from Default White */
+    --card: 240 5% 97%;
+    /* #F7F7F8 - Surface Grey */
+    --card-foreground: 220 5% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 220 5% 13%;
 
-    --primary: 252 56% 57%;
-    /* Linear Purple/Indigo */
-    --primary-foreground: 0 0% 98%;
+    --primary: 165 81% 35%;
+    /* #10A37F - Nexus Teal */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 240 5% 97%;
+    /* #F7F7F8 */
+    --secondary-foreground: 220 5% 13%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 240 5% 97%;
+    /* #F7F7F8 */
+    --muted-foreground: 240 8% 47%;
+    /* #6E6E80 - Ink Secondary */
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 150 20% 93%;
+    /* #E5F6F1 - Light wash for active states */
+    --accent-foreground: 165 81% 35%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 252 56% 57%;
-    --radius: 0.3rem;
-    /* Tighter radius */
+    --border: 240 14% 87%;
+    /* #D9D9E3 */
+    --input: 0 0% 100%;
+    /* #FFFFFF - Shadows applied via class if needed */
+    --ring: 165 81% 35%;
+    /* #10A37F */
+    --radius: 0.375rem;
+    /* 6px */
+
+    /* Workflow Phase Card: Surface/Module Style */
+    /* DISTINCT: Use the Surface Grey for the card BG, border matches subtle border */
+    --card-phase-bg: 240 5% 97%;
+    --card-phase-border: 240 14% 87%;
+    --card-phase-alpha: 1;
+    --card-phase-border-alpha: 1;
   }
 
-  /* LINEAR DARK */
-  [data-theme='linear'] .dark,
-  [data-theme='linear'].dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+  [data-theme='nexus'][class*='dark'] {
+    /* Dark Mode: "The Control Room" */
+    --background: 235 11% 23%;
+    /* #343541 - Anthracite */
+    --foreground: 240 10% 94%;
+    /* #ECECF1 */
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 234 11% 30%;
+    /* #444654 - Response Bubble */
+    --card-foreground: 240 10% 94%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 234 11% 30%;
+    --popover-foreground: 240 10% 94%;
 
-    --primary: 252 56% 57%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 165 81% 35%;
+    /* #10A37F */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 234 10% 37%;
+    /* #565869 */
+    --secondary-foreground: 240 10% 94%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 234 11% 30%;
+    --muted-foreground: 240 12% 80%;
+    /* #C5C5D2 */
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 164 38% 16%;
+    /* #193831 - Dark teal wash */
+    --accent-foreground: 165 81% 35%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --border: 234 10% 37%;
+    /* #565869 */
+    --input: 234 10% 37%;
+    /* Darker input background */
+    --ring: 165 81% 35%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --card-phase-bg: 234 11% 30%;
+    --card-phase-border: 234 10% 37%;
+    --card-phase-alpha: 1;
+    --card-phase-border-alpha: 1;
   }
 }
+
 
 @layer base {
   * {
