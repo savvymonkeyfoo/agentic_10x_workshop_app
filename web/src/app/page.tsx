@@ -25,7 +25,7 @@ export default async function Dashboard() {
   const workshops = await getWorkshops();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-core)] p-10">
+    <div className="min-h-screen bg-transparent p-10">
 
       <header className="max-w-6xl mx-auto flex justify-between items-center mb-12">
         <div>
