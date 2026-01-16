@@ -53,7 +53,7 @@ export function MarkdownTextarea({
                 onBlur={() => setIsEditing(false)}
                 placeholder={placeholder}
                 className={cn(
-                    'w-full bg-input/50 border border-input rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all text-foreground',
+                    'w-full bg-input border border-input rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-ring outline-none transition-all text-foreground',
                     className
                 )}
                 style={{ minHeight }}
@@ -65,7 +65,7 @@ export function MarkdownTextarea({
         <div
             onClick={() => setIsEditing(true)}
             className={cn(
-                'w-full bg-input/50 border border-input rounded-lg p-3 cursor-text hover:border-ring transition-all',
+                'w-full bg-input border border-input rounded-lg p-3 cursor-text hover:border-ring transition-all',
                 !hasContent && 'text-muted-foreground',
                 className
             )}

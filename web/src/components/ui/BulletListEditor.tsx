@@ -103,33 +103,35 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
                     {label}
                 </label>
             )}
-            <div className="flex flex-col gap-2">
-                {items.map((item, i) => (
-                    <div key={i} className="flex gap-2 items-start group w-full">
-                        {/* The Bullet - Fixed Width, preventing wrap under */}
-                        <span className="text-muted-foreground font-bold mt-[4px] select-none text-sm">•</span>
+            <div className="bg-input border border-input rounded-lg p-3 focus-within:ring-2 focus-within:ring-ring transition-all">
+                <div className="flex flex-col gap-2">
+                    {items.map((item, i) => (
+                        <div key={i} className="flex gap-2 items-start group w-full">
+                            {/* The Bullet - Fixed Width, preventing wrap under */}
+                            <span className="text-muted-foreground font-bold mt-[4px] select-none text-sm">•</span>
 
-                        {/* The Input - Flex Grow */}
-                        <textarea
-                            id={id ? (i === 0 ? id : `${id}-${i}`) : undefined}
-                            name={name}
-                            ref={el => { inputsRef.current[i] = el; }}
-                            value={item}
-                            onChange={(e) => handleChange(i, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, i)}
-                            rows={1}
-                            placeholder={i === 0 ? placeholder : ''}
-                            className="flex-1 bg-transparent border-none outline-none text-sm text-foreground leading-relaxed resize-none overflow-hidden placeholder:text-muted-foreground/50 p-0 m-0 font-sans"
-                            style={{ minHeight: '24px' }}
-                        />
-                    </div>
-                ))}
+                            {/* The Input - Flex Grow */}
+                            <textarea
+                                id={id ? (i === 0 ? id : `${id}-${i}`) : undefined}
+                                name={name}
+                                ref={el => { inputsRef.current[i] = el; }}
+                                value={item}
+                                onChange={(e) => handleChange(i, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, i)}
+                                rows={1}
+                                placeholder={i === 0 ? placeholder : ''}
+                                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground leading-relaxed resize-none overflow-hidden placeholder:text-muted-foreground/50 p-0 m-0 font-sans"
+                                style={{ minHeight: '24px' }}
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Clickable area at bottom to add new item if list is empty (fallback) */}
+                {items.length === 0 && (
+                    <div onClick={() => handleChange(0, '')} className="h-8 cursor-text w-full" />
+                )}
             </div>
-
-            {/* Clickable area at bottom to add new item if list is empty (fallback) */}
-            {items.length === 0 && (
-                <div onClick={() => handleChange(0, '')} className="h-8 cursor-text w-full" />
-            )}
         </div>
     );
 }
