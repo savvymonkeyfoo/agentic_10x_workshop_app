@@ -119,23 +119,23 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
             <defs>
                 {/* Standard Grey Marker */}
-                <marker id="wave-arrow-grey" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <marker id="wave-arrow-grey" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
                 </marker>
                 {/* Wave 1 Emerald */}
-                <marker id="wave-arrow-1" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <marker id="wave-arrow-1" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#10b981" />
                 </marker>
                 {/* Wave 2 Blue */}
-                <marker id="wave-arrow-2" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <marker id="wave-arrow-2" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#3b82f6" />
                 </marker>
                 {/* Wave 3 Violet */}
-                <marker id="wave-arrow-3" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <marker id="wave-arrow-3" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#8b5cf6" />
                 </marker>
                 {/* Wave 4 Slate */}
-                <marker id="wave-arrow-4" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                <marker id="wave-arrow-4" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
                     <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
                 </marker>
             </defs>
@@ -152,8 +152,8 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
                 // @ts-ignore
                 const sy = start.y + start.height / 2;
 
-                // Target: Left Edge Mid
-                const ex = end.x;
+                // Target: Left Edge Mid (Offset by marker width to connect to Back of arrow)
+                const ex = end.x - 6;
                 // @ts-ignore
                 const ey = end.y + end.height / 2;
 
