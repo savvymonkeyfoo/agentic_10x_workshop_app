@@ -223,9 +223,16 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
 
                 {/* Quadrant Labels */}
                 <text x="30" y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">QUICK WINS</text>
+                <text x="30" y="55" fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="start">High Val, Low Cplx</text>
+
                 <text x={width - 30} y="40" fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">MAJOR PROJECTS</text>
-                <text x="30" y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">FILL-INS</text>
-                <text x={width - 30} y={height - 30} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
+                <text x={width - 30} y="55" fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="end">High Val, High Cplx</text>
+
+                <text x="30" y={height - 40} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="start">TACTICAL</text>
+                <text x="30" y={height - 25} fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="start">Low Val, Low Cplx</text>
+
+                <text x={width - 30} y={height - 40} fill="#94a3b8" fontSize="12" fontWeight="700" letterSpacing="1" textAnchor="end">DEPRIORITISE</text>
+                <text x={width - 30} y={height - 25} fill="#94a3b8" fontSize="10" opacity="0.8" textAnchor="end">Low Val, High Cplx</text>
 
                 {/* Strategy Dependency Edge Paths - REMOVED per user request */}
                 {/* {edges.map((edge, i) => ...)} */}
