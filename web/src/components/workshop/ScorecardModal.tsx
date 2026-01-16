@@ -42,6 +42,17 @@ const STEP_STYLES = {
     }
 };
 
+interface Question {
+    id: string;
+    label: string;
+    left: string;
+    mid: string;
+    right: string;
+    leftExplainer: string;
+    midExplainer: string;
+    rightExplainer: string;
+}
+
 // 3-Step Picker Component with Pastel Colors
 function ThreeStepPicker({
     value,
@@ -50,16 +61,7 @@ function ThreeStepPicker({
 }: {
     value: number;
     onChange: (val: number) => void;
-    question: {
-        id: string;
-        label: string;
-        left: string;
-        mid: string;
-        right: string;
-        leftExplainer: string;
-        midExplainer: string;
-        rightExplainer: string;
-    };
+    question: Question;
 }) {
     const steps = [
         { value: 0, label: question.left, explainer: question.leftExplainer, styleKey: 'left' as const },
@@ -216,7 +218,7 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                                         key={question.id}
                                         value={scores[question.id]}
                                         onChange={(val) => handleSliderChange(question.id, val)}
-                                        question={question as any}
+                                        question={question}
                                     />
                                 ))}
                             </AccordionContent>

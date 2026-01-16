@@ -68,12 +68,12 @@ const getWaveCurve = (start: { x: number, y: number }, end: { x: number, y: numb
 
 // --- 5. Connection Overlay (Experimental) ---
 const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: string }[], nodes: ProjectNode[] }) => {
-    const [positions, setPositions] = React.useState<Record<string, { x: number, y: number }>>({});
+    const [positions, setPositions] = React.useState<Record<string, { x: number, y: number, width: number, height: number }>>({});;
 
     // Simple measurement hook that runs after render
     React.useEffect(() => {
         const updatePositions = () => {
-            const newPos: Record<string, { x: number, y: number }> = {};
+            const newPos: Record<string, { x: number, y: number, width: number, height: number }> = {};
             // We need to measure all current nodes
             nodes.forEach(node => {
                 const el = document.getElementById(`card-${node.id}`);
@@ -86,9 +86,7 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
                         newPos[node.id] = {
                             x: rect.left - containerRect.left,
                             y: rect.top - containerRect.top,
-                            // @ts-ignore
                             width: rect.width,
-                            // @ts-ignore
                             height: rect.height
                         };
                     }
@@ -140,21 +138,16 @@ const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: s
                 </marker>
             </defs>
             {edges.map(edge => {
-                // @ts-ignore
                 const start = positions[edge.from];
-                // @ts-ignore
                 const end = positions[edge.to];
                 if (!start || !end) return null;
 
                 // Source: Right Edge Mid
-                // @ts-ignore
                 const sx = start.x + start.width;
-                // @ts-ignore
                 const sy = start.y + start.height / 2;
 
                 // Target: Left Edge Mid (Offset by marker width to connect to Back of arrow)
                 const ex = end.x - 6;
-                // @ts-ignore
                 const ey = end.y + end.height / 2;
 
                 // Determine color based on TARGET rank

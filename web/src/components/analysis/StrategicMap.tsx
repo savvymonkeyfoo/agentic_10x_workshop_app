@@ -107,74 +107,7 @@ const resolveCollisions = (nodes: Opportunity[], width: number, height: number) 
 };
 
 
-// Helper to compute SVG path for a curve between two cards with smart anchoring
-const getCurvePath = (start: { x: number, y: number }, end: { x: number, y: number }, cardW: number, cardH: number) => {
-    // 0. Defines
-    const halfW = cardW / 2;
-    const halfH = cardH / 2;
-
-    // 1. Determine relative position
-    // Since x,y are CENTER coordinates:
-    const isRight = end.x > start.x + cardW; // Target is fully to the right (with buffer)
-    const isLeft = end.x < start.x - cardW;  // Target is fully to the left
-    const isBelow = end.y > start.y + cardH; // Target is fully below
-
-    let sx, sy, ex, ey, c1x, c1y, c2x, c2y;
-
-    if (isRight) {
-        // Source Right Edge -> Target Left Edge
-        sx = start.x + halfW;
-        sy = start.y;
-        ex = end.x - halfW;
-        ey = end.y;
-
-        const dist = Math.abs(ex - sx) / 2;
-        c1x = sx + dist;
-        c1y = sy;
-        c2x = ex - dist;
-        c2y = ey;
-    } else if (isLeft) {
-        // Source Left Edge -> Target Right Edge (Backwards dependency)
-        sx = start.x - halfW;
-        sy = start.y;
-        ex = end.x + halfW;
-        ey = end.y;
-
-        const dist = Math.abs(sx - ex) / 2;
-        c1x = sx - dist;
-        c1y = sy;
-        c2x = ex + dist;
-        c2y = ey;
-    } else if (isBelow) {
-        // Source Bottom Edge -> Target Top Edge
-        sx = start.x;
-        sy = start.y + halfH;
-        ex = end.x;
-        ey = end.y - halfH;
-
-        const dist = Math.abs(ey - sy) / 2;
-        c1x = sx;
-        c1y = sy + dist;
-        c2x = ex;
-        c2y = ey - dist;
-    } else {
-        // Fallback: Source Top Edge -> Target Bottom Edge (Target is above)
-        sx = start.x;
-        sy = start.y - halfH;
-        ex = end.x;
-        ey = end.y + halfH;
-
-        const dist = Math.abs(sy - ey) / 2;
-        c1x = sx;
-        c1y = sy - dist;
-        c2x = ex;
-        c2y = ey + dist;
-    }
-
-    return `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
-};
-
-export default function StrategicMap({ opportunities, edges = [] }: { opportunities: Opportunity[], edges?: { from: string, to: string }[] }) {
+export default function StrategicMap({ opportunities, edges: _edges = [] }: { opportunities: Opportunity[], edges?: { from: string, to: string }[] }) {
     const width = 1000;
     const height = 750;
     const CARD_W = 180;
@@ -185,14 +118,6 @@ export default function StrategicMap({ opportunities, edges = [] }: { opportunit
         // We only do ONE pass now (Grid mapping + Rectangle Physics)
         return resolveCollisions(valid, width, height).sort((a, b) => (a.sequenceRank || 99) - (b.sequenceRank || 99));
     }, [opportunities]);
-
-    // Map ID to coordinates for quick lookup
-    const nodeMap = useMemo(() => {
-        return processedData.reduce((acc, node) => {
-            acc[node.id] = node;
-            return acc;
-        }, {} as Record<string, typeof processedData[0]>);
-    }, [processedData]);
 
     const getCardColor = (rank: number | null) => {
         // Wave 1: Green, Wave 2: Blue

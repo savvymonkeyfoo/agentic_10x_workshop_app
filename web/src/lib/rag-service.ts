@@ -12,7 +12,6 @@ import { del } from '@vercel/blob';
 // Constants
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 100;
-const EMBEDDING_DIMENSION = 768;
 
 /**
  * Extract text from a file buffer based on file type.
@@ -23,6 +22,7 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
 
     if (extension === 'pdf') {
         // Dynamic import to avoid bundling issues
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const pdfParse = require('pdf-parse');
         const data = await pdfParse(buffer);
         return data.text;

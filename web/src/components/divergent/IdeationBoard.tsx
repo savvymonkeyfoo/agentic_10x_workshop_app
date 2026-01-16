@@ -20,7 +20,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import { LayoutGrid, ArrowLeft, RefreshCw, Plus, MousePointer2, Check } from 'lucide-react';
+import { LayoutGrid, ArrowLeft, Plus, MousePointer2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';

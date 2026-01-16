@@ -83,10 +83,9 @@ async function queryPinecone(
     const { getWorkshopNamespace } = await import('@/lib/pinecone');
     const { embedding } = await embed({ model: AI_CONFIG.embeddingModel, value: query });
 
-    let filter: Record<string, unknown> | undefined;
-    if (filterType) {
-        filter = Array.isArray(filterType) ? { type: { "$in": filterType } } : { type: { "$eq": filterType } };
-    }
+    const filter: Record<string, unknown> | undefined = filterType
+        ? (Array.isArray(filterType) ? { type: { "$in": filterType } } : { type: { "$eq": filterType } })
+        : undefined;
 
     const namespace = getWorkshopNamespace(workshopId);
     const results = await namespace.query({ vector: embedding, topK, filter, includeMetadata: true });
@@ -237,7 +236,7 @@ export async function analyzeBacklogItem(
     try {
         const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
         let techDNA = context?.dna || (dbContext?.extractedConstraints as string | null);
-        let research = context?.research || dbContext?.researchBrief || "No specific research briefs.";
+        const research = context?.research || dbContext?.researchBrief || "No specific research briefs.";
 
         if (!techDNA) {
             const retrieval = await queryContext(workshopId, "technical architecture", 'DOSSIER');
@@ -246,12 +245,9 @@ export async function analyzeBacklogItem(
             await prisma.workshopContext.update({ where: { workshopId }, data: { extractedConstraints: techDNA } });
         }
 
-        let prompt;
-        if (item.isSeed) {
-            prompt = `${GENERATION_PROMPT}\n\nRESEARCH: ${research}`;
-        } else {
-            prompt = `${ENRICHMENT_PROMPT}\n\nITEM: ${item.title}\nDESC: ${item.description}\nDNA: ${techDNA}`;
-        }
+        const prompt = item.isSeed
+            ? `${GENERATION_PROMPT}\n\nRESEARCH: ${research}`
+            : `${ENRICHMENT_PROMPT}\n\nITEM: ${item.title}\nDESC: ${item.description}\nDNA: ${techDNA}`;
 
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
@@ -354,7 +350,7 @@ export async function enrichOpportunity(workshopId: string, title: string, descr
  */
 export async function updateOpportunity(workshopId: string, opportunity: any) {
     try {
-        const opportunityId = opportunity.id || opportunity.originalId;
+        const opportunityId = (opportunity.id || opportunity.originalId) as string | undefined;
 
         if (!opportunityId) {
             return { success: false, error: "No opportunity ID provided" };
@@ -363,17 +359,13 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
         await prisma.opportunity.update({
             where: { id: opportunityId },
             data: {
-                projectName: opportunity.title,
-                frictionStatement: opportunity.description,
-                // Note: proposedSolution maps to frictionStatement - no separate description field in schema
-                friction: opportunity.friction,
-                techAlignment: opportunity.techAlignment,
-                strategyAlignment: opportunity.strategyAlignment,
-                boardX: opportunity.boardPosition?.x,
-                boardY: opportunity.boardPosition?.y,
-                boardStatus: opportunity.boardStatus,
-                source: opportunity.source,
-                tier: opportunity.tier
+                projectName: opportunity.title as string,
+                frictionStatement: opportunity.description as string,
+                friction: opportunity.friction as string,
+                techAlignment: opportunity.techAlignment as string,
+                strategyAlignment: opportunity.strategyAlignment as string,
+                boardStatus: opportunity.boardStatus as string,
+                tier: opportunity.tier as string
             }
         });
 

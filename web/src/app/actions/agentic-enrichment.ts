@@ -75,12 +75,6 @@ const BusinessCaseParamsSchema = z.object({
     dfvViabilityNote: z.string().nullable().describe("Brief justification for viability rating.")
 });
 
-// --- PROMPTS ---
-
-const SYSTEM_PROMPT = `You are an expert Solutions Architect and Business Strategist.
-Your goal is to enrich early-stage opportunities with high-fidelity technical and strategic details.
-You have access to Enterprise Context (RAG). Use it to ground your responses in reality.`;
-
 // --- ACTION ---
 
 export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'EXECUTION_PARAMS' | 'BUSINESS_CASE' | 'VALUE_PROP';
@@ -88,7 +82,7 @@ export type EnrichmentMode = 'ANALYSIS' | 'WORKFLOW' | 'EXECUTION' | 'EXECUTION_
 export async function agenticEnrichment(
     workshopId: string,
     mode: EnrichmentMode,
-    context: { title: string; description: string; currentData?: any }
+    context: { title: string; description: string; currentData?: object }
 ) {
     try {
         console.log(`[AgenticEnrichment] Mode: ${mode} for "${context.title}"`);
@@ -123,9 +117,14 @@ export async function agenticEnrichment(
     }
 }
 
-// --- GENERATORS ---
+// Generator context type
+interface GeneratorContext {
+    title: string;
+    description: string;
+    currentData?: object;
+}
 
-async function generateAnalysis(ragContext: string, context: any) {
+async function generateAnalysis(ragContext: string, context: GeneratorContext) {
     const prompt = `
     Based on the Opportunity "${context.title}" and the Enterprise Context below, generate a technical and strategic analysis.
     
@@ -145,7 +144,7 @@ async function generateAnalysis(ragContext: string, context: any) {
     return { success: true, type: 'json', data: object };
 }
 
-async function generateWorkflow(ragContext: string, context: any) {
+async function generateWorkflow(ragContext: string, context: GeneratorContext) {
     const prompt = `
     Design a logical 3-5 step workflow for the Opportunity "${context.title}".
     Use the Enterprise Context to identify likely systems and guardrails.
@@ -166,7 +165,7 @@ async function generateWorkflow(ragContext: string, context: any) {
     return { success: true, type: 'json', data: object.phases };
 }
 
-async function generateExecutionPlan(ragContext: string, context: any) {
+async function generateExecutionPlan(ragContext: string, context: GeneratorContext) {
     const prompt = `
     Draft a high-level Execution Plan for "${context.title}".
     Include:
@@ -189,7 +188,7 @@ async function generateExecutionPlan(ragContext: string, context: any) {
     return { success: true, type: 'markdown', data: text };
 }
 
-async function generateBusinessCase(ragContext: string, context: any) {
+async function generateBusinessCase(ragContext: string, context: GeneratorContext) {
     // 1. Generate the narrative markdown
     const narrativePrompt = `
     Write a compelling Business Case for "${context.title}".
@@ -211,6 +210,12 @@ async function generateBusinessCase(ragContext: string, context: any) {
     });
 
     // 2. Generate structured parameters
+    const currentData = context.currentData as Record<string, unknown> | undefined;
+    const workflowPhases = (currentData?.workflowPhases as Array<{ name: string; autonomy: string }>) || [];
+    const impactedSystems = (currentData?.impactedSystems as string[]) || [];
+    const capabilitiesExisting = (currentData?.capabilitiesExisting as string[]) || [];
+    const capabilitiesMissing = (currentData?.capabilitiesMissing as string[]) || [];
+
     const paramsPrompt = `
     Based on the Opportunity "${context.title}" and the available context, estimate the following parameters.
 
@@ -223,13 +228,13 @@ async function generateBusinessCase(ragContext: string, context: any) {
     AVAILABLE DATA:
     - Title: ${context.title}
     - Description: ${context.description}
-    - Workflow Phases: ${context.currentData?.workflowPhases?.length || 0} phases
-    - Phase Details: ${context.currentData?.workflowPhases?.map((p: any) => `${p.name} (${p.autonomy})`).join(', ') || 'Not defined'}
-    - Impacted Systems: ${context.currentData?.impactedSystems?.join(', ') || 'Not defined'}
-    - Existing Capabilities: ${context.currentData?.capabilitiesExisting?.join(', ') || 'None listed'}
-    - Missing Capabilities: ${context.currentData?.capabilitiesMissing?.join(', ') || 'None listed'}
-    - Strategy Alignment: ${context.currentData?.strategyAlignment || 'Not defined'}
-    - Tech Alignment: ${context.currentData?.techAlignment || 'Not defined'}
+    - Workflow Phases: ${workflowPhases.length} phases
+    - Phase Details: ${workflowPhases.map(p => `${p.name} (${p.autonomy})`).join(', ') || 'Not defined'}
+    - Impacted Systems: ${impactedSystems.join(', ') || 'Not defined'}
+    - Existing Capabilities: ${capabilitiesExisting.join(', ') || 'None listed'}
+    - Missing Capabilities: ${capabilitiesMissing.join(', ') || 'None listed'}
+    - Strategy Alignment: ${currentData?.strategyAlignment || 'Not defined'}
+    - Tech Alignment: ${currentData?.techAlignment || 'Not defined'}
     
     ENTERPRISE CONTEXT:
     ${ragContext}
@@ -261,7 +266,7 @@ async function generateBusinessCase(ragContext: string, context: any) {
     }
 }
 
-async function generateValueProp(ragContext: string, context: any) {
+async function generateValueProp(ragContext: string, context: GeneratorContext) {
     const prompt = `
     Generate a formatted Customer Value Proposition for "${context.title}" using the standard structure:
     "As a [Role], I want to [Outcome], with [Solution], so that [Need]."
@@ -284,7 +289,11 @@ async function generateValueProp(ragContext: string, context: any) {
     return { success: true, type: 'json', data: object };
 }
 
-async function generateExecutionParams(ragContext: string, context: any) {
+async function generateExecutionParams(ragContext: string, context: GeneratorContext) {
+    const currentData = context.currentData as Record<string, unknown> | undefined;
+    const workflowPhases = (currentData?.workflowPhases as Array<{ name: string }>) || [];
+    const impactedSystems = (currentData?.impactedSystems as string[]) || [];
+
     const prompt = `
     Based on the Opportunity "${context.title}" and the Enterprise Context below, generate execution parameters for implementation.
 
@@ -304,8 +313,8 @@ async function generateExecutionParams(ragContext: string, context: any) {
     
     CURRENT DATA (if available):
     Title: ${context.title}
-    Workflow Phases: ${context.currentData?.workflowPhases?.map((p: any) => p.name).join(', ') || 'Not defined'}
-    Impacted Systems: ${context.currentData?.impactedSystems?.join(', ') || 'Not defined'}
+    Workflow Phases: ${workflowPhases.map(p => p.name).join(', ') || 'Not defined'}
+    Impacted Systems: ${impactedSystems.join(', ') || 'Not defined'}
     
     Generate practical execution parameters for each of the 6 fields:
     1. definitionOfDone - Success metrics and completion criteria
