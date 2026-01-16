@@ -54,6 +54,122 @@ const DroppableColumn = ({ rank, title, projects, color, bg }: DroppableColumnPr
 };
 
 // --- 3. Main Component ---
+// --- 4. Helper for Curve Connections ---
+const getWaveCurve = (start: { x: number, y: number }, end: { x: number, y: number }) => {
+    // Standard Bezier Curve S-Shape
+    const distX = Math.abs(end.x - start.x);
+    // Control points at 50% distance horizontally
+    const c1x = start.x + distX * 0.5;
+    const c1y = start.y;
+    const c2x = end.x - distX * 0.5;
+    const c2y = end.y;
+    return `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
+};
+
+// --- 5. Connection Overlay (Experimental) ---
+const WavesConnectionOverlay = ({ edges, nodes }: { edges: { from: string, to: string }[], nodes: ProjectNode[] }) => {
+    const [positions, setPositions] = React.useState<Record<string, { x: number, y: number }>>({});
+
+    // Simple measurement hook that runs after render
+    React.useEffect(() => {
+        const updatePositions = () => {
+            const newPos: Record<string, { x: number, y: number }> = {};
+            // We need to measure all current nodes
+            nodes.forEach(node => {
+                const el = document.getElementById(`card-${node.id}`);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    // We need coordinates relative to the CONTAINER, but usually overlays are absolute.
+                    // The easiest way for a precise overlay in a scrolling/relative container is to find the Container's rect too.
+                    // Or just rely on offsetLeft/Top if the parent is relative.
+                    const container = el.offsetParent as HTMLElement;
+                    if (container) {
+                        // This logic assumes `el.offsetParent` is the column, and the column is inside the relative grid.
+                        // Actually, DraggableCard's offsetParent is often the Column's inner div or the Columns div.
+
+                        // Let's use getBoundingClientRect relative to the ROOT container of this component.
+                        // We will capture the root container ref in the parent and pass a measuring callback,
+                        // or simpler: Just assume full absolute positioning relative to the main relative wrapper.
+                    }
+                }
+            });
+        };
+
+        // Wait for layout
+        const timer = setTimeout(() => {
+            const container = document.getElementById('waves-container');
+            if (!container) return;
+            const containerRect = container.getBoundingClientRect();
+
+            const newPos: Record<string, { x: number, y: number }> = {};
+            nodes.forEach(node => {
+                const el = document.getElementById(`card-${node.id}`);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    // Center-Right of Source
+                    // Center-Left of Target
+
+                    newPos[node.id] = {
+                        // Relative to container
+                        x: rect.left - containerRect.left,
+                        y: rect.top - containerRect.top,
+                        // Store dimensions too if needed, but for now just raw rect relative to container
+                        // @ts-ignore
+                        width: rect.width,
+                        // @ts-ignore
+                        height: rect.height
+                    };
+                }
+            });
+            setPositions(newPos);
+        }, 100); // Small delay for rendering
+
+        return () => clearTimeout(timer);
+    }, [nodes, edges]); // Re-run when nodes move
+
+    return (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+            <defs>
+                <marker id="wave-arrow" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                    <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
+                </marker>
+            </defs>
+            {edges.map(edge => {
+                // @ts-ignore
+                const start = positions[edge.from];
+                // @ts-ignore
+                const end = positions[edge.to];
+                if (!start || !end) return null;
+
+                // Source: Right Edge Mid
+                // @ts-ignore
+                const sx = start.x + start.width;
+                // @ts-ignore
+                const sy = start.y + start.height / 2;
+
+                // Target: Left Edge Mid
+                const ex = end.x;
+                // @ts-ignore
+                const ey = end.y + end.height / 2;
+
+                return (
+                    <path
+                        key={`w-${edge.from}-${edge.to}`}
+                        d={getWaveCurve({ x: sx, y: sy }, { x: ex, y: ey })}
+                        fill="none"
+                        stroke="#94a3b8"
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                        markerEnd="url(#wave-arrow)"
+                        opacity="0.5"
+                    />
+                );
+            })}
+        </svg>
+    )
+}
+
+// --- 3. Main Component ---
 export default function StrategicWaves({ nodes, workshopId, edges = [] }: { nodes: ProjectNode[], workshopId: string, edges?: { from: string, to: string }[] }) {
     const router = useRouter();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -96,7 +212,10 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
     };
 
     return (
-        <div className="w-full h-[600px] relative p-4 mt-16">
+        <div id="waves-container" className="w-full h-[600px] relative p-4 mt-16">
+            {/* SVG OVERLAY */}
+            <WavesConnectionOverlay edges={edges} nodes={nodes} />
+
             <DndContext onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
                 <div className="grid grid-cols-4 gap-4 h-full relative z-10">
                     {columns.map(col => (
@@ -116,214 +235,29 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
                             <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Moving Project...</span>
                         </div>
                     ) : null}
-// --- 4. Helper for Curve Connections ---
-                    const getWaveCurve = (start: {x: number, y: number }, end: {x: number, y: number }) => {
-    // Standard Bezier Curve S-Shape
-    const distX = Math.abs(end.x - start.x);
-                    // Control points at 50% distance horizontally
-                    const c1x = start.x + distX * 0.5;
-                    const c1y = start.y;
-                    const c2x = end.x - distX * 0.5;
-                    const c2y = end.y;
-                    return `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
-};
+                </DragOverlay>
+            </DndContext>
 
-                    // --- 5. Connection Overlay (Experimental) ---
-                    const WavesConnectionOverlay = ({edges, nodes}: {edges: {from: string, to: string }[], nodes: ProjectNode[] }) => {
-    const [positions, setPositions] = React.useState<Record<string, { x: number, y: number }>>({ });
-
-    // Simple measurement hook that runs after render
-    React.useEffect(() => {
-        const updatePositions = () => {
-             const newPos: Record<string, {x: number, y: number }> = { };
-             // We need to measure all current nodes
-             nodes.forEach(node => {
-                 const el = document.getElementById(`card-${node.id}`);
-                        if (el) {
-                     const rect = el.getBoundingClientRect();
-                        // We need coordinates relative to the CONTAINER, but usually overlays are absolute.
-                        // The easiest way for a precise overlay in a scrolling/relative container is to find the Container's rect too.
-                        // Or just rely on offsetLeft/Top if the parent is relative.
-                        const container = el.offsetParent as HTMLElement;
-                        if(container) {
-                            // This logic assumes `el.offsetParent` is the column, and the column is inside the relative grid.
-                            // Actually, DraggableCard's offsetParent is often the Column's inner div or the Columns div.
-
-                            // Let's use getBoundingClientRect relative to the ROOT container of this component.
-                            // We will capture the root container ref in the parent and pass a measuring callback,
-                            // or simpler: Just assume full absolute positioning relative to the main relative wrapper.
-                        }
-                 }
-             });
-        };
-
-        // Wait for layout
-        const timer = setTimeout(() => {
-             const container = document.getElementById('waves-container');
-                        if(!container) return;
-                        const containerRect = container.getBoundingClientRect();
-
-                        const newPos: Record<string, {x: number, y: number }> = { };
-             nodes.forEach(node => {
-                 const el = document.getElementById(`card-${node.id}`);
-                        if (el) {
-                     const rect = el.getBoundingClientRect();
-                        // Center-Right of Source
-                        // Center-Left of Target
-                        // Actually, let's just use Center-Center for generic logic, then adjust.
-                        // But for visual cleanliness:
-                        // FROM: Right Edge, Center Y
-                        // TO: Left Edge, Center Y
-
-                        newPos[node.id] = {
-                            // Relative to container
-                            x: rect.left - containerRect.left,
-                        y: rect.top - containerRect.top,
-                        // Store dimensions too if needed, but for now just raw rect relative to container
-                        // @ts-ignore
-                        width: rect.width,
-                        // @ts-ignore
-                        height: rect.height
-                     };
-                 }
-             });
-                        setPositions(newPos);
-        }, 100); // Small delay for rendering
-
-        return () => clearTimeout(timer);
-    }, [nodes, edges]); // Re-run when nodes move (technically we need to listen to DragEnd too, but parent re-renders on DragEnd might trigger this)
-
-                        return (
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
-                            <defs>
-                                <marker id="wave-arrow" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                                    <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
-                                </marker>
-                            </defs>
-                            {edges.map(edge => {
-                                // @ts-ignore
-                                const start = positions[edge.from];
-                                // @ts-ignore
-                                const end = positions[edge.to];
-                                if (!start || !end) return null;
-
-                                // Source: Right Edge Mid
-                                // @ts-ignore
-                                const sx = start.x + start.width;
-                                // @ts-ignore
-                                const sy = start.y + start.height / 2;
-
-                                // Target: Left Edge Mid
-                                const ex = end.x;
-                                // @ts-ignore
-                                const ey = end.y + end.height / 2;
-
-                                return (
-                                    <path
-                                        key={`w-${edge.from}-${edge.to}`}
-                                        d={getWaveCurve({ x: sx, y: sy }, { x: ex, y: ey })}
-                                        fill="none"
-                                        stroke="#94a3b8"
-                                        strokeWidth="1.5"
-                                        strokeDasharray="4 4"
-                                        markerEnd="url(#wave-arrow)"
-                                        opacity="0.5"
-                                    />
-                                );
-                            })}
-                        </svg>
-                        )
-}
-
-                        // --- 3. Main Component ---
-                        export default function StrategicWaves({nodes, workshopId, edges = []}: {nodes: ProjectNode[], workshopId: string, edges?: {from: string, to: string }[] }) {
-    const router = useRouter();
-                        const [activeId, setActiveId] = useState<string | null>(null);
-                        const [modalOpen, setModalOpen] = useState(false);
-                        const [pendingMove, setPendingMove] = useState<{ id: string, newRank: number } | null>(null);
-                        const [reason, setReason] = useState("");
-
-                        // Headers configuration
-                        const columns = [
-                        {rank: 1, title: "WAVE 1: MOBILISE", color: "border-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
-                        {rank: 2, title: "WAVE 2: SCALE", color: "border-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
-                        {rank: 3, title: "WAVE 3: OPTIMISE", color: "border-violet-500", bg: "bg-violet-50 dark:bg-violet-900/10" },
-                        {rank: 4, title: "WAVE 4: DEFER", color: "border-slate-300", bg: "bg-slate-50 dark:bg-slate-800/50" },
-                        ];
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-                        setActiveId(null);
-                        if (over && active.id !== over.id) {
-            const newRank = parseInt(over.id as string);
-            // Only trigger if rank actually changed
-            // Support both property names for compatibility
-            const currentProject = nodes.find(o => o.id === active.id);
-                        const currentRank = currentProject?.rank || currentProject?.sequenceRank || 4;
-
-                        if (currentProject && currentRank !== newRank) {
-                            setPendingMove({ id: active.id as string, newRank });
-                        setModalOpen(true); // <--- TRIGGER MODAL
-            }
-        }
-    };
-
-    const handleSave = async () => {
-        if (!pendingMove) return;
-                        await updateProjectWave(pendingMove.id, pendingMove.newRank, reason, workshopId);
-                        setModalOpen(false);
-                        setReason("");
-                        setPendingMove(null);
-                        router.refresh(); // Refresh to update Matrix colors and Lists
-    };
-
-                        return (
-                        <div id="waves-container" className="w-full h-[600px] relative p-4 mt-16">
-                            {/* SVG OVERLAY */}
-                            <WavesConnectionOverlay edges={edges} nodes={nodes} />
-
-                            <DndContext onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-                                <div className="grid grid-cols-4 gap-4 h-full relative z-10">
-                                    {columns.map(col => (
-                                        <DroppableColumn
-                                            key={col.rank}
-                                            {...col}
-                                            // Filter logic adapted for 'nodes' structure where 'rank' is the property
-                                            projects={nodes.filter(o => (o.rank || o.sequenceRank || 4) === col.rank)}
-                                        />
-                                    ))}
-                                </div>
-
-                                {/* Drag Overlay (Visual feedback) */}
-                                <DragOverlay>
-                                    {activeId ? (
-                                        <div className="bg-white dark:bg-slate-700 p-3 rounded shadow-xl border border-blue-500 rotate-3 cursor-grabbing w-[200px]">
-                                            <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Moving Project...</span>
-                                        </div>
-                                    ) : null}
-                                </DragOverlay>
-                            </DndContext>
-
-                            {/* --- OVERRIDE MODAL --- */}
-                            {modalOpen && (
-                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl">
-                                    <div className="bg-white dark:bg-slate-800 w-[400px] p-6 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in zoom-in-95">
-                                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Recommendation Override</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You are moving a project against the AI recommendation. Please document the reason for the Board.</p>
-                                        <textarea
-                                            className="w-full h-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4 resize-none"
-                                            placeholder="e.g. 'Board mandated immediate start despite risk...'"
-                                            value={reason}
-                                            onChange={(e) => setReason(e.target.value)}
-                                            autoFocus
-                                        />
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">Cancel</button>
-                                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-colors">Save Override</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+            {/* --- OVERRIDE MODAL --- */}
+            {modalOpen && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl">
+                    <div className="bg-white dark:bg-slate-800 w-[400px] p-6 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in zoom-in-95">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Recommendation Override</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You are moving a project against the AI recommendation. Please document the reason for the Board.</p>
+                        <textarea
+                            className="w-full h-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4 resize-none"
+                            placeholder="e.g. 'Board mandated immediate start despite risk...'"
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-colors">Save Override</button>
                         </div>
-                        );
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
