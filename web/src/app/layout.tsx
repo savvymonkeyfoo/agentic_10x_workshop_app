@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Libre_Baskerville } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import Link from 'next/link';
@@ -10,11 +10,6 @@ import logoDark from '@/assets/images/logo_dark_transparent.png';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const libre_baskerville = Libre_Baskerville({
-  weight: ['400', '700'],
-  subsets: ["latin"],
-  variable: "--font-serif"
-});
 
 export const metadata: Metadata = {
   title: "Agentic 10x Workshop",
@@ -28,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${libre_baskerville.variable} font-sans`} suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

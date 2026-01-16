@@ -113,7 +113,8 @@
     --ring: 20 14.3% 4.1%;
     --radius: 0.75rem;
 
-    --font-heading: var(--font-serif);
+    /* Font assignments */
+    --font-heading: var(--font-inter);
     --font-body: var(--font-inter);
   }
 
