@@ -284,8 +284,8 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         try {
             const result = await promoteToCapture({ workshopId, opportunityIds: selectedOpps.map(o => o.id) });
 
-            if (result.success && result.count > 0) {
-                toast.success(`${result.count} Ideas Promoted! Redirecting...`, {
+            if (result.success && result.data && result.data.count > 0) {
+                toast.success(`${result.data.count} Ideas Promoted! Redirecting...`, {
                     duration: 2000
                 });
 
@@ -304,7 +304,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                 // AUTO-NAVIGATE (User Requested)
                 router.push(`/workshop/${workshopId}/input`);
 
-            } else if (result.count === 0) {
+            } else if (result.success && result.data && result.data.count === 0) {
                 toast.info("No new items were promoted (duplicates skipped).");
                 setIsSelectMode(false);
                 setSelectedItems(new Set());
@@ -334,8 +334,8 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
         try {
             const result = await demoteFromCapture({ workshopId, opportunityIds: promotedOnly.map(o => o.id) });
 
-            if (result.success && result.count > 0) {
-                toast.success(`${result.count} Ideas removed from Capture.`);
+            if (result.success && result.data && result.data.count > 0) {
+                toast.success(`${result.data.count} Ideas removed from Capture.`);
 
                 // Optimistic Update
                 setOpportunities(prev => prev.map(o => {
