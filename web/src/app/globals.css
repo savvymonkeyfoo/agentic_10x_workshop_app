@@ -263,6 +263,100 @@
     --card-phase-alpha: 1;
     --card-phase-border-alpha: 1;
   }
+
+  /* AETHER / FLUID SPATIALITY (Light) */
+  [data-theme='aether'] {
+    /* "Morning Mist" */
+    --background: 220 33% 97%;
+    /* #F5F7FA Base */
+    --foreground: 222 47% 11%;
+    /* #0F172A (Slate 900) */
+
+    /* Glass Surface: Translucent White */
+    --card: 0 0% 100%;
+    /* #FFFFFF - Alpha handled by utility */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 239 84% 67%;
+    /* #6366F1 Indigo */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 0 0% 100%;
+    /* White borders for glass effect */
+    --input: 0 0% 100%;
+    --ring: 270 95% 75%;
+    /* Purple Glow */
+    --radius: 1rem;
+    /* Softer, more organic corners */
+
+    /* Typography Override */
+    --font-heading: var(--font-outfit);
+    --font-body: var(--font-outfit);
+
+    /* Aurora Gradient handled in body rule below */
+
+    /* Workflow Cards: Glass Blocks */
+    --card-phase-bg: 0 0% 100%;
+    --card-phase-border: 0 0% 100%;
+    --card-phase-alpha: 0.5;
+    /* 50% opacity */
+    --card-phase-border-alpha: 0.4;
+  }
+
+  /* AETHER DARK */
+  [data-theme='aether'] .dark,
+  [data-theme='aether'].dark {
+    /* "Deep Space" */
+    --background: 222 47% 11%;
+    /* #0F172A (Slate 900) - Fallback */
+    --foreground: 210 40% 98%;
+
+    /* Glass Surface: Translucent Dark Blue */
+    --card: 217 33% 17%;
+    /* #1E293B (Slate 800) */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 239 84% 67%;
+    /* #6366F1 Indigo */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 239 84% 67%;
+    --accent-foreground: 210 40% 98%;
+
+    --border: 0 0% 100%;
+    /* White rim lighting */
+    --input: 217 33% 17%;
+    --ring: 270 95% 75%;
+
+    --card-phase-bg: 217 33% 17%;
+    --card-phase-border: 0 0% 100%;
+    --card-phase-alpha: 0.4;
+    --card-phase-border-alpha: 0.1;
+  }
 }
 
 
@@ -274,4 +368,57 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* AETHER THEME SPECIAL FX - MOVED OUTSIDE LAYER FOR SPECIFICITY */
+
+/* 1. Aurora Backgrounds - Force applied to body */
+[data-theme='aether'] body {
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(224, 231, 255, 0.8), transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(250, 232, 255, 0.8), transparent 50%) !important;
+  background-color: #F5F7FA !important;
+  background-attachment: fixed;
+  background-size: cover;
+  min-height: 100vh;
+}
+
+[data-theme='aether'] .dark body,
+[data-theme='aether'].dark body {
+  background-image:
+    radial-gradient(circle at 50% -20%, rgba(79, 70, 229, 0.25), transparent 60%),
+    radial-gradient(circle at 80% 50%, rgba(217, 70, 239, 0.1), transparent 50%) !important;
+  background-color: #030712 !important;
+}
+
+/* 2. Glass Cards - Forced Override */
+[data-theme='aether'] .bg-card,
+[data-theme='aether'] .bg-popover,
+[data-theme='aether'] .bg-white,
+[data-theme='aether'] .bg-background {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='aether'] .dark .bg-card,
+[data-theme='aether'] .dark .bg-popover,
+[data-theme='aether'] .dark .bg-white,
+[data-theme='aether'] .dark .bg-background {
+  background-color: rgba(30, 41, 59, 0.7) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 3. Input Glow "Field of Influence" */
+[data-theme='aether'] input:focus,
+[data-theme='aether'] textarea:focus,
+[data-theme='aether'] .focus-within\:ring-ring:focus-within {
+  box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.6) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  transition: box-shadow 0.3s ease-out;
 }
