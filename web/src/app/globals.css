@@ -310,12 +310,14 @@
 
     /* Aurora Gradient handled in body rule below */
 
-    /* Workflow Cards: Glass Blocks */
-    --card-phase-bg: 0 0% 100%;
-    --card-phase-border: 0 0% 100%;
-    --card-phase-alpha: 0.5;
-    /* 50% opacity */
-    --card-phase-border-alpha: 0.4;
+    /* Workflow Cards: Glass Blocks (Enhanced Visibility) */
+    --card-phase-bg: 226 100% 97%;
+    /* Light Indigo Tint */
+    --card-phase-border: 226 70% 80%;
+    /* Defined Indigo Border */
+    --card-phase-alpha: 0.85;
+    /* 85% opacity - clear surface */
+    --card-phase-border-alpha: 0.5;
   }
 
   /* AETHER DARK */
@@ -352,10 +354,12 @@
     --input: 217 33% 17%;
     --ring: 270 95% 75%;
 
-    --card-phase-bg: 217 33% 17%;
-    --card-phase-border: 0 0% 100%;
-    --card-phase-alpha: 0.4;
-    --card-phase-border-alpha: 0.1;
+    --card-phase-bg: 224 71% 4%;
+    /* Deep Indigo Base */
+    --card-phase-border: 239 84% 67%;
+    /* Glowing Primary Border */
+    --card-phase-alpha: 0.6;
+    --card-phase-border-alpha: 0.3;
   }
 }
 
