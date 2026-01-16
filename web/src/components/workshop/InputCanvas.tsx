@@ -177,7 +177,7 @@ const SmartTextarea = ({
                     // Allow override or use default yellow
                     props.className
                         ? props.className
-                        : "w-full text-sm leading-relaxed bg-muted/50 border-b border-border focus:border-primary outline-none resize-none overflow-hidden min-h-[28px] placeholder-muted-foreground/40 text-foreground font-medium"
+                        : "w-full text-sm leading-relaxed bg-card border-b border-border focus:border-primary outline-none resize-none overflow-hidden min-h-[28px] placeholder-muted-foreground/40 text-foreground font-medium"
                 }
                 placeholder={placeholder}
                 rows={1}
@@ -412,7 +412,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
     };
 
     return (
-        <div className="space-y-4 bg-muted/30 dark:bg-muted/10 p-4 rounded-xl border border-dashed border-border">
+        <div className="space-y-4 bg-muted/10 dark:bg-muted/10 p-4 rounded-xl border border-dashed border-border">
             {/* Live Preview (Moved to Top) */}
             <div className="text-sm font-medium text-foreground bg-card p-4 rounded border border-border leading-relaxed shadow-sm">
                 &quot;{value || <span className="text-muted-foreground italic font-normal">Start typing below to build your value proposition...</span>}&quot;
@@ -428,7 +428,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.role}
                         onChange={(e) => handleInput(e, 'role')}
-                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
+                        className="w-full bg-input border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. Insurance Broker"
                     />
                 </div>
@@ -441,7 +441,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.outcome}
                         onChange={(e) => handleInput(e, 'outcome')}
-                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
+                        className="w-full bg-input border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. Submit a request via email..."
                     />
                 </div>
@@ -454,7 +454,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.solution}
                         onChange={(e) => handleInput(e, 'solution')}
-                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
+                        className="w-full bg-input border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. an Agentic Workflow"
                     />
                 </div>
@@ -467,7 +467,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                         rows={1}
                         value={parts.need}
                         onChange={(e) => handleInput(e, 'need')}
-                        className="w-full bg-input/50 border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
+                        className="w-full bg-input border border-input rounded px-3 py-2 text-sm focus:ring-2 focus:ring-ring outline-none resize-none overflow-hidden min-h-[38px] placeholder:text-muted-foreground"
                         placeholder="e.g. I have a quote in under 2 hours."
                     />
                 </div>

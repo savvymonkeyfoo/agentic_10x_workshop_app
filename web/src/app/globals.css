@@ -83,39 +83,42 @@
   /* CLAUDE / MANUSCRIPT (Light) */
   [data-theme='claude'] {
     /* Digital Manuscript Light */
-    --background: 36 29% 98%;
-    /* #FDFBF9 */
+    --background: 36 33% 97%;
+    /* #FAF8F5 - Warm Paper (Darker) */
     --foreground: 0 0% 18%;
     /* #2D2D2D */
 
-    --card: 36 14% 94%;
-    /* #F2F0ED */
+    --card: 0 0% 100%;
+    /* #FFFFFF - Pure White */
     --card-foreground: 0 0% 18%;
 
-    --popover: 36 14% 94%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 18%;
 
     --primary: 15 62% 60%;
     /* #D97757 Burnt Terracotta */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 14% 94%;
+    --secondary: 0 0% 100%;
+    /* #FFFFFF */
     --secondary-foreground: 0 0% 18%;
 
-    --muted: 34 23% 95%;
-    /* #F6F3EF */
-    --muted-foreground: 40 3% 36%;
-    /* #5F5D59 */
+    --muted: 0 0% 100%;
+    /* #FFFFFF - Input Backgrounds */
+    --muted-foreground: 40 3% 46%;
+    /* #7A7875 - Lighter text for placeholders */
 
-    --accent: 15 62% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 36 33% 97%;
+    /* #FAF8F5 - Hover state matches background */
+    --accent-foreground: 0 0% 18%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
 
-    --border: 36 14% 86%;
-    /* #E0DCD6 */
-    --input: 34 23% 95%;
+    --border: 36 14% 90%;
+    /* #EBE9E6 - Subtle Border */
+    --input: 0 0% 100%;
+    /* #FFFFFF */
     --ring: 15 62% 60%;
     --radius: 0.5rem;
 

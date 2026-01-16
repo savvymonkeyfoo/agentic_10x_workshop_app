@@ -70,7 +70,7 @@ export const OpportunityTileNavigator = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-muted/30 border-t border-border shadow-inner"
+                        className="overflow-hidden bg-background border-t border-border shadow-inner"
                     >
                         {/* FIX: Changed p-6 to px-8 py-8 to match page container alignment */}
                         <div className="flex gap-4 px-8 py-8 overflow-x-auto">
