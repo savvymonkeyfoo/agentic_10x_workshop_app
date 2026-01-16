@@ -19,6 +19,12 @@ export const themes: ThemeConfig[] = [
         color: "bg-[#D97757]"
     },
     {
+        value: "nexus",
+        label: "Nexus",
+        description: "Swiss Modernism. Clean, neutral, and precise.",
+        color: "bg-[#10A37F]"
+    },
+    {
         value: "linear",
         label: "Modern",
         description: "Linear High-Contrast",
