@@ -1428,7 +1428,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         performSave(data);
                                                     }
                                                 }}
-                                                className="w-full bg-input/50 border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none transition-all"
+                                                className="w-full bg-input border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none transition-all"
                                                 placeholder="e.g. Invoice Reconciliation Bot"
                                             />
                                         </div>
@@ -1907,7 +1907,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             name="benefitRevenue"
                                                             value={data.benefitRevenue}
                                                             onChange={(val) => handleInputChange('benefitRevenue', val)}
-                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                            className="w-full bg-input border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
@@ -1918,7 +1918,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             name="benefitCostAvoidance"
                                                             value={data.benefitCostAvoidance}
                                                             onChange={(val) => handleInputChange('benefitCostAvoidance', val)}
-                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                            className="w-full bg-input border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
@@ -1931,7 +1931,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             onChange={(val) => handleInputChange('benefitEfficiency', val)}
                                                             prefix=""
                                                             suffix="hrs"
-                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                            className="w-full bg-input border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="0"
                                                         />
                                                     </div>
@@ -1942,7 +1942,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                             name="benefitEstCost"
                                                             value={data.benefitEstCost}
                                                             onChange={(val) => handleInputChange('benefitEstCost', val)}
-                                                            className="w-full bg-input/50 border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                            className="w-full bg-input border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                                                             placeholder="One-time cost..."
                                                         />
                                                     </div>
