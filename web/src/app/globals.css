@@ -88,23 +88,24 @@
     --foreground: 0 0% 18%;
     /* #2D2D2D */
 
-    --card: 60 14% 98%;
-    /* #FCFCFA - Slightly Warm White */
+    --card: 0 0% 100%;
+    /* #FFFFFF - Pure White */
     --card-foreground: 0 0% 18%;
 
-    --popover: 60 14% 98%;
+    --popover: 0 0% 100%;
+    /* #FFFFFF */
     --popover-foreground: 0 0% 18%;
 
     --primary: 15 62% 60%;
     /* #D97757 Burnt Terracotta */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 60 14% 98%;
-    /* #FCFCFA */
+    --secondary: 0 0% 100%;
+    /* #FFFFFF */
     --secondary-foreground: 0 0% 18%;
 
-    --muted: 60 14% 98%;
-    /* #FCFCFA */
+    --muted: 0 0% 100%;
+    /* #FFFFFF */
     --muted-foreground: 40 3% 46%;
     /* #7A7875 - Lighter text for placeholders */
 
@@ -117,8 +118,8 @@
 
     --border: 36 14% 90%;
     /* #EBE9E6 - Subtle Border */
-    --input: 60 14% 98%;
-    /* #FCFCFA */
+    --input: 0 0% 100%;
+    /* #FFFFFF */
     --ring: 15 62% 60%;
     --radius: 0.5rem;
 
