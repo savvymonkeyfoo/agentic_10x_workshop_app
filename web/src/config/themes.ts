@@ -25,6 +25,12 @@ export const themes: ThemeConfig[] = [
         color: "bg-[#10A37F]"
     },
     {
+        value: "aether",
+        label: "Aether",
+        description: "Fluid Spatiality. Glass, gradients, and flow.",
+        color: "bg-gradient-to-br from-indigo-500 to-purple-500"
+    },
+    {
         value: "linear",
         label: "Modern",
         description: "Linear High-Contrast",
