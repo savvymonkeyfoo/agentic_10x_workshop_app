@@ -1311,7 +1311,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                 <div className="flex items-center gap-4">
                     {/* Autosave Indicator */}
-                    <div className="text-xs font-medium text-slate-400 w-20 text-right">
+                    <div className="text-xs font-medium text-muted-foreground w-20 text-right">
                         {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
                         {saveStatus === 'saved' && <span className="text-status-safe">Saved</span>}
                         {saveStatus === 'error' && <span className="text-status-risk">Error</span>}

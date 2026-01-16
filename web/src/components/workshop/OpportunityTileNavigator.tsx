@@ -39,14 +39,14 @@ export const OpportunityTileNavigator = ({
 }) => {
 
     return (
-        <div className="bg-white border-b border-slate-200 shadow-sm relative z-20">
+        <div className="bg-background border-b border-border shadow-sm relative z-20">
             {/* Header / Toggle Bar */}
             <div
                 onClick={onToggle}
-                className="px-8 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                className="px-8 py-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <div className="bg-blue-600 text-white p-1 rounded">
+                    <div className="bg-primary text-primary-foreground p-1 rounded">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="7" height="7"></rect>
                             <rect x="14" y="3" width="7" height="7"></rect>
@@ -54,11 +54,11 @@ export const OpportunityTileNavigator = ({
                             <rect x="3" y="14" width="7" height="7"></rect>
                         </svg>
                     </div>
-                    <span className="text-xs font-bold text-slate-600 tracking-widest uppercase">
+                    <span className="text-xs font-bold text-muted-foreground tracking-widest uppercase">
                         {opportunities.length} Opportunities
                     </span>
                 </div>
-                <div className="text-slate-400">
+                <div className="text-muted-foreground/70">
                     {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
             </div>
@@ -70,7 +70,7 @@ export const OpportunityTileNavigator = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-slate-50 border-t border-slate-100 shadow-inner"
+                        className="overflow-hidden bg-muted/30 border-t border-border shadow-inner"
                     >
                         {/* FIX: Changed p-6 to px-8 py-8 to match page container alignment */}
                         <div className="flex gap-4 px-8 py-8 overflow-x-auto">
@@ -78,9 +78,9 @@ export const OpportunityTileNavigator = ({
                             {/* New Opportunity Button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); onCreate(); }}
-                                className="shrink-0 w-[160px] h-[100px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-white transition-all group"
+                                className="shrink-0 w-[160px] h-[100px] border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-card transition-all group"
                             >
-                                <div className="w-10 h-10 rounded-full bg-slate-200 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
                                     <Plus size={20} />
                                 </div>
                                 <span className="text-xs font-bold">New Opportunity</span>
@@ -96,24 +96,24 @@ export const OpportunityTileNavigator = ({
                                         key={opp.id}
                                         onClick={() => onSelect(opp)}
                                         className={`
-                                            relative shrink-0 w-[200px] h-[100px] bg-white rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group
-                                            ${isSelected ? 'border-blue-500 ring-4 ring-blue-50' : 'border-slate-200 hover:border-blue-300'}
+                                            relative shrink-0 w-[200px] h-[100px] bg-card rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group
+                                            ${isSelected ? 'border-primary ring-4 ring-primary/10' : 'border-border hover:border-primary/30'}
                                         `}
                                     >
                                         {/* Top Row: Status Icon + Delete */}
                                         <div className="flex justify-between items-start">
                                             {/* Completion Status (NOT Selection) */}
-                                            <div className={`w-3 h-3 rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                            <div className={`w-3 h-3 rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onDelete(opp.id); }}
-                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded transition-all"
+                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive rounded transition-all"
                                             >
                                                 <XIcon size={14} />
                                             </button>
                                         </div>
 
                                         {/* Title Only */}
-                                        <div className="font-bold text-slate-700 text-sm leading-tight line-clamp-2">
+                                        <div className="font-bold text-foreground text-sm leading-tight line-clamp-2">
                                             {opp.projectName || "Untitled Opportunity"}
                                         </div>
                                     </div>
