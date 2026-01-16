@@ -1583,8 +1583,8 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                 onClick={() => {
                                                                     if (isZoomedOut) setIsZoomedOut(false);
                                                                 }}
-                                                                // STYLING: "Post-it" Note Style (Primary Tint)
-                                                                className={`bg-primary/10 border border-primary/20 rounded-md shadow-md flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none text-card-foreground
+                                                                // STYLING: Semantic "Post-it" / Card Style (Theme Dependent)
+                                                                className={`bg-card-phase border border-card-phase-border rounded-md shadow-md flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-all duration-300 origin-top cursor-grab active:cursor-grabbing select-none text-card-foreground
                                                                     ${isZoomedOut
                                                                         ? 'w-[150px] h-[150px] p-3 justify-center items-center text-center cursor-pointer hover:shadow-lg hover:border-primary/50' // OVERVIEW STYLE
                                                                         : 'w-[320px] p-4' // DETAIL STYLE

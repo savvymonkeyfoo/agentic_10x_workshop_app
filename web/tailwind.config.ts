@@ -28,6 +28,10 @@ const config: Config = {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'card-phase': {
+					DEFAULT: 'hsl(var(--card-phase-bg) / var(--card-phase-alpha))',
+					border: 'hsl(var(--card-phase-border) / var(--card-phase-border-alpha))'
+				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
