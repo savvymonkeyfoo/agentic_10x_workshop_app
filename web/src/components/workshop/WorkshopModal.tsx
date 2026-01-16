@@ -17,6 +17,8 @@ interface WorkshopModalProps {
     workshopToEdit?: WorkshopData | null;
 }
 
+import { toast } from 'sonner';
+
 export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
     const isEditMode = !!workshopToEdit;
 
@@ -51,7 +53,7 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
         if (!file) return;
 
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
-            alert('Only JPG and PNG files are allowed.');
+            toast.error('Only JPG and PNG files are allowed.');
             return;
         }
 
@@ -69,9 +71,10 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
 
             const data = await res.json();
             setLogoUrl(data.url);
+            toast.success('Logo uploaded successfully');
         } catch (err) {
             console.error(err);
-            alert('Failed to upload logo.');
+            toast.error('Failed to upload logo.');
         } finally {
             setUploading(false);
         }
@@ -97,9 +100,11 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
 
             if (isEditMode) {
                 await updateWorkshop(formData);
-                onClose(); // Close modal on update (create redirects)
+                toast.success('Workshop updated successfully');
+                onClose();
             } else {
                 await createWorkshop(formData);
+                toast.success('Workshop created successfully');
             }
 
         } catch (err: unknown) {
@@ -111,7 +116,7 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
 
             console.error("Submission Error:", err);
             const message = err instanceof Error ? err.message : 'Unknown error';
-            alert(`Failed to ${isEditMode ? 'update' : 'create'} workshop: ${message}`);
+            toast.error(`Failed to ${isEditMode ? 'update' : 'create'} workshop: ${message}`);
             setSubmitting(false);
         }
     };

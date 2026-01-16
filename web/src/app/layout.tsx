@@ -6,6 +6,7 @@ import Image from 'next/image';
 import "./globals.css";
 import logoLight from '@/assets/images/logo_transparent.png';
 import logoDark from '@/assets/images/logo_dark_transparent.png';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         <div className="pt-20 bg-transparent min-h-screen"> {/* Offset for fixed nav, enforce transparent background */}
           {children}
         </div>
+        <Toaster />
       </body>
     </html>
   );

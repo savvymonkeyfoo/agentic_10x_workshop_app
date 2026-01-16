@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { safeAction } from '@/lib/safe-action';
 
 /**
  * UNIFIED PROMOTION ACTION
@@ -16,12 +17,13 @@ interface PromoteOptions {
     keepInIdeation?: boolean; // If true, item stays visible on whiteboard
 }
 
-export async function promoteToCapture({ workshopId, opportunityIds, keepInIdeation = true }: PromoteOptions) {
-    if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-        return { success: false, count: 0 };
-    }
+export async function promoteToCapture(options: PromoteOptions) {
+    return await safeAction(async () => {
+        const { workshopId, opportunityIds, keepInIdeation = true } = options;
+        if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
+            throw new Error('Invalid arguments');
+        }
 
-    try {
         // Set showInCapture = true (makes visible in Capture view)
         // Optionally keep showInIdeation = true (stays on whiteboard)
         const result = await prisma.opportunity.updateMany({
@@ -38,13 +40,8 @@ export async function promoteToCapture({ workshopId, opportunityIds, keepInIdeat
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-
-        return { success: true, count: result.count };
-
-    } catch (error) {
-        console.error("Failed to promote opportunities", error);
-        return { success: false, count: 0 };
-    }
+        return { count: result.count };
+    }, 'Failed to promote opportunities');
 }
 
 /**
@@ -54,11 +51,11 @@ export async function promoteToCapture({ workshopId, opportunityIds, keepInIdeat
  * Items remain visible in Ideation
  */
 export async function demoteFromCapture({ workshopId, opportunityIds }: { workshopId: string; opportunityIds: string[] }) {
-    if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-        return { success: false, count: 0 };
-    }
+    return await safeAction(async () => {
+        if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
+            throw new Error('Invalid arguments');
+        }
 
-    try {
         const result = await prisma.opportunity.updateMany({
             where: {
                 id: { in: opportunityIds },
@@ -71,11 +68,6 @@ export async function demoteFromCapture({ workshopId, opportunityIds }: { worksh
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-
-        return { success: true, count: result.count };
-
-    } catch (error) {
-        console.error("Failed to demote opportunities", error);
-        return { success: false, count: 0 };
-    }
+        return { count: result.count };
+    }, 'Failed to demote opportunities');
 }
