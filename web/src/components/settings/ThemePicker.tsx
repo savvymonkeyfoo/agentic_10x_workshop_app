@@ -10,10 +10,16 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
+import { useStyle } from "@/components/providers/style-provider"
 
 export function ThemePicker() {
-    const { setTheme } = useTheme()
+    const { setTheme, theme } = useTheme()
+    const { style, setStyle } = useStyle()
 
     return (
         <DropdownMenu>
@@ -24,16 +30,34 @@ export function ThemePicker() {
                     <span className="sr-only">Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                    Light
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                    Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                    System
-                </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                    <DropdownMenuRadioItem value="light">
+                        Light
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark">
+                        Dark
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="system">
+                        System
+                    </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={style} onValueChange={(val) => setStyle(val as any)}>
+                    <DropdownMenuRadioItem value="capgemini">
+                        Default (Capgemini)
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="anthropic">
+                        Warm (Anthropic)
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="linear">
+                        Modern (Linear)
+                    </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
     )
