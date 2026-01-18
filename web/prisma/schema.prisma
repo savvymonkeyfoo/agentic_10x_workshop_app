@@ -41,6 +41,7 @@ model Opportunity {
   // Tab A: Strategic Context
   projectName       String
   description       String?  @db.Text // [NEW] Description from Ideation
+  notes             String?  @db.Text // [NEW] Facilitator Notes
   frictionStatement String
   strategicHorizon  String   // "GROWTH", "OPS", "STRATEGY"
   whyDoIt           String   

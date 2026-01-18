@@ -16,6 +16,7 @@ export async function saveOpportunity(workshopId: string, data: any, opportunity
         frictionStatement: data.frictionStatement || "",
         strategicHorizon: data.strategicHorizon || "",
         whyDoIt: data.whyDoIt || "",
+        notes: data.notes || null, // [NEW] Facilitator Notes
 
         // New Workflow Data - cast to Prisma.InputJsonValue for proper JSON handling
         workflowPhases: (data.workflowPhases || []) as Prisma.InputJsonValue,

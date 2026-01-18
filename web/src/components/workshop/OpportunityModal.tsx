@@ -2,9 +2,10 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2 } from "lucide-react";
+import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2, NotebookPen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
@@ -19,6 +20,7 @@ export type OpportunityCardData = {
     source?: string;
     provenance?: string;
     originalId: string;
+    notes?: string; // NEW: Context & Notes
 };
 
 interface OpportunityModalProps {
@@ -262,6 +264,37 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 />
                             </div>
 
+                            {/* Proposed Solution */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Zap className="w-4 h-4 text-amber-500" />
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Proposed Solution</h3>
+                                </div>
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                                    <Textarea
+                                        value={localCard.proposedSolution || ''}
+                                        onChange={(e) => handleChange('proposedSolution', e.target.value)}
+                                        className="min-h-[100px] bg-transparent border-none focus-visible:ring-0 text-base resize-none p-0 placeholder:text-muted-foreground/50"
+                                        placeholder="Describe the solution..."
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Context & Notes */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <NotebookPen className="w-4 h-4 text-blue-500" />
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Context & Notes</h3>
+                                </div>
+                                <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4">
+                                    <SmartBulletEditor
+                                        value={localCard.notes || ''}
+                                        onChange={(val) => handleChange('notes', val)}
+                                        placeholder="Add facilitator notes, context, or key constraints..."
+                                        colorClass="text-foreground"
+                                    />
+                                </div>
+                            </div>
                             {/* 2. TECH (BLUE) */}
                             <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-colors group">
                                 <Label className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2">

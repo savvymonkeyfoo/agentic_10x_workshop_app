@@ -14,6 +14,7 @@ export interface OpportunityState {
     // Tab A
     projectName: string;
     description: string; // [NEW] Description specific to the opportunity
+    notes: string; // [NEW] Facilitator Notes
     frictionStatement: string;
     strategicHorizon: string[]; // Changed to array for multi-select, will join on save
     whyDoIt: string; // Stored concatenated string

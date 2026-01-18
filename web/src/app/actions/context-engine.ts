@@ -169,6 +169,9 @@ STRICT RULES:
 CONTEXT:
 I will provide the Idea and an Enterprise Dossier. Use the Dossier to validate the idea.
 
+NOTES FROM FACILITATOR:
+{notes}
+
 OUTPUT JSON: { 
     "proposedSolution": "string (concise paragraph describing the solution approach)",
     "friction": "string (bullet points of potential challenges)", 
@@ -316,17 +319,20 @@ export async function analyzeBacklogItem(
     }
 }
 
-export async function enrichOpportunity(workshopId: string, title: string, description: string) {
+export async function enrichOpportunity(workshopId: string, title: string, description: string, notes?: string) {
     try {
-        const dbContext = await prisma.workshopContext.findUnique({ where: { workshopId } });
-        let techDNA = dbContext?.extractedConstraints as string | null;
+        const activeWorkshop = await prisma.workshop.findUnique({
+            where: { id: workshopId },
+            include: { context: true }
+        });
 
-        // Fallback if missing
-        if (!techDNA) {
-            techDNA = "Standard Enterprise Architecture. Cloud-first, API-first.";
-        }
+        if (!activeWorkshop) throw new Error("Workshop not found");
 
-        const prompt = `${WORKSHOP_ENRICHMENT_PROMPT}\n\nIDEA: ${title}\nDESC: ${description}\nDNA: ${techDNA}`;
+        const techDNA = activeWorkshop.context?.intelligenceAnalysis ? JSON.stringify(activeWorkshop.context.intelligenceAnalysis) : "No DNA Available";
+
+        // Inject notes into prompt if available
+        const notesContext = notes ? notes : "None";
+        const prompt = `${WORKSHOP_ENRICHMENT_PROMPT.replace('{notes}', notesContext)}\n\nIDEA: ${title}\nDESC: ${description}\nDNA: ${techDNA}`;
 
         const { text: cardJson } = await generateText({
             model: AI_CONFIG.strategicModel,
@@ -364,6 +370,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
                 friction: opportunity.friction as string,
                 techAlignment: opportunity.techAlignment as string,
                 strategyAlignment: opportunity.strategyAlignment as string,
+                notes: opportunity.notes as string, // [NEW] Save notes during analysis/update
                 boardStatus: opportunity.boardStatus as string,
                 tier: opportunity.tier as string
             }

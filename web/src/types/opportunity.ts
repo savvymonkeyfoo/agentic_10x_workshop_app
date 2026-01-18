@@ -11,6 +11,7 @@ export interface UnifiedOpportunity {
     title: string;
     description: string; // The Problem / Friction Statement
     proposedSolution?: string | null; // The Proposed Solution
+    notes?: string | null; // Facilitator Notes
     source?: string | null; // CLIENT_BACKLOG, MARKET_SIGNAL, WORKSHOP_GENERATED, MERGED
 
     // Intelligence Layer (Rich Text)

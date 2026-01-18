@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
 import { BulletListEditor } from '@/components/ui/BulletListEditor';
 import { MarkdownTextarea } from '@/components/ui/MarkdownTextarea';
+import { SmartBulletEditor } from '@/components/ui/smart-bullet-editor';
 import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
@@ -34,6 +35,7 @@ import { toast } from 'sonner';
 const INITIAL_STATE: OpportunityState = {
     projectName: '',
     description: '', // [NEW] Description specific to the opportunity
+    notes: '', // [NEW] Facilitator Notes
     frictionStatement: '',
     strategicHorizon: [], // Default empty
     whyDoIt: '',
@@ -657,7 +659,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 const cvpResult = await agenticEnrichment(workshopId, 'VALUE_PROP', {
                     title: data.projectName,
                     description: data.frictionStatement, // Use Friction as input
-                    currentData: data
+                    currentData: { ...data, notes: data.notes } // Pass notes
                 }) as any;
 
                 if (cvpResult.success && cvpResult.data) {
@@ -683,7 +685,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 const wfResult = await agenticEnrichment(workshopId, 'WORKFLOW', {
                     title: data.projectName,
                     description: currentWhyDoIt, // Use the detailed CVP
-                    currentData: { ...data, whyDoIt: currentWhyDoIt } // Ensure context has it
+                    currentData: { ...data, whyDoIt: currentWhyDoIt, notes: data.notes } // Ensure context has it
                 }) as any;
 
                 if (wfResult.success && wfResult.data) {
@@ -720,12 +722,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 agenticEnrichment(workshopId, 'EXECUTION', {
                     title: data.projectName,
                     description: currentWhyDoIt,
-                    currentData: commonContext
+                    currentData: { ...commonContext, notes: data.notes }
                 }),
                 agenticEnrichment(workshopId, 'EXECUTION_PARAMS', {
                     title: data.projectName,
                     description: currentWhyDoIt,
-                    currentData: commonContext
+                    currentData: { ...commonContext, notes: data.notes }
                 })
             ]) as any[];
 
@@ -764,7 +766,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             const bcResult = await agenticEnrichment(workshopId, 'BUSINESS_CASE', {
                 title: data.projectName,
                 description: currentWhyDoIt,
-                currentData: businessCaseContext
+                currentData: { ...businessCaseContext, notes: data.notes }
             }) as any;
 
             if (bcResult.success && bcResult.data) {
@@ -968,6 +970,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
             setData({
                 projectName: selected.projectName || '',
                 description: selected.description || '', // [NEW] Description
+                notes: selected.notes || '', // [NEW] Facilitator Notes
                 frictionStatement: selected.frictionStatement || '',
                 strategicHorizon: selected.strategicHorizon ? selected.strategicHorizon.split(',').map((s: string) => s.trim()) : [],
                 whyDoIt: selected.whyDoIt || '',
@@ -1524,6 +1527,21 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     value={data.whyDoIt}
                                                     onChange={(val) => handleInputChange('whyDoIt', val)}
                                                 />
+                                            </div>
+
+                                            {/* Context & Notes */}
+                                            <div className="pt-4 border-t border-border/50 mt-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Sparkles className="w-4 h-4 text-blue-500" />
+                                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Context & Notes</h3>
+                                                </div>
+                                                <div className="bg-muted/30 border border-border/50 rounded-xl p-4">
+                                                    <SmartBulletEditor
+                                                        value={data.notes || ''}
+                                                        onChange={(val) => handleInputChange('notes', val)}
+                                                        placeholder="Add facilitator notes, context, or key constraints..."
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

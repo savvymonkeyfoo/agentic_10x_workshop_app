@@ -125,6 +125,8 @@ interface GeneratorContext {
 }
 
 async function generateAnalysis(ragContext: string, context: GeneratorContext) {
+    const notes = (context.currentData as any)?.notes ? `\n    FACILITATOR NOTES:\n    ${(context.currentData as any)?.notes}\n` : "";
+
     const prompt = `
     Based on the Opportunity "${context.title}" and the Enterprise Context below, generate a technical and strategic analysis.
     
@@ -133,6 +135,7 @@ async function generateAnalysis(ragContext: string, context: GeneratorContext) {
     
     OPPORTUNITY DESC:
     ${context.description}
+    ${notes}
     `;
 
     const { object } = await generateObject({
@@ -145,6 +148,8 @@ async function generateAnalysis(ragContext: string, context: GeneratorContext) {
 }
 
 async function generateWorkflow(ragContext: string, context: GeneratorContext) {
+    const notes = (context.currentData as any)?.notes ? `\n    FACILITATOR NOTES:\n    ${(context.currentData as any)?.notes}\n` : "";
+
     const prompt = `
     Design a logical 3-5 step workflow for the Opportunity "${context.title}".
     Use the Enterprise Context to identify likely systems and guardrails.
@@ -154,6 +159,7 @@ async function generateWorkflow(ragContext: string, context: GeneratorContext) {
     
     OPPORTUNITY DESC:
     ${context.description}
+    ${notes}
     `;
 
     const { object } = await generateObject({
@@ -166,6 +172,8 @@ async function generateWorkflow(ragContext: string, context: GeneratorContext) {
 }
 
 async function generateExecutionPlan(ragContext: string, context: GeneratorContext) {
+    const notes = (context.currentData as any)?.notes ? `\n    FACILITATOR NOTES:\n    ${(context.currentData as any)?.notes}\n` : "";
+
     const prompt = `
     Draft a high-level Execution Plan for "${context.title}".
     Include:
@@ -178,6 +186,10 @@ async function generateExecutionPlan(ragContext: string, context: GeneratorConte
     
     CONTEXT:
     ${ragContext}
+
+    OPPORTUNITY DESC:
+    ${context.description}
+    ${notes}
     `;
 
     const { text } = await generateText({
@@ -190,6 +202,8 @@ async function generateExecutionPlan(ragContext: string, context: GeneratorConte
 
 async function generateBusinessCase(ragContext: string, context: GeneratorContext) {
     // 1. Generate the narrative markdown
+    const notes = (context.currentData as any)?.notes ? `\n    FACILITATOR NOTES:\n    ${(context.currentData as any)?.notes}\n` : "";
+
     const narrativePrompt = `
     Write a compelling Business Case for "${context.title}".
     Focus on:
@@ -202,6 +216,10 @@ async function generateBusinessCase(ragContext: string, context: GeneratorContex
     
     CONTEXT:
     ${ragContext}
+
+    OPPORTUNITY DESC:
+    ${context.description}
+    ${notes}
     `;
 
     const { text } = await generateText({
@@ -267,6 +285,8 @@ async function generateBusinessCase(ragContext: string, context: GeneratorContex
 }
 
 async function generateValueProp(ragContext: string, context: GeneratorContext) {
+    const notes = (context.currentData as any)?.notes ? `\n    FACILITATOR NOTES:\n    ${(context.currentData as any)?.notes}\n` : "";
+
     const prompt = `
     Generate a formatted Customer Value Proposition for "${context.title}" using the standard structure:
     "As a [Role], I want to [Outcome], with [Solution], so that [Need]."
@@ -278,6 +298,7 @@ async function generateValueProp(ragContext: string, context: GeneratorContext) 
     
     OPPORTUNITY DESC:
     ${context.description}
+    ${notes}
     `;
 
     const { object } = await generateObject({
@@ -293,6 +314,9 @@ async function generateExecutionParams(ragContext: string, context: GeneratorCon
     const currentData = context.currentData as Record<string, unknown> | undefined;
     const workflowPhases = (currentData?.workflowPhases as Array<{ name: string }>) || [];
     const impactedSystems = (currentData?.impactedSystems as string[]) || [];
+
+    const notes = (currentData?.notes as string) || "";
+    const formattedNotes = notes ? `\n    FACILITATOR NOTES:\n    ${notes}\n` : "";
 
     const prompt = `
     Based on the Opportunity "${context.title}" and the Enterprise Context below, generate execution parameters for implementation.
@@ -310,6 +334,7 @@ async function generateExecutionParams(ragContext: string, context: GeneratorCon
     
     OPPORTUNITY DESCRIPTION:
     ${context.description}
+    ${formattedNotes}
     
     CURRENT DATA (if available):
     Title: ${context.title}
