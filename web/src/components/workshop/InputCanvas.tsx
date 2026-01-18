@@ -1531,17 +1531,15 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                             {/* Context & Notes */}
                                             <div className="pt-4 border-t border-border/50 mt-4">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Sparkles className="w-4 h-4 text-blue-500" />
-                                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Context & Notes</h3>
-                                                </div>
-                                                <div className="bg-muted/30 border border-border/50 rounded-xl p-4">
-                                                    <SmartBulletEditor
-                                                        value={data.notes || ''}
-                                                        onChange={(val) => handleInputChange('notes', val)}
-                                                        placeholder="Add facilitator notes, context, or key constraints..."
-                                                    />
-                                                </div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                                                    Context & Notes
+                                                </label>
+                                                <MarkdownTextarea
+                                                    value={data.notes || ''}
+                                                    onChange={(val) => handleInputChange('notes', val)}
+                                                    placeholder="Add facilitator notes, context, or key constraints..."
+                                                    minHeight="6rem"
+                                                />
                                             </div>
                                         </div>
                                     </div>
