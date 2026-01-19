@@ -373,7 +373,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
                 notes: opportunity.notes as string, // [NEW] Save notes during analysis/update
                 boardStatus: opportunity.boardStatus as string,
                 tier: opportunity.tier as string
-            }
+            } as any
         });
 
         revalidatePath(`/workshop/${workshopId}`);
@@ -520,7 +520,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             originalId: opp.id,
             title: opp.projectName || '',
             description: opp.frictionStatement || '',
-            notes: opp.notes || null, // [FIX] Include Notes
+            notes: (opp as any).notes || null, // [FIX] Include Notes (Casted for Type Safety)
             friction: opp.friction || '',
             techAlignment: opp.techAlignment || '',
             strategyAlignment: opp.strategyAlignment || '',

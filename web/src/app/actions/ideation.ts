@@ -73,7 +73,7 @@ export async function initializeIdeationBoard(workshopId: string) {
             title: op.projectName,
             description: op.frictionStatement || '',
             proposedSolution: op.description || '',
-            notes: op.notes || null, // [FIX] Include Notes
+            notes: (op as any).notes || null, // [FIX] Include Notes (Casted)
             source: op.source || 'WORKSHOP_GENERATED',
             boardPosition: {
                 x: op.boardX || 0,
@@ -172,7 +172,7 @@ export async function createWorkshopOpportunity(
                 tShirtSize: 'M',
                 definitionOfDone: '',
                 keyDecisions: ''
-            }
+            } as any
         });
 
         revalidatePath(`/workshop/${workshopId}`);
@@ -186,7 +186,7 @@ export async function createWorkshopOpportunity(
                 title: newOpportunity.projectName,
                 description: newOpportunity.frictionStatement,
                 proposedSolution: newOpportunity.description,
-                notes: newOpportunity.notes, // [FIX] Return Notes
+                notes: (newOpportunity as any).notes, // [FIX] Return Notes
                 source: newOpportunity.source,
                 boardPosition: {
                     x: newOpportunity.boardX,
