@@ -398,8 +398,7 @@
 /* 2. Glass Cards - Forced Override */
 [data-theme='aether'] .bg-card,
 [data-theme='aether'] .bg-popover,
-[data-theme='aether'] .bg-white,
-[data-theme='aether'] .bg-background {
+[data-theme='aether'] .bg-white {
   background-color: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -409,8 +408,7 @@
 
 [data-theme='aether'] .dark .bg-card,
 [data-theme='aether'] .dark .bg-popover,
-[data-theme='aether'] .dark .bg-white,
-[data-theme='aether'] .dark .bg-background {
+[data-theme='aether'] .dark .bg-white {
   background-color: rgba(30, 41, 59, 0.7) !important;
   backdrop-filter: blur(25px) !important;
   -webkit-backdrop-filter: blur(25px) !important;
