@@ -137,7 +137,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className={cn(
                 "max-w-3xl max-h-[90vh] overflow-y-auto",
-                isAether && "!fixed !inset-0 !m-auto !transform-none !top-auto !left-auto !translate-x-0 !translate-y-0"
+                isAether && "!fixed !inset-0 !m-auto !transform-none !translate-x-0 !translate-y-0"
             )}>
 
                 {/* --- VIEW 1: DELETE CONFIRMATION --- */}
