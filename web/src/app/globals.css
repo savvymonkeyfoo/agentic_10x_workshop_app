@@ -428,7 +428,8 @@
 }
 
 /* Fix for Aether theme Modal Centering */
-[data-theme='aether'] [role="dialog"]>.fixed[data-state="open"] {
+[data-theme='aether'] [role="dialog"][data-state="open"],
+[data-theme='aether'] [role="alertdialog"][data-state="open"] {
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
