@@ -32,7 +32,12 @@ interface OpportunityModalProps {
     onDelete?: (card: OpportunityCardData) => void;
 }
 
+import { useStyle } from "@/components/providers/style-provider";
+
 export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDelete }: OpportunityModalProps) {
+    const { style } = useStyle();
+    const isAether = style === 'aether';
+
     const [localCard, setLocalCard] = useState<OpportunityCardData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isEnriching, setIsEnriching] = useState(false);
@@ -130,7 +135,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className={cn(
+                "max-w-3xl max-h-[90vh] overflow-y-auto",
+                isAether && "!fixed !inset-0 !m-auto !transform-none !top-auto !left-auto !translate-x-0 !translate-y-0"
+            )}>
 
                 {/* --- VIEW 1: DELETE CONFIRMATION --- */}
                 {isDeleteConfirm ? (

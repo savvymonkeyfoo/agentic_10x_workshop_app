@@ -426,13 +426,3 @@
   border-color: rgba(99, 102, 241, 0.6) !important;
   transition: box-shadow 0.3s ease-out;
 }
-
-/* Fix for Aether theme Modal Centering */
-[data-theme='aether'] [role="dialog"][data-state="open"],
-[data-theme='aether'] [role="alertdialog"][data-state="open"] {
-  position: fixed !important;
-  inset: 0 !important;
-  margin: auto !important;
-  transform: none !important;
-  translate: none !important;
-}
