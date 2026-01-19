@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-type Style = "capgemini" | "claude" | "linear"
+type Style = "capgemini" | "claude" | "linear" | "aether"
 
 interface StyleProviderProps {
     children: React.ReactNode
