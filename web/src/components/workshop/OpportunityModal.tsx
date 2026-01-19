@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2, NotebookPen } from "lucide-react";
 import { cn } from "@/lib/utils";
