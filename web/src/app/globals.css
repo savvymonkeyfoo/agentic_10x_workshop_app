@@ -430,11 +430,9 @@
 /* Fix for Aether theme Modal Centering */
 [data-theme='aether'] [role="dialog"][data-state="open"],
 [data-theme='aether'] [role="alertdialog"][data-state="open"] {
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  translate: none !important;
-  /* Prevent conflict/double-application */
-  margin: 0 !important;
   position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  transform: none !important;
+  translate: none !important;
 }
