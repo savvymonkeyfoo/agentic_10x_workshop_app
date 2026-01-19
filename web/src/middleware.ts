@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(_req: NextRequest) {
-    // 🚧 AUTHENTICATION DISABLED FOR DEVELOPMENT 🚧
-    // TODO: Re-enable authentication before production deployment
-    // To re-enable: uncomment the code below and remove this bypass
-
-    return NextResponse.next(); // Bypass all auth checks
-
-    /* COMMENTED OUT FOR DEVELOPMENT - UNCOMMENT TO RE-ENABLE AUTH
+export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
     // Check for cookie
@@ -38,7 +31,6 @@ export function middleware(_req: NextRequest) {
     }
 
     return NextResponse.next();
-    */
 }
 
 export const config = {
