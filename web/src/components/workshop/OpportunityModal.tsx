@@ -168,6 +168,9 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                     <>
                         <DialogHeader>
                             <DialogTitle className="sr-only">Edit Opportunity</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Detailed view and editing for opportunity: {localCard.title}
+                            </DialogDescription>
 
                             {/* SOURCE BADGE */}
                             <div className="flex items-center justify-between mb-2">
