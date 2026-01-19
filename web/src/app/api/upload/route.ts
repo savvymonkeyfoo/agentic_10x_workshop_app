@@ -37,10 +37,40 @@ export async function POST(request: Request): Promise<NextResponse> {
         const assetType = form.get('assetType') as string;
 
         // Validation
-        if (!file || !workshopId || !assetType) {
-            console.error('[Upload] Missing required fields:', { file: !!file, workshopId: !!workshopId, assetType: !!assetType });
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!file) {
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
+
+        // ---------------------------------------------------------
+        // PATH A: GENERIC UPLOAD (e.g. Client Logo)
+        // If workshopId or assetType is missing, treat as simple upload
+        // ---------------------------------------------------------
+        if (!workshopId || !assetType) {
+            console.log('[Upload] Generic upload detected (no workshopId/assetType). Processing as simple file...');
+
+            // basic validation for generic uploads (images only to be safe?)
+            if (!file.type.startsWith('image/')) {
+                console.error('[Upload] Generic upload rejected: Not an image');
+                return NextResponse.json({ error: 'Only image uploads are allowed in generic mode' }, { status: 400 });
+            }
+
+            if (!process.env.BLOB_READ_WRITE_TOKEN) {
+                throw new Error('BLOB_READ_WRITE_TOKEN is missing');
+            }
+
+            const blob = await put(file.name, file, {
+                access: 'public',
+                token: process.env.BLOB_READ_WRITE_TOKEN,
+                addRandomSuffix: true,
+            });
+
+            console.log('[Upload] Generic upload complete:', blob.url);
+            return NextResponse.json({ url: blob.url });
+        }
+
+        // ---------------------------------------------------------
+        // PATH B: RAG ASSET UPLOAD
+        // ---------------------------------------------------------
 
         if (!['DOSSIER', 'BACKLOG', 'MARKET_SIGNAL'].includes(assetType)) {
             return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
