@@ -73,6 +73,7 @@ export async function initializeIdeationBoard(workshopId: string) {
             title: op.projectName,
             description: op.frictionStatement || '',
             proposedSolution: op.description || '',
+            notes: op.notes || null, // [FIX] Include Notes
             source: op.source || 'WORKSHOP_GENERATED',
             boardPosition: {
                 x: op.boardX || 0,
@@ -131,6 +132,7 @@ export async function createWorkshopOpportunity(
         title?: string;
         description?: string;
         proposedSolution?: string;
+        notes?: string;
         friction?: string;
         techAlignment?: string;
         strategyAlignment?: string;
@@ -153,6 +155,7 @@ export async function createWorkshopOpportunity(
                 projectName: cardData.title || 'Untitled Idea',
                 frictionStatement: cardData.description || '',
                 description: cardData.proposedSolution || '',
+                notes: cardData.notes || null, // [FIX] Save Notes
                 friction: cardData.friction,
                 techAlignment: cardData.techAlignment,
                 strategyAlignment: cardData.strategyAlignment,
@@ -183,6 +186,7 @@ export async function createWorkshopOpportunity(
                 title: newOpportunity.projectName,
                 description: newOpportunity.frictionStatement,
                 proposedSolution: newOpportunity.description,
+                notes: newOpportunity.notes, // [FIX] Return Notes
                 source: newOpportunity.source,
                 boardPosition: {
                     x: newOpportunity.boardX,

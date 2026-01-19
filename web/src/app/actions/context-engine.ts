@@ -520,6 +520,7 @@ export async function getWorkshopIntelligence(workshopId: string) {
             originalId: opp.id,
             title: opp.projectName || '',
             description: opp.frictionStatement || '',
+            notes: opp.notes || null, // [FIX] Include Notes
             friction: opp.friction || '',
             techAlignment: opp.techAlignment || '',
             strategyAlignment: opp.strategyAlignment || '',
