@@ -367,6 +367,7 @@ export async function updateOpportunity(workshopId: string, opportunity: any) {
             data: {
                 projectName: opportunity.title as string,
                 frictionStatement: opportunity.description as string,
+                description: opportunity.proposedSolution as string, // FIX: Save proposedSolution field
                 friction: opportunity.friction as string,
                 techAlignment: opportunity.techAlignment as string,
                 strategyAlignment: opportunity.strategyAlignment as string,
