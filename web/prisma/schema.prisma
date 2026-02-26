@@ -124,6 +124,8 @@ model Opportunity {
   @@index([originId])
   @@index([showInIdeation])
   @@index([showInCapture])
+  @@index([workshopId, showInCapture])
+  @@index([workshopId, showInIdeation])
 }
 
 // 3. Capabilities
@@ -133,6 +135,8 @@ model CapabilityConsumed {
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
   name          String
   status        String      // "EXISTING" or "MISSING"
+
+  @@index([opportunityId])
 }
 
 model CapabilityProduced {
@@ -140,6 +144,8 @@ model CapabilityProduced {
   opportunityId String
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
   name          String
+
+  @@index([opportunityId])
 }
 
 // 4. Divergent Thinking Module (New)
@@ -174,25 +180,30 @@ model Asset {
   id          String   @id @default(uuid())
   workshopId  String
   workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  
+
   name        String
   url         String   // Vercel Blob URL (renamed from blobUrl)
   type        String   // Enum: "DOSSIER" or "BACKLOG"
   status      String   @default("READY") // READY, INDEXING, ERROR
-  
+
   createdAt   DateTime @default(now())
-  
+
   chunks      DocumentChunk[]
+
+  @@index([workshopId])
+  @@index([status])
 }
 
 model DocumentChunk {
   id          String   @id @default(uuid())
   assetId     String
   asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  
+
   content     String   @db.Text
   chunkIndex  Int
-  
+
   // Fallback: Float[] (Postgres Array) because pgvector extension is missing locally
   embedding   Float[]
+
+  @@index([assetId])
 }

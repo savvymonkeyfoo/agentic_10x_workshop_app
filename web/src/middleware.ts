@@ -1,30 +1,60 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(req: NextRequest) {
+const jwtSecret = process.env.JWT_SECRET;
+
+if (!jwtSecret) {
+    throw new Error('SECURITY ERROR: JWT_SECRET must be set');
+}
+
+const secret = new TextEncoder().encode(jwtSecret);
+
+async function verifyAuth(token: string): Promise<boolean> {
+    try {
+        await jwtVerify(token, secret);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    // Check for cookie
-    const hasAuth = req.cookies.has('auth-token');
-
-    // Define protected routes (exclude public assets + api + login)
-    // Actually, we want to protect EVERYTHING except specific public paths
+    // Define public paths that don't require authentication
     const isPublicPath =
         pathname === '/login' ||
-        pathname.startsWith('/api/') || // Keep API open for internal fetches (or protect explicit routes)
+        pathname === '/api/auth/login' ||  // Only login endpoint is public
+        pathname === '/api/auth/logout' ||
         pathname.startsWith('/_next') ||
         pathname.startsWith('/favicon.ico') ||
-        pathname.startsWith('/uploads/'); // Assuming images are public
+        pathname.startsWith('/uploads/');
 
-    if (!hasAuth && !isPublicPath) {
-        // Redirect unauthenticated users to login
+    // Get auth token
+    const token = req.cookies.get('auth-token')?.value;
+
+    // Verify JWT token
+    const isAuthenticated = token ? await verifyAuth(token) : false;
+
+    // Protect all routes except public paths
+    if (!isAuthenticated && !isPublicPath) {
+        // For API routes, return 401 Unauthorized
+        if (pathname.startsWith('/api/')) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // For page routes, redirect to login
         const url = req.nextUrl.clone();
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    if (hasAuth && pathname === '/login') {
-        // Redirect authenticated users away from login
+    // Redirect authenticated users away from login page
+    if (isAuthenticated && pathname === '/login') {
         const url = req.nextUrl.clone();
         url.pathname = '/';
         return NextResponse.redirect(url);
