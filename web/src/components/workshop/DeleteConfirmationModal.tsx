@@ -15,13 +15,13 @@ export function DeleteConfirmationModal({ workshopId, clientName, onClose }: Del
 
     const handleDelete = async () => {
         setDeleting(true);
-        try {
-            await deleteWorkshop(workshopId);
+        const result = await deleteWorkshop(workshopId);
+
+        if (result.success) {
             onClose();
-        } catch (err: unknown) {
-            console.error("Delete Error:", err);
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            alert(`Failed to delete workshop: ${message}`);
+        } else {
+            console.error("Delete Error:", result.error);
+            alert(`Failed to delete workshop: ${result.error}`);
             setDeleting(false);
         }
     };

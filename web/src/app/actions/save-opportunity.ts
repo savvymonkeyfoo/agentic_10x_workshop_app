@@ -7,96 +7,99 @@ import { saveOpportunitySchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function saveOpportunity(workshopId: string, data: any, opportunityId?: string) {
-    // Validate input data with Zod
-    const validation = saveOpportunitySchema.safeParse({ workshopId, ...data });
+    try {
+        // Validate input data with Zod
+        const validation = saveOpportunitySchema.safeParse({ workshopId, ...data });
 
-    if (!validation.success) {
-        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-        throw new Error(`Validation failed: ${errors}`);
+        if (!validation.success) {
+            const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            return { success: false, error: `Validation failed: ${errors}` };
+        }
+
+        // Common data mapping
+        const opportunityData = {
+            workshopId,
+            projectName: data.projectName || "Untitled Opportunity",
+            description: data.description || "",
+            frictionStatement: data.frictionStatement || "",
+            strategicHorizon: data.strategicHorizon || "",
+            whyDoIt: data.whyDoIt || "",
+            notes: data.notes || null, // [NEW] Facilitator Notes
+
+            // New Workflow Data - cast to Prisma.InputJsonValue for proper JSON handling
+            workflowPhases: (data.workflowPhases || []) as Prisma.InputJsonValue,
+
+            // Narrative Fields
+            businessCase: data.businessCase || "",
+            executionPlan: data.executionPlan || "",
+            techAlignment: data.techAlignment || "",
+            strategyAlignment: data.strategyAlignment || "",
+            // Removed agentDirective
+
+            scoreValue: Number(data.vrcc?.value ?? 3),
+            scoreCapability: Number(data.vrcc?.capability ?? 3),
+            scoreComplexity: Number(data.vrcc?.complexity ?? 3),
+            scoreRiskFinal: Number(data.vrcc?.riskFinal ?? 3),
+            scoreRiskAI: Number(data.vrcc?.riskAI ?? 0),
+            riskOverrideLog: data.vrcc?.riskOverrideLog || "",
+
+            tShirtSize: data.tShirtSize || "M",
+
+            // Financials - Ensure numbers or null/undefined if empty
+            benefitRevenue: data.benefitRevenue ? Number(data.benefitRevenue) : null,
+            benefitCostAvoidance: data.benefitCostAvoidance ? Number(data.benefitCostAvoidance) : null,
+            benefitEstCost: data.benefitEstCost ? Number(data.benefitEstCost) : null,
+            benefitEfficiency: data.benefitEfficiency ? Number(data.benefitEfficiency) : null,
+            benefitTimeframe: data.benefitTimeframe || 'Monthly',
+
+            // DFV Assessment (JSON)
+            dfvAssessment: data.dfvAssessment ?? Prisma.DbNull,
+
+            definitionOfDone: data.definitionOfDone || "",
+            keyDecisions: data.keyDecisions || "",
+            impactedSystems: Array.isArray(data.impactedSystems) ? data.impactedSystems : [],
+            systemGuardrails: data.systemGuardrails || "",
+            aiOpsRequirements: data.aiOpsRequirements || "",
+            changeManagement: data.changeManagement || "",
+            trainingRequirements: data.trainingRequirements || "",
+
+            // Capability Mapping
+            capabilitiesExisting: Array.isArray(data.capabilitiesExisting) ? data.capabilitiesExisting : [],
+            capabilitiesMissing: Array.isArray(data.capabilitiesMissing) ? data.capabilitiesMissing : []
+        };
+
+        let result;
+
+        if (opportunityId) {
+            // Upsert: Update if exists, otherwise create with the SAME ID (restoring it)
+            result = await prisma.opportunity.upsert({
+                where: { id: opportunityId },
+                update: opportunityData,
+                create: {
+                    ...opportunityData,
+                    id: opportunityId, // Force specific ID to keep client sync
+                    // Visibility: if restoring, keep current flags (handled by upsert logic)
+                    showInCapture: true,
+                    showInIdeation: false
+                }
+            });
+        } else {
+            // Create new (DB generates ID) - Created from Capture page
+            result = await prisma.opportunity.create({
+                data: {
+                    ...opportunityData,
+                    showInCapture: true,   // Visible in Capture (where it's being created)
+                    showInIdeation: false  // NOT from Ideation (allows permanent delete)
+                }
+            });
+        }
+
+        revalidatePath(`/workshop/${workshopId}`);
+
+        // Return ID and success, do NOT redirect here (client handles navigation or autosave state)
+        return { success: true, id: result.id };
+    } catch (error) {
+        console.error('Failed to save opportunity:', error);
+        return { success: false, error: 'Failed to save opportunity' };
     }
-
-    const validatedInput = validation.data;
-
-    // Common data mapping
-    const opportunityData = {
-        workshopId,
-        projectName: data.projectName || "Untitled Opportunity",
-        description: data.description || "",
-        frictionStatement: data.frictionStatement || "",
-        strategicHorizon: data.strategicHorizon || "",
-        whyDoIt: data.whyDoIt || "",
-        notes: data.notes || null, // [NEW] Facilitator Notes
-
-        // New Workflow Data - cast to Prisma.InputJsonValue for proper JSON handling
-        workflowPhases: (data.workflowPhases || []) as Prisma.InputJsonValue,
-
-        // Narrative Fields
-        businessCase: data.businessCase || "",
-        executionPlan: data.executionPlan || "",
-        techAlignment: data.techAlignment || "",
-        strategyAlignment: data.strategyAlignment || "",
-        // Removed agentDirective
-
-        scoreValue: Number(data.vrcc?.value ?? 3),
-        scoreCapability: Number(data.vrcc?.capability ?? 3),
-        scoreComplexity: Number(data.vrcc?.complexity ?? 3),
-        scoreRiskFinal: Number(data.vrcc?.riskFinal ?? 3),
-        scoreRiskAI: Number(data.vrcc?.riskAI ?? 0),
-        riskOverrideLog: data.vrcc?.riskOverrideLog || "",
-
-        tShirtSize: data.tShirtSize || "M",
-
-        // Financials - Ensure numbers or null/undefined if empty
-        benefitRevenue: data.benefitRevenue ? Number(data.benefitRevenue) : null,
-        benefitCostAvoidance: data.benefitCostAvoidance ? Number(data.benefitCostAvoidance) : null,
-        benefitEstCost: data.benefitEstCost ? Number(data.benefitEstCost) : null,
-        benefitEfficiency: data.benefitEfficiency ? Number(data.benefitEfficiency) : null,
-        benefitTimeframe: data.benefitTimeframe || 'Monthly',
-
-        // DFV Assessment (JSON)
-        dfvAssessment: data.dfvAssessment ?? Prisma.DbNull,
-
-        definitionOfDone: data.definitionOfDone || "",
-        keyDecisions: data.keyDecisions || "",
-        impactedSystems: Array.isArray(data.impactedSystems) ? data.impactedSystems : [],
-        systemGuardrails: data.systemGuardrails || "",
-        aiOpsRequirements: data.aiOpsRequirements || "",
-        changeManagement: data.changeManagement || "",
-        trainingRequirements: data.trainingRequirements || "",
-
-        // Capability Mapping
-        capabilitiesExisting: Array.isArray(data.capabilitiesExisting) ? data.capabilitiesExisting : [],
-        capabilitiesMissing: Array.isArray(data.capabilitiesMissing) ? data.capabilitiesMissing : []
-    };
-
-    let result;
-
-    if (opportunityId) {
-        // Upsert: Update if exists, otherwise create with the SAME ID (restoring it)
-        result = await prisma.opportunity.upsert({
-            where: { id: opportunityId },
-            update: opportunityData,
-            create: {
-                ...opportunityData,
-                id: opportunityId, // Force specific ID to keep client sync
-                // Visibility: if restoring, keep current flags (handled by upsert logic)
-                showInCapture: true,
-                showInIdeation: false
-            }
-        });
-    } else {
-        // Create new (DB generates ID) - Created from Capture page
-        result = await prisma.opportunity.create({
-            data: {
-                ...opportunityData,
-                showInCapture: true,   // Visible in Capture (where it's being created)
-                showInIdeation: false  // NOT from Ideation (allows permanent delete)
-            }
-        });
-    }
-
-    revalidatePath(`/workshop/${workshopId}`);
-
-    // Return ID and success, do NOT redirect here (client handles navigation or autosave state)
-    return { success: true, id: result.id };
 }
