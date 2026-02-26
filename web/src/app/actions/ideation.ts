@@ -33,16 +33,20 @@ export async function initializeIdeationBoard(workshopId: string) {
             orderBy: { createdAt: 'asc' }
         });
 
-        // Assign positions to any that don't have them
-        let hasUpdates = false;
-        const positionedOpportunities = await Promise.all(
-            opportunities.map(async (op, index) => {
-                if (op.boardX === null || op.boardY === null) {
-                    hasUpdates = true;
-                    const col = index % GRID.COLUMNS;
-                    const row = Math.floor(index / GRID.COLUMNS);
+        // Identify opportunities needing position updates
+        const needsPositioning = opportunities.filter(
+            op => op.boardX === null || op.boardY === null
+        );
 
-                    await prisma.opportunity.update({
+        if (needsPositioning.length > 0) {
+            // Batch update using transaction
+            await prisma.$transaction(
+                needsPositioning.map((op, _index) => {
+                    const absoluteIndex = opportunities.findIndex(o => o.id === op.id);
+                    const col = absoluteIndex % GRID.COLUMNS;
+                    const row = Math.floor(absoluteIndex / GRID.COLUMNS);
+
+                    return prisma.opportunity.update({
                         where: { id: op.id },
                         data: {
                             boardX: GRID.START_X + (col * GRID.CARD_WIDTH),
@@ -50,51 +54,62 @@ export async function initializeIdeationBoard(workshopId: string) {
                             boardStatus: op.boardStatus || 'inbox'
                         }
                     });
+                })
+            );
 
-                    return {
-                        ...op,
-                        boardX: GRID.START_X + (col * GRID.CARD_WIDTH),
-                        boardY: GRID.START_Y + (row * GRID.CARD_HEIGHT),
-                        boardStatus: op.boardStatus || 'inbox'
-                    };
-                }
-                return op;
-            })
-        );
+            // Refresh opportunities after update
+            const updatedOpportunities = await prisma.opportunity.findMany({
+                where: {
+                    workshopId,
+                    showInIdeation: true
+                },
+                orderBy: { createdAt: 'asc' }
+            });
 
-        if (hasUpdates) {
             revalidatePath(`/workshop/${workshopId}`);
+
+            // Transform to UI format
+            return {
+                success: true,
+                opportunities: updatedOpportunities.map(transformToUI)
+            };
         }
 
-        // Transform to format expected by UI
-        const uiOpportunities = positionedOpportunities.map(op => ({
-            id: op.id,
-            originalId: op.originId || op.id,
-            title: op.projectName,
-            description: op.frictionStatement || '',
-            proposedSolution: op.description || '',
-            notes: (op as any).notes || null, // [FIX] Include Notes (Casted)
-            source: op.source || 'WORKSHOP_GENERATED',
-            boardPosition: {
-                x: op.boardX || 0,
-                y: op.boardY || 0
-            },
-            boardStatus: op.boardStatus || 'inbox',
-            friction: op.friction,
-            techAlignment: op.techAlignment,
-            strategyAlignment: op.strategyAlignment,
-            tier: op.tier,
-            promotionStatus: op.promotionStatus,
-            showInIdeation: op.showInIdeation,
-            showInCapture: op.showInCapture
-        }));
-
-        return { success: true, opportunities: uiOpportunities };
+        // No updates needed, return existing opportunities
+        return {
+            success: true,
+            opportunities: opportunities.map(transformToUI)
+        };
 
     } catch (error) {
         console.error("Failed to initialize board", error);
         return { success: false, error: "Failed to initialize" };
     }
+}
+
+// Helper function to transform opportunity to UI format
+function transformToUI(op: any) {
+    return {
+        id: op.id,
+        originalId: op.originId || op.id,
+        title: op.projectName,
+        description: op.frictionStatement || '',
+        proposedSolution: op.description || '',
+        notes: op.notes || null,
+        source: op.source || 'WORKSHOP_GENERATED',
+        boardPosition: {
+            x: op.boardX || 0,
+            y: op.boardY || 0
+        },
+        boardStatus: op.boardStatus || 'inbox',
+        friction: op.friction,
+        techAlignment: op.techAlignment,
+        strategyAlignment: op.strategyAlignment,
+        tier: op.tier,
+        promotionStatus: op.promotionStatus,
+        showInIdeation: op.showInIdeation,
+        showInCapture: op.showInCapture
+    };
 }
 
 /**

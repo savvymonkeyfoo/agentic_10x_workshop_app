@@ -11,10 +11,6 @@ import { DfvChartSmall } from '@/components/shared/DFVChart';
 import { WorkshopCard } from '@/components/ui/WorkshopCard';
 import { StaticWorkflow } from './charts/StaticWorkflow';
 import { useArtDirector, cleanText } from './hooks/useArtDirector';
-import html2canvas from 'html2canvas';
-import { pdf } from '@react-pdf/renderer';
-import { StrategyMapDocument } from './pdf/StrategyMapDocument';
-import { saveAs } from 'file-saver';
 
 // Type for DFV assessment JSON field
 interface DFVAssessmentData {
@@ -62,6 +58,19 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
     const handleExportPDF = async () => {
         setIsExporting(true);
         try {
+            // Dynamically import heavy libraries only when needed
+            const [
+                { default: html2canvas },
+                { pdf },
+                { StrategyMapDocument },
+                { saveAs }
+            ] = await Promise.all([
+                import('html2canvas'),
+                import('@react-pdf/renderer'),
+                import('./pdf/StrategyMapDocument'),
+                import('file-saver')
+            ]);
+
             // 1. Chart Capture Engine (with Manual Resize)
             const getChartImg = async (id: string) => {
                 const el = document.getElementById(id);

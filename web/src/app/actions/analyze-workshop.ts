@@ -41,8 +41,6 @@ export async function analyzeWorkshop(workshopId: string) {
 - HAS: [${(o.capabilitiesExisting || []).join(', ') || 'None'}]`
         ).join('\n\n');
 
-        console.log("[Analyze] Strategic Dossier:\n", context);
-
         // 3. The 'Council of Agents' Prompt
         const { object } = await generateObject({
             model: AI_CONFIG.strategicModel,
@@ -91,15 +89,12 @@ DATA DOSSIER:
 ${context}`
         });
 
-        console.log("[Analyze] AI Response:", JSON.stringify(object, null, 2));
-
         // 4. Update Database using transaction for atomicity
         await prisma.$transaction(async (tx) => {
             // Update all opportunities in parallel within transaction
             await Promise.all(
-                object.strategy.sequence.map(item => {
-                    console.log(`[Analyze] Updating ${item.id} to rank ${item.rank}`);
-                    return tx.opportunity.update({
+                object.strategy.sequence.map(item =>
+                    tx.opportunity.update({
                         where: { id: item.id },
                         data: {
                             sequenceRank: item.rank,

@@ -2,13 +2,23 @@
 import { generateObject } from 'ai';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
+import { recommendCapabilitiesSchema, validateData } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function recommendCapabilities(workflowContext: any) {
     try {
-        if (!workflowContext) return { success: false, data: [] };
+        // Validate input
+        const validation = validateData(recommendCapabilitiesSchema, workflowContext);
+        if (!validation.success) {
+            return {
+                success: false,
+                data: [],
+                error: validation.errors?.join(', ')
+            };
+        }
 
-        const contextString = JSON.stringify(workflowContext, null, 2);
+        const validatedContext = validation.data;
+        const contextString = JSON.stringify(validatedContext, null, 2);
 
         const result = await generateObject({
             model: AI_CONFIG.generalModel,

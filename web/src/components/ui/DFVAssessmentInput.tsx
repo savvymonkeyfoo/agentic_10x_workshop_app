@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface DFVDimension {
     score: number; // 1-5
@@ -22,11 +21,9 @@ interface StarRatingInputProps {
 }
 
 const StarIcon = ({ filled, onClick }: { filled: boolean; onClick: () => void }) => (
-    <motion.button
-        whileHover={{ scale: 1.2 }}
-        whileTap={{ scale: 0.9 }}
+    <button
         onClick={onClick}
-        className="focus:outline-none"
+        className="focus:outline-none transition-transform duration-150 hover:scale-125 active:scale-90"
     >
         <svg
             width="24"
@@ -39,7 +36,7 @@ const StarIcon = ({ filled, onClick }: { filled: boolean; onClick: () => void })
         >
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
         </svg>
-    </motion.button>
+    </button>
 );
 
 export function StarRatingInput({ label, dimension, onChange, color }: StarRatingInputProps) {
@@ -70,23 +67,18 @@ export function StarRatingInput({ label, dimension, onChange, color }: StarRatin
             </button>
 
             {/* Expandable Justification */}
-            <AnimatePresence>
-                {showJustification && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <textarea
-                            value={dimension.justification}
-                            onChange={(e) => onChange({ ...dimension, justification: e.target.value })}
-                            placeholder="Why this score?"
-                            className="w-full bg-input/50 border border-input rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-ring resize-none h-16 text-foreground placeholder:text-muted-foreground"
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <div
+                className={`overflow-hidden transition-all duration-200 ${
+                    showJustification ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+            >
+                <textarea
+                    value={dimension.justification}
+                    onChange={(e) => onChange({ ...dimension, justification: e.target.value })}
+                    placeholder="Why this score?"
+                    className="w-full bg-input/50 border border-input rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-ring resize-none h-16 text-foreground placeholder:text-muted-foreground"
+                />
+            </div>
         </div>
     );
 }

@@ -99,7 +99,6 @@ async function queryPinecone(
     }));
 
     const uniqueFiles = new Set(chunks.map(c => c.filename));
-    console.log(`[SupremeScout] Retrieved ${chunks.length} chunks from ${uniqueFiles.size} docs.`);
     return { chunks, documentCount: uniqueFiles.size, chunkCount: chunks.length };
 }
 
@@ -417,8 +416,6 @@ export async function deleteIdeationOpportunity({ workshopId, originalId }: Dele
 
 export async function hydrateBacklog(workshopId: string) {
     try {
-        console.log(`[SupremeScout] Hydrating backlog for ${workshopId}...`);
-
         // 1. Generate Seeds (Always do this first to ensure they exist)
         const researchSeeds = Array.from({ length: 5 }).map((_, i) => ({
             id: `seed-${Date.now()}-${i}`, // Unique ID every time
@@ -432,7 +429,6 @@ export async function hydrateBacklog(workshopId: string) {
 
         // 2. Return Cached if Available
         if (rawBacklog && Array.isArray(rawBacklog) && rawBacklog.length > 0) {
-            console.log(`[SupremeScout] Using cached backlog: ${rawBacklog.length} items`);
             return { success: true, items: [...rawBacklog, ...researchSeeds] };
         }
 
@@ -463,8 +459,6 @@ export async function hydrateBacklog(workshopId: string) {
                 description: item.description || item.details || item.summary || item.text || "No description provided",
                 isSeed: false
             }));
-
-            console.log(`[SupremeScout] Extracted ${items.length} items from backlog.`);
 
         } catch (e) {
             console.error("[SupremeScout] JSON Parsing Failed:", text);
@@ -577,8 +571,6 @@ export async function queryContext(workshopId: string, query: string, assetType?
 
 export async function resetWorkshopIntelligence(workshopId: string) {
     try {
-        console.log(`[SupremeScout] Resetting intelligence for ${workshopId}...`);
-
         // Transaction to ensure both SQL and JSON are cleared
         await prisma.$transaction([
             // 1. Clear JSON blob

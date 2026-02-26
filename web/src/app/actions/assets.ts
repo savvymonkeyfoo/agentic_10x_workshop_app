@@ -15,8 +15,6 @@ import { revalidatePath } from 'next/cache';
  * @returns Result object with success status
  */
 export async function deleteAsset(assetId: string): Promise<{ success: boolean; error?: string }> {
-    console.log(`[Action] deleteAsset called for: ${assetId}`);
-
     const result = await deleteAssetService(assetId);
 
     if (result.success) {

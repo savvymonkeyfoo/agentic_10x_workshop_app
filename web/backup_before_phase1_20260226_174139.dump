@@ -1,0 +1,474 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 14.15 (Homebrew)
+-- Dumped by pg_dump version 14.15 (Homebrew)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+CREATE SCHEMA public;
+
+
+ALTER SCHEMA public OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: Asset; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Asset" (
+    id text NOT NULL,
+    "workshopId" text NOT NULL,
+    name text NOT NULL,
+    url text NOT NULL,
+    type text NOT NULL,
+    status text DEFAULT 'READY'::text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."Asset" OWNER TO postgres;
+
+--
+-- Name: CapabilityConsumed; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CapabilityConsumed" (
+    id text NOT NULL,
+    "opportunityId" text NOT NULL,
+    name text NOT NULL,
+    status text NOT NULL
+);
+
+
+ALTER TABLE public."CapabilityConsumed" OWNER TO postgres;
+
+--
+-- Name: CapabilityProduced; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CapabilityProduced" (
+    id text NOT NULL,
+    "opportunityId" text NOT NULL,
+    name text NOT NULL
+);
+
+
+ALTER TABLE public."CapabilityProduced" OWNER TO postgres;
+
+--
+-- Name: DocumentChunk; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."DocumentChunk" (
+    id text NOT NULL,
+    content text NOT NULL,
+    "chunkIndex" integer NOT NULL,
+    embedding double precision[],
+    "assetId" text NOT NULL
+);
+
+
+ALTER TABLE public."DocumentChunk" OWNER TO postgres;
+
+--
+-- Name: Opportunity; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Opportunity" (
+    id text NOT NULL,
+    "workshopId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "projectName" text NOT NULL,
+    "frictionStatement" text NOT NULL,
+    "strategicHorizon" text NOT NULL,
+    "whyDoIt" text NOT NULL,
+    "workflowPhases" jsonb,
+    "agentDirective" jsonb,
+    "scoreValue" integer NOT NULL,
+    "scoreCapability" integer NOT NULL,
+    "scoreComplexity" integer NOT NULL,
+    "scoreRiskFinal" integer DEFAULT 0 NOT NULL,
+    "scoreRiskAI" integer DEFAULT 0 NOT NULL,
+    "riskOverrideLog" text,
+    "tShirtSize" text NOT NULL,
+    "benefitRevenue" double precision,
+    "benefitCostAvoidance" double precision,
+    "benefitEstCost" double precision,
+    "benefitEfficiency" double precision,
+    "benefitTimeframe" text,
+    "dfvAssessment" jsonb,
+    "definitionOfDone" text NOT NULL,
+    "keyDecisions" text NOT NULL,
+    "impactedSystems" text[],
+    "systemGuardrails" text,
+    "aiOpsRequirements" text,
+    "changeManagement" text,
+    "trainingRequirements" text,
+    "capabilitiesExisting" text[],
+    "capabilitiesMissing" text[],
+    "sequenceRank" integer,
+    "strategicRationale" text,
+    "matrixX" double precision,
+    "matrixY" double precision,
+    "canvasLastGeneratedAt" timestamp(3) without time zone,
+    "businessCase" text,
+    "executionPlan" text,
+    friction text,
+    "originId" text,
+    "promotionStatus" text,
+    "strategyAlignment" text,
+    "techAlignment" text,
+    "workflowData" jsonb,
+    description text,
+    "boardStatus" text,
+    "boardX" double precision,
+    "boardY" double precision,
+    source text,
+    tier text,
+    "showInCapture" boolean DEFAULT false NOT NULL,
+    "showInIdeation" boolean DEFAULT false NOT NULL,
+    notes text,
+    CONSTRAINT "Opportunity_benefitCostAvoidance_check" CHECK ((("benefitCostAvoidance" IS NULL) OR ("benefitCostAvoidance" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_benefitEfficiency_check" CHECK ((("benefitEfficiency" IS NULL) OR ("benefitEfficiency" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_benefitEstCost_check" CHECK ((("benefitEstCost" IS NULL) OR ("benefitEstCost" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_benefitRevenue_check" CHECK ((("benefitRevenue" IS NULL) OR ("benefitRevenue" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_boardStatus_check" CHECK ((("boardStatus" IS NULL) OR ("boardStatus" = ANY (ARRAY['inbox'::text, 'placed'::text, 'archived'::text])))),
+    CONSTRAINT "Opportunity_boardX_check" CHECK ((("boardX" IS NULL) OR ("boardX" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_boardY_check" CHECK ((("boardY" IS NULL) OR ("boardY" >= (0)::double precision))),
+    CONSTRAINT "Opportunity_promotionStatus_check" CHECK ((("promotionStatus" IS NULL) OR ("promotionStatus" = 'PROMOTED'::text))),
+    CONSTRAINT "Opportunity_scoreCapability_check" CHECK ((("scoreCapability" >= 1) AND ("scoreCapability" <= 5))),
+    CONSTRAINT "Opportunity_scoreComplexity_check" CHECK ((("scoreComplexity" >= 1) AND ("scoreComplexity" <= 5))),
+    CONSTRAINT "Opportunity_scoreRiskAI_check" CHECK ((("scoreRiskAI" >= 0) AND ("scoreRiskAI" <= 5))),
+    CONSTRAINT "Opportunity_scoreRiskFinal_check" CHECK ((("scoreRiskFinal" >= 0) AND ("scoreRiskFinal" <= 5))),
+    CONSTRAINT "Opportunity_scoreValue_check" CHECK ((("scoreValue" >= 1) AND ("scoreValue" <= 5))),
+    CONSTRAINT "Opportunity_strategicHorizon_check" CHECK (("strategicHorizon" = ANY (ARRAY['GROWTH'::text, 'OPS'::text, 'STRATEGY'::text, ''::text]))),
+    CONSTRAINT "Opportunity_tShirtSize_check" CHECK (("tShirtSize" = ANY (ARRAY['XS'::text, 'S'::text, 'M'::text, 'L'::text, 'XL'::text])))
+);
+
+
+ALTER TABLE public."Opportunity" OWNER TO postgres;
+
+--
+-- Name: Workshop; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Workshop" (
+    id text NOT NULL,
+    "clientName" text NOT NULL,
+    "clientLogoUrl" text,
+    "workshopDate" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    status text DEFAULT 'INPUT'::text NOT NULL,
+    "strategyNarrative" text,
+    "strategyDependencies" text,
+    "strategyRisks" text,
+    "dependencyGraph" jsonb
+);
+
+
+ALTER TABLE public."Workshop" OWNER TO postgres;
+
+--
+-- Name: WorkshopContext; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."WorkshopContext" (
+    id text NOT NULL,
+    "workshopId" text NOT NULL,
+    "clientDossierUrl" text,
+    "clientBacklogUrl" text,
+    "marketResearchUrl" text,
+    "rawBacklog" jsonb,
+    "researchBrief" text,
+    "extractedConstraints" jsonb,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    "reasoningSignature" text,
+    "researchBriefs" jsonb,
+    "intelligenceAnalysis" jsonb
+);
+
+
+ALTER TABLE public."WorkshopContext" OWNER TO postgres;
+
+--
+-- Data for Name: Asset; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Asset" (id, "workshopId", name, url, type, status, "createdAt") FROM stdin;
+d0ade0c7-57ed-48e0-9c35-b5e53a79d781	WS-2025-SEED-001	Test Dossier.pdf	https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zurich_Insurance_Group_logo.svg/2560px-Zurich_Insurance_Group_logo.svg.png	DOSSIER	READY	2025-12-18 04:38:37.863
+165b31b0-2b7e-4701-b6c1-5f6968a10130	WS-2025-SEED-001	Test Backlog.pdf	https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zurich_Insurance_Group_logo.svg/2560px-Zurich_Insurance_Group_logo.svg.png	BACKLOG	READY	2025-12-18 04:38:37.878
+\.
+
+
+--
+-- Data for Name: CapabilityConsumed; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CapabilityConsumed" (id, "opportunityId", name, status) FROM stdin;
+1613dc00-86a3-4ea0-876c-691494456ed6	OPP-001	OCR Engine	EXISTING
+c6064d9c-a4bd-4d27-a7cf-447720c57f52	OPP-001	SAP API Access	MISSING
+ce37c75c-6cef-4838-8a09-e55090cdc514	OPP-002	Cleaned Invoice Data	MISSING
+\.
+
+
+--
+-- Data for Name: CapabilityProduced; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CapabilityProduced" (id, "opportunityId", name) FROM stdin;
+2b60ceb3-dcdc-4a50-aa49-d1b67d52bfed	OPP-001	Cleaned Invoice Data
+\.
+
+
+--
+-- Data for Name: DocumentChunk; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."DocumentChunk" (id, content, "chunkIndex", embedding, "assetId") FROM stdin;
+ddd3746b-f20a-414b-8087-240a9bc1608a	The client is Acme Global. They struggle with manual invoicing.	0	{}	d0ade0c7-57ed-48e0-9c35-b5e53a79d781
+9c27b63d-5ea0-40cd-ac66-4653c32530ce	Backlog Item 1: Automate PO matching.	0	{}	165b31b0-2b7e-4701-b6c1-5f6968a10130
+\.
+
+
+--
+-- Data for Name: Opportunity; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Opportunity" (id, "workshopId", "createdAt", "updatedAt", "projectName", "frictionStatement", "strategicHorizon", "whyDoIt", "workflowPhases", "agentDirective", "scoreValue", "scoreCapability", "scoreComplexity", "scoreRiskFinal", "scoreRiskAI", "riskOverrideLog", "tShirtSize", "benefitRevenue", "benefitCostAvoidance", "benefitEstCost", "benefitEfficiency", "benefitTimeframe", "dfvAssessment", "definitionOfDone", "keyDecisions", "impactedSystems", "systemGuardrails", "aiOpsRequirements", "changeManagement", "trainingRequirements", "capabilitiesExisting", "capabilitiesMissing", "sequenceRank", "strategicRationale", "matrixX", "matrixY", "canvasLastGeneratedAt", "businessCase", "executionPlan", friction, "originId", "promotionStatus", "strategyAlignment", "techAlignment", "workflowData", description, "boardStatus", "boardX", "boardY", source, tier, "showInCapture", "showInIdeation", notes) FROM stdin;
+6d693b1a-939e-4aaa-bb38-4f642b748871	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:45:52.33	2026-01-15 06:51:52.267	Fraud Pattern Sentinel	Fraud rings are evolving faster than our static rules engines can catch up.	GROWTH	Reduce leakage by identifying subtle cross-claim patterns.	[{"name": "Scan", "description": "Ingest daily transaction logs"}, {"name": "Cluster", "description": "Identify linked entities (same IP, device)"}, {"name": "Alert", "description": "Flag high-probability rings"}]	\N	5	3	5	4	0	\N	XL	0	8000000	500000	0	Annually	{"viability": 5, "feasibility": 3, "desirability": 4}	Graph-based detection of fraud rings identifying >$1M in recoverable leakage.	Graph DB: Neo4j vs Amazon Neptune.	{"Data Lake","Claims DB"}	Human Review Board for all fraud flags.	High Memory Nodes.	\N	\N	{"Data Lake","Transaction Logs"}	{"Graph Database","Real-time Inference"}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+21ca494d-ea80-4288-93d7-87df58caa14e	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:45:52.329	2026-01-15 06:51:52.267	Underwriter Co-Pilot	Underwriters drown in 50+ page PDFs for every commercial property application.	STRATEGY	Allow underwriters to quote 2x more policies per week by summarizing risk factors instantly.	[{"name": "Upload", "description": "User uploads risk report"}, {"name": "Analyze", "description": "Agent identifies fire/flood risks"}, {"name": "Suggest", "description": "Drafts coverage exclusions"}]	\N	5	2	4	3	0	\N	L	5000000	0	250000	15000	Annually	{"viability": 5, "feasibility": 4, "desirability": 5}	Underwriters can generate risk summaries and exclusion drafts from raw PDFs in under 1 minute.	Model Selection: GPT-4 vs Claude 3.5 Sonnet.	{"Policy Admin System",SharePoint}	Never auto-deny coverage. Only suggest.	Vector Store (Pinecone)	\N	\N	{SharePoint}	{"Vector Database","RAG Pipeline"}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+d9fd7f48-878d-4480-b615-51858e967998	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:45:52.331	2026-01-15 06:51:52.267	Policy Renewal Agent	Small business policies churn because we fail to engage them before expiry.	GROWTH	Increase retention by 15% through personalized, proactive outreach.	[{"name": "Trigger", "description": "Identifies expiry - 60 days"}, {"name": "Draft", "description": "Generates personalized renewal offer"}, {"name": "Send", "description": "E-mails broker or customer"}]	\N	4	5	2	2	0	\N	S	2500000	0	50000	2000	Annually	{"viability": 5, "feasibility": 5, "desirability": 3}	Automated renewal outreach deployed to 100% of SME customers 60 days prior to expiry.	Integration method: Salesforce API.	{Salesforce,SendGrid}	Rate limit emails to avoid spam filters.	Serverless Functions.	\N	\N	{"CRM (Salesforce)","Email Gateway"}	{None}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+fb7b0e2c-5daa-4d79-a4f3-fb589ce0333f	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:59:21.618	2026-01-15 06:51:52.267	Fraud Pattern Sentinel	Fraud rings evolving faster than rules engines.	GROWTH	Reduce leakage by identifying cross-claim patterns.	[]	\N	5	3	5	4	0	\N	XL	\N	8000000	\N	\N	\N	{}	Identify 10 previous known fraud rings in test data.	Pending decision.	{}	\N	\N	\N	\N	{}	{}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+386649ef-330b-4164-a1de-6508c3d54082	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:59:21.619	2026-01-15 06:51:52.267	Policy Renewal Agent	Small business policies churn due to lack of engagement.	GROWTH	Increase retention by 15% via proactive outreach.	[]	\N	4	5	2	2	0	\N	S	2500000	\N	\N	\N	\N	{}	Auto-send renewal emails to 100% of expiring SME policies.	Pending decision.	{}	\N	\N	\N	\N	{}	{}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+OPP-002	WS-2025-SEED-001	2025-12-18 03:47:05.346	2026-01-15 06:51:52.267	Supplier Negotiation Bot	Manual negotiation takes 3 weeks per contract. We lose 5% margin on tail spend.	GROWTH	As a Procurement Lead, I want to autonomously renegotiate tail-spend contracts so that we can recover 5% margin without adding headcount.	\N	{"action": "Draft renewal email with performance data and price target", "trigger": "Contract renewal date - 30 days", "guardrail": "Human approval required before sending final offer", "autonomy_level": "L1 (Suggest)"}	5	2	4	4	4	\N	L	2000000	\N	500000	10	\N	{"viability": {"score": "HIGH"}, "feasibility": {"score": "LOW"}, "desirability": {"score": "MED"}}	- Bot successfully identifies contracts expiring in 30 days.\n- Generates negotiation email with <5% hallucination rate.\n- Dashboard tracks savings realized.	Legal approval for automated contract language. Threshold for 'Auto-Send' vs 'Review'.	{Coupa,Salesforce,Email}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+OPP-001	WS-2025-SEED-001	2025-12-18 03:47:05.335	2026-01-15 06:51:52.267	Invoice Reconciliation Agent	AP team spends 40hrs/week manually matching POs.	OPS	As an AP Manager, I want to automate invoice matching so that my team can focus on high-value vendor relationship management instead of data entry.	\N	{"action": "Extract Line Items, Match PO in SAP, Schedule Payment", "trigger": "New PDF invoice received via Email", "guardrail": "IF confidence < 95% OR Value > $50k, route to Human", "autonomy_level": "L1 (Suggest)"}	4	5	2	2	2	\N	M	\N	\N	150000	40	\N	{"viability": {"score": "HIGH"}, "feasibility": {"score": "HIGH"}, "desirability": {"score": "HIGH"}}	- System processes 95% of standard PDF invoices without human intervention.\n- Two-way match logic confirmed by Finance.\n- Integration with SAP is live in Prod.	Security review required for reading Finance Inbox. SAP Service User credentials needed.	{SAP,"Microsoft Exchange",SharePoint}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+9208192f-57c5-459b-8a14-a45cf80e9e20	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:45:52.318	2026-01-15 06:51:52.267	Smart Claims Triage Bot	Claims adjusters spend 40% of their day categorizing inbound emails and PDFs instead of adjusting.	OPS	Reduce "First Notice of Loss" (FNOL) processing time from 3 days to 30 minutes.	[{"name": "Ingest", "description": "Monitor inbox for new claims"}, {"name": "Classify", "description": "LLM extracts Policy ID and Loss Type"}, {"name": "Route", "description": "Assign to correct adjuster queue"}]	\N	5	4	3	2	0	\N	M	0	1200000	150000	8000	Annually	{"viability": 5, "feasibility": 5, "desirability": 5}	Fully automated classification and routing of email claims with 90% accuracy.	Buy vs Build: Use Azure Document Intelligence.	{"Exchange Server","Claims Management System"}	Confidence score < 90% must go to human.	Standard GPU instance.	\N	\N	{"Outlook API","Policy Database"}	{"OCR for Handwriting","Sentiment Analysis"}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+75607555-9dd3-46bc-a6eb-958a6cc5b839	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:59:21.613	2026-01-15 06:51:52.267	Smart Claims Triage Bot	Claims adjusters spend 40% of their day categorizing inbound emails.	OPS	Reduce FNOL processing time from 3 days to 30 minutes.	[]	\N	5	4	3	2	0	\N	M	\N	1200000	\N	\N	\N	{}	Automated classification of 90% of inbound claims.	Pending decision.	{}	\N	\N	\N	\N	{}	{}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+c8b2f51c-cfcd-4a6d-ac7d-026367cf44cc	fd5a419e-cd0c-456b-90f2-10f35b444da2	2025-12-14 21:59:21.617	2026-01-15 06:51:52.267	Underwriter Co-Pilot	Underwriters drown in 50+ page PDFs.	STRATEGY	Quote 2x more policies per week.	[]	\N	5	2	4	3	0	\N	L	5000000	\N	\N	\N	\N	{}	Assistant successfully summarizes 50-page PDF in <30s.	Pending decision.	{}	\N	\N	\N	\N	{}	{}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	t	\N
+\.
+
+
+--
+-- Data for Name: Workshop; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Workshop" (id, "clientName", "clientLogoUrl", "workshopDate", "createdAt", status, "strategyNarrative", "strategyDependencies", "strategyRisks", "dependencyGraph") FROM stdin;
+8621f24e-aeea-405a-b28f-d3ad16874455	Visa Card	/uploads/logo-1765498592264-visa.png	2025-12-25 00:00:00	2025-12-12 00:16:33.456	INPUT	\N	\N	\N	\N
+fd5a419e-cd0c-456b-90f2-10f35b444da2	Zurich Insurance	https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zurich_Insurance_Group_logo.svg/2560px-Zurich_Insurance_Group_logo.svg.png	2025-12-14 21:45:52.272	2025-12-14 21:45:52.309	IN_PROGRESS	Zurich is pivoting to an "AI-First" claims processing model to reduce cycle times by 40%.	Availability of Azure OpenAI instances and cleanup of historical claims data.	Data privacy compliance (GDPR) and legacy mainframe integration.	\N
+WS-2025-SEED-001	Acme Global Logistics	\N	2025-12-18 03:47:05.327	2025-12-18 03:47:05.327	Input	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: WorkshopContext; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."WorkshopContext" (id, "workshopId", "clientDossierUrl", "clientBacklogUrl", "marketResearchUrl", "rawBacklog", "researchBrief", "extractedConstraints", "createdAt", "updatedAt", "reasoningSignature", "researchBriefs", "intelligenceAnalysis") FROM stdin;
+\.
+
+
+--
+-- Name: Asset Asset_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Asset"
+    ADD CONSTRAINT "Asset_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: CapabilityConsumed CapabilityConsumed_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CapabilityConsumed"
+    ADD CONSTRAINT "CapabilityConsumed_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: CapabilityProduced CapabilityProduced_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CapabilityProduced"
+    ADD CONSTRAINT "CapabilityProduced_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: DocumentChunk DocumentChunk_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."DocumentChunk"
+    ADD CONSTRAINT "DocumentChunk_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Opportunity Opportunity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Opportunity"
+    ADD CONSTRAINT "Opportunity_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: WorkshopContext WorkshopContext_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."WorkshopContext"
+    ADD CONSTRAINT "WorkshopContext_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Workshop Workshop_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Workshop"
+    ADD CONSTRAINT "Workshop_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Asset_status_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Asset_status_idx" ON public."Asset" USING btree (status);
+
+
+--
+-- Name: Asset_workshopId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Asset_workshopId_idx" ON public."Asset" USING btree ("workshopId");
+
+
+--
+-- Name: CapabilityConsumed_opportunityId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "CapabilityConsumed_opportunityId_idx" ON public."CapabilityConsumed" USING btree ("opportunityId");
+
+
+--
+-- Name: CapabilityProduced_opportunityId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "CapabilityProduced_opportunityId_idx" ON public."CapabilityProduced" USING btree ("opportunityId");
+
+
+--
+-- Name: DocumentChunk_assetId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "DocumentChunk_assetId_idx" ON public."DocumentChunk" USING btree ("assetId");
+
+
+--
+-- Name: Opportunity_originId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Opportunity_originId_idx" ON public."Opportunity" USING btree ("originId");
+
+
+--
+-- Name: Opportunity_showInCapture_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Opportunity_showInCapture_idx" ON public."Opportunity" USING btree ("showInCapture");
+
+
+--
+-- Name: Opportunity_showInIdeation_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Opportunity_showInIdeation_idx" ON public."Opportunity" USING btree ("showInIdeation");
+
+
+--
+-- Name: Opportunity_workshopId_showInCapture_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Opportunity_workshopId_showInCapture_idx" ON public."Opportunity" USING btree ("workshopId", "showInCapture");
+
+
+--
+-- Name: Opportunity_workshopId_showInIdeation_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "Opportunity_workshopId_showInIdeation_idx" ON public."Opportunity" USING btree ("workshopId", "showInIdeation");
+
+
+--
+-- Name: WorkshopContext_workshopId_key; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "WorkshopContext_workshopId_key" ON public."WorkshopContext" USING btree ("workshopId");
+
+
+--
+-- Name: Asset Asset_workshopId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Asset"
+    ADD CONSTRAINT "Asset_workshopId_fkey" FOREIGN KEY ("workshopId") REFERENCES public."Workshop"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: CapabilityConsumed CapabilityConsumed_opportunityId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CapabilityConsumed"
+    ADD CONSTRAINT "CapabilityConsumed_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES public."Opportunity"(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: CapabilityProduced CapabilityProduced_opportunityId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CapabilityProduced"
+    ADD CONSTRAINT "CapabilityProduced_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES public."Opportunity"(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: DocumentChunk DocumentChunk_assetId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."DocumentChunk"
+    ADD CONSTRAINT "DocumentChunk_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES public."Asset"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Opportunity Opportunity_workshopId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Opportunity"
+    ADD CONSTRAINT "Opportunity_workshopId_fkey" FOREIGN KEY ("workshopId") REFERENCES public."Workshop"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: WorkshopContext WorkshopContext_workshopId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."WorkshopContext"
+    ADD CONSTRAINT "WorkshopContext_workshopId_fkey" FOREIGN KEY ("workshopId") REFERENCES public."Workshop"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

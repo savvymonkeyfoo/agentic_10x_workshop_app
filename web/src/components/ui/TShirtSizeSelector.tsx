@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 type TShirtSize = 'XS' | 'S' | 'M' | 'L' | 'XL';
 
@@ -55,19 +54,17 @@ export function TShirtSizeSelector({ value, onChange }: TShirtSizeSelectorProps)
     return (
         <div className="flex items-end gap-2">
             {SIZES.map(({ size, scale }) => (
-                <motion.button
+                <button
                     key={size}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
                     onClick={() => onChange(size)}
-                    className={`relative cursor-pointer transition-all duration-200 ${value === size
+                    className={`relative cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 ${value === size
                         ? 'drop-shadow-lg'
                         : 'opacity-70 hover:opacity-100'
                         }`}
                     title={`Size ${size}`}
                 >
                     <TShirtIcon size={size} isActive={value === size} scale={scale} />
-                </motion.button>
+                </button>
             ))}
         </div>
     );

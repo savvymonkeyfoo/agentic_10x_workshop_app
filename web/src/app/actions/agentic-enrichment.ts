@@ -83,10 +83,8 @@ export async function agenticEnrichment(
     workshopId: string,
     mode: EnrichmentMode,
     context: { title: string; description: string; currentData?: object }
-) {
+)  {
     try {
-        console.log(`[AgenticEnrichment] Mode: ${mode} for "${context.title}"`);
-
         // 1. RAG Retrieval
         // We query Pinecone for relevant context based on the mode and title
         const query = `${context.title} ${context.description} ${mode}`;

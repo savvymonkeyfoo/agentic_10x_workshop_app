@@ -2,10 +2,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { deleteOpportunitySchema, validateData } from '@/lib/validation';
 
 /**
  * UNIFIED DELETE OPPORTUNITY ACTION
- * 
+ *
  * With unified SQL storage, there's only one delete function
  * that works for opportunities at any stage.
  */
@@ -20,8 +21,10 @@ interface DeleteOpportunityOptions {
  * Works for opportunities at any stage (IDEATION, CAPTURE, etc.)
  */
 export async function deleteOpportunity({ opportunityId, workshopId }: DeleteOpportunityOptions) {
-    if (!opportunityId) {
-        return { success: false, error: "Opportunity ID required" };
+    // Validate input
+    const validation = validateData(deleteOpportunitySchema, { opportunityId, workshopId });
+    if (!validation.success) {
+        return { success: false, error: validation.errors?.join(', ') };
     }
 
     try {

@@ -19,7 +19,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Local state for polling updates without page refresh
+    // Local state for SSE updates without page refresh
     const [items, setItems] = useState<Asset[]>(assets);
 
     // Sync props to state if props change (e.g. initial load or parent refresh)
@@ -27,54 +27,67 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
         setItems(assets);
     }, [assets]);
 
-    // Polling Logic: Targeted Status Checks
+    // Server-Sent Events: Real-time Status Updates
     useEffect(() => {
-        const indexingItems = items.filter(a => a.status === 'PROCESSING');
-        if (indexingItems.length === 0) return;
+        const processingItems = items.filter(a => a.status === 'PROCESSING');
+        if (processingItems.length === 0) return;
 
-        let attempts = 0;
-        const maxAttempts = 40; // 2 minutes approx (3s interval)
+        let eventSource: EventSource | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
 
-        const interval = setInterval(async () => {
-            attempts++;
-            if (attempts > maxAttempts) {
-                // Timeout logic: Mark hanging items as ERROR locally to stop spinning
+        try {
+            // Connect to SSE endpoint
+            eventSource = new EventSource(`/api/assets/status-stream?workshopId=${workshopId}`);
+
+            // Handle incoming updates
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'initial' || data.type === 'update') {
+                        const updatedAssets = data.assets;
+
+                        // Update local state with new statuses
+                        setItems(prev => prev.map(asset => {
+                            const updated = updatedAssets.find((u: Asset) => u.id === asset.id);
+                            if (updated && updated.status !== asset.status) {
+                                if (updated.status === 'READY') {
+                                    toast.success(`${asset.name} is ready!`);
+                                    router.refresh();
+                                }
+                                return { ...asset, status: updated.status };
+                            }
+                            return asset;
+                        }));
+                    }
+                } catch (error) {
+                    console.error('SSE parse error:', error);
+                }
+            };
+
+            eventSource.onerror = () => {
+                eventSource?.close();
+                console.log('SSE connection closed');
+            };
+
+            // Timeout after 2 minutes
+            timeoutId = setTimeout(() => {
                 setItems(prev => prev.map(a =>
                     a.status === 'PROCESSING' ? { ...a, status: 'ERROR' } : a
                 ));
-                toast.error("Indexing timed out. Please try again.");
-                clearInterval(interval);
-                return;
-            }
+                toast.error("Processing timed out. Please try again.");
+                eventSource?.close();
+            }, 120000);
 
-            // Check status for each indexing item
-            await Promise.all(indexingItems.map(async (item) => {
-                try {
-                    const res = await fetch(`/api/assets/${item.id}/status`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.status !== 'PROCESSING') {
-                            // Update local state if status changed
-                            setItems(prev => prev.map(a =>
-                                a.id === item.id ? { ...a, status: data.status } : a
-                            ));
-                            if (data.status === 'READY') {
-                                toast.success(`${item.name} is ready!`);
-                                router.refresh(); // Optional: Refresh to ensure full sync eventually
-                            }
-                        }
-                    } else if (res.status === 404) {
-                        // Removed?
-                        setItems(prev => prev.filter(a => a.id !== item.id));
-                    }
-                } catch (e) {
-                    console.error("Poll Error", e);
-                }
-            }));
-        }, 3000);
+        } catch (error) {
+            console.error('SSE connection error:', error);
+        }
 
-        return () => clearInterval(interval);
-    }, [items, router]);
+        return () => {
+            eventSource?.close();
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+    }, [items, workshopId, router]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();

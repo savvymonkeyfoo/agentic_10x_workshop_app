@@ -2,25 +2,41 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { deleteWorkshopSchema, validateData } from '@/lib/validation';
 
 export async function deleteWorkshop(id: string) {
-    if (!id) {
-        throw new Error('Workshop ID is required');
+    // Validate input
+    const validation = validateData(deleteWorkshopSchema, { id });
+    if (!validation.success) {
+        throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
     }
 
-    // Cascade delete opportunities handled by database or need manual cleanup?
-    // Prisma schema doesn't show onDelete cascade for Opportunity relation in Workshop, 
-    // but usually we want to delete related records first or use onDelete: Cascade in schema.
-    // For now, let's assume simple delete, but if it fails due to foreign key constraint, 
-    // we'll need to delete opportunities first.
-    // Let's delete opportunities first to be safe.
+    // Use transaction to ensure atomic delete
+    await prisma.$transaction(async (tx) => {
+        // 1. Delete all related opportunities (and their cascading relations)
+        await tx.opportunity.deleteMany({
+            where: { workshopId: id }
+        });
 
-    await prisma.opportunity.deleteMany({
-        where: { workshopId: id }
-    });
+        // 2. Delete workshop context if exists
+        const context = await tx.workshopContext.findUnique({
+            where: { workshopId: id }
+        });
+        if (context) {
+            await tx.workshopContext.delete({
+                where: { id: context.id }
+            });
+        }
 
-    await prisma.workshop.delete({
-        where: { id }
+        // 3. Delete all assets and their chunks (CASCADE handled by schema)
+        await tx.asset.deleteMany({
+            where: { workshopId: id }
+        });
+
+        // 4. Finally delete the workshop
+        await tx.workshop.delete({
+            where: { id }
+        });
     });
 
     revalidatePath('/');
