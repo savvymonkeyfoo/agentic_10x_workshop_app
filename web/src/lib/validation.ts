@@ -18,14 +18,14 @@ export const saveOpportunitySchema = z.object({
   workshopId: z.string().uuid('Invalid workshop ID'),
   projectName: z.string().min(1, 'Project name is required').max(200, 'Project name too long'),
   description: z.string().optional(),
-  frictionStatement: z.string().min(1, 'Friction statement is required'),
+  frictionStatement: z.string().optional(),
   strategicHorizon: z.enum(['GROWTH', 'OPS', 'STRATEGY'], {
     message: 'Strategic horizon must be GROWTH, OPS, or STRATEGY',
-  }),
-  whyDoIt: z.string().min(1, 'Why do it is required'),
+  }).optional(),
+  whyDoIt: z.string().optional(),
   notes: z.string().optional(),
 
-  // VRCC Scores (Value, Capability, Complexity, Risk)
+  // VRCC Scores (Value, Capability, Complexity, Risk) - optional for initial save
   vrcc: z.object({
     value: z.number().int().min(1).max(5, 'Value score must be between 1-5'),
     capability: z.number().int().min(1).max(5, 'Capability score must be between 1-5'),
@@ -33,11 +33,11 @@ export const saveOpportunitySchema = z.object({
     riskFinal: z.number().int().min(0).max(5, 'Risk final score must be between 0-5'),
     riskAI: z.number().int().min(0).max(5, 'Risk AI score must be between 0-5').optional(),
     riskOverrideLog: z.string().optional(),
-  }),
+  }).optional(),
 
   tShirtSize: z.enum(['XS', 'S', 'M', 'L', 'XL'], {
     message: 'T-shirt size must be XS, S, M, L, or XL',
-  }),
+  }).optional(),
 
   // Financials
   benefitRevenue: z.number().nonnegative('Revenue must be positive').optional().nullable(),
@@ -46,9 +46,9 @@ export const saveOpportunitySchema = z.object({
   benefitEfficiency: z.number().nonnegative('Efficiency must be positive').optional().nullable(),
   benefitTimeframe: z.enum(['Monthly', 'Annually']).optional(),
 
-  // Execution Fields
-  definitionOfDone: z.string().min(1, 'Definition of done is required'),
-  keyDecisions: z.string().min(1, 'Key decisions are required'),
+  // Execution Fields - optional for initial save
+  definitionOfDone: z.string().optional(),
+  keyDecisions: z.string().optional(),
   impactedSystems: z.array(z.string()).optional(),
   systemGuardrails: z.string().optional(),
   aiOpsRequirements: z.string().optional(),
