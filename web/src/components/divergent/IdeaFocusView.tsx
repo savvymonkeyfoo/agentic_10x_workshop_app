@@ -49,8 +49,8 @@ interface IdeaFocusViewProps {
 // --- CONSTANTS ---
 const STEP_STYLES = {
     left: { active: 'bg-muted text-foreground border-border shadow-sm', inactive: 'text-muted-foreground hover:text-foreground' },
-    mid: { active: 'bg-blue-500/10 text-blue-700 border-blue-200 shadow-sm', inactive: 'text-muted-foreground hover:text-foreground' },
-    right: { active: 'bg-amber-500/10 text-amber-700 border-amber-200 shadow-sm', inactive: 'text-muted-foreground hover:text-foreground' }
+    mid: { active: 'bg-info/10 text-info border-info shadow-sm', inactive: 'text-muted-foreground hover:text-foreground' },
+    right: { active: 'bg-warning/10 text-warning border-warning shadow-sm', inactive: 'text-muted-foreground hover:text-foreground' }
 };
 
 const GENERAL_SUGGESTION_ID = 'general_improvements';
@@ -153,8 +153,8 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
     const projectedTier = useMemo(() => getTierFromScore(averageScore), [averageScore]);
 
     const tierColor = {
-        STRATEGIC_BET: "bg-amber-100 text-amber-800 border-amber-200",
-        TABLE_STAKES: "bg-blue-100 text-blue-800 border-blue-200",
+        STRATEGIC_BET: "bg-warning-subtle text-warning border-warning",
+        TABLE_STAKES: "bg-info-subtle text-info border-info",
         AGENTIC_AUTO: "bg-muted text-foreground border-border"
     }[projectedTier] || "bg-muted text-foreground";
 
@@ -347,9 +347,9 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                                                         parent.source === 'CLIENT_BACKLOG' ? 'Client Backlog' :
                                                             parent.source === 'WORKSHOP_GENERATED' ? 'Workshop' : parent.source;
 
-                                                    const sourceColor = parent.source === 'MARKET_SIGNAL' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                    const sourceColor = parent.source === 'MARKET_SIGNAL' ? 'bg-intelligence-subtle text-intelligence border-intelligence' :
                                                         parent.source === 'CLIENT_BACKLOG' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' :
-                                                            'bg-green-50 text-green-700 border-green-200';
+                                                            'bg-success-subtle text-success border-success';
 
                                                     return (
                                                         <div key={parent.id} className="flex items-center justify-between bg-card p-2 rounded border border-border shadow-sm">
@@ -400,7 +400,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                             </div>
                             <div className="space-y-4">
                                 <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                    <Zap size={12} className="text-amber-500" /> Tech Alignment
+                                    <Zap size={12} className="text-warning" /> Tech Alignment
                                 </label>
                                 <textarea
                                     value={localData.techStack}
@@ -455,7 +455,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                 <div className="w-[400px] bg-muted/30 flex flex-col border-l border-border pt-16">
                     <div className="px-8 pb-6 border-b border-border bg-muted/30">
                         <h3 className="font-black text-foreground flex items-center gap-2">
-                            <Wand2 className="text-purple-600" size={20} /> Intelligence & Insights
+                            <Wand2 className="text-intelligence" size={20} /> Intelligence & Insights
                         </h3>
                         <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">Strategic Recommendations</p>
                     </div>
@@ -585,7 +585,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                 <Dialog open={!!pendingSuggestion} onOpenChange={(open) => !open && setPendingSuggestion(null)}>
                     <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
                         <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-amber-600">
+                            <DialogTitle className="flex items-center gap-2 text-warning">
                                 <AlertTriangle size={20} /> Confirm Overwrite
                             </DialogTitle>
                             <DialogDescription className="font-medium text-muted-foreground pt-2">
@@ -602,7 +602,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                             }}>
                                 Cancel
                             </Button>
-                            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={(e) => {
+                            <Button className="bg-warning hover:bg-warning text-white" onClick={(e) => {
                                 e.stopPropagation();
                                 if (pendingSuggestion) {
                                     confirmApplySuggestion(pendingSuggestion);

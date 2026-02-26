@@ -40,10 +40,10 @@ const STEP_CONFIG: Record<PipelineStep, { icon: React.ReactNode; text: string; d
 };
 
 const THINKING_LABELS: Record<ThinkingLevel, { label: string; color: string }> = {
-    minimal: { label: 'Fast', color: 'text-yellow-500' },
-    low: { label: 'Standard', color: 'text-blue-400' },
-    medium: { label: 'Deep', color: 'text-indigo-500' },
-    high: { label: 'Maximum', color: 'text-purple-500' },
+    minimal: { label: 'Fast', color: 'text-warning' },
+    low: { label: 'Standard', color: 'text-info-muted' },
+    medium: { label: 'Deep', color: 'text-intelligence' },
+    high: { label: 'Maximum', color: 'text-intelligence-muted' },
 };
 
 // Step progression timing (approximate LLM call duration)
@@ -135,7 +135,7 @@ export function ResearchBriefButton({
                                         Generate Strategic Research Briefs
                                         <div className="relative ml-2">
                                             <Brain className="h-5 w-5" />
-                                            <Sparkles className="h-3 w-3 absolute -top-1 -right-1 text-yellow-300 animate-pulse" />
+                                            <Sparkles className="h-3 w-3 absolute -top-1 -right-1 text-warning-muted animate-pulse" />
                                         </div>
                                     </>
                                 )}
@@ -146,10 +146,10 @@ export function ResearchBriefButton({
                         <TooltipContent side="bottom" className="max-w-xs text-center">
                             <p>Upload and index at least one <strong>Dossier</strong> and one <strong>Backlog</strong> to unlock Strategic Research.</p>
                             <div className="text-xs text-muted-foreground mt-1 flex justify-center gap-2">
-                                <span className={dossierCount > 0 ? "text-green-500" : "text-red-400"}>
+                                <span className={dossierCount > 0 ? "text-success" : "text-destructive"}>
                                     Dossier: {dossierCount}
                                 </span>
-                                <span className={backlogCount > 0 ? "text-green-500" : "text-red-400"}>
+                                <span className={backlogCount > 0 ? "text-success" : "text-destructive"}>
                                     Backlog: {backlogCount}
                                 </span>
                             </div>
@@ -158,33 +158,33 @@ export function ResearchBriefButton({
                     {isLoading && (
                         <TooltipContent side="bottom" className="max-w-xs text-center p-3">
                             <div className="flex items-center justify-center gap-2 mb-2">
-                                <Brain className="h-4 w-4 text-indigo-600" />
-                                <span className="font-semibold text-indigo-600">Gemini 3 Supreme Scout</span>
+                                <Brain className="h-4 w-4 text-intelligence" />
+                                <span className="font-semibold text-intelligence">Gemini 3 Supreme Scout</span>
                             </div>
                             <div className="text-xs space-y-1.5">
                                 <div className={cn(
                                     "flex items-center gap-2 px-2 py-1 rounded",
-                                    currentStep === 'auditing' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                                    currentStep === 'auditing' ? "bg-intelligence-subtle text-intelligence font-medium" : "text-muted-foreground"
                                 )}>
                                     <span className="w-4">1.</span>
                                     <span>Technical Audit</span>
                                     <span className="ml-auto text-xs opacity-60">Flash</span>
                                     {(currentStep === 'analysing' || currentStep === 'architecting') &&
-                                        <span className="text-green-500">✓</span>}
+                                        <span className="text-success">✓</span>}
                                 </div>
                                 <div className={cn(
                                     "flex items-center gap-2 px-2 py-1 rounded",
-                                    currentStep === 'analysing' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                                    currentStep === 'analysing' ? "bg-intelligence-subtle text-intelligence font-medium" : "text-muted-foreground"
                                 )}>
                                     <span className="w-4">2.</span>
                                     <span>Strategic Gap Analysis</span>
                                     <span className="ml-auto text-xs opacity-60">Pro</span>
                                     {currentStep === 'architecting' &&
-                                        <span className="text-green-500">✓</span>}
+                                        <span className="text-success">✓</span>}
                                 </div>
                                 <div className={cn(
                                     "flex items-center gap-2 px-2 py-1 rounded",
-                                    currentStep === 'architecting' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-muted-foreground"
+                                    currentStep === 'architecting' ? "bg-intelligence-subtle text-intelligence font-medium" : "text-muted-foreground"
                                 )}>
                                     <span className="w-4">3.</span>
                                     <span>Research Brief Generation</span>

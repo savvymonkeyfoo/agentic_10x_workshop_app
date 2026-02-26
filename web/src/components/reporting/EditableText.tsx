@@ -54,14 +54,14 @@ export function EditableText({ id, field, value: initialValue, className, placeh
             <div
                 onClick={() => setIsEditing(true)}
                 className={cn(
-                    "w-full cursor-text rounded px-1 -mx-1 border border-transparent hover:bg-yellow-50 hover:border-yellow-200 transition-colors min-h-[1.5em] relative",
+                    "w-full cursor-text rounded px-1 -mx-1 border border-transparent hover:bg-warning-subtle hover:border-warning transition-colors min-h-[1.5em] relative",
                     className,
-                    !value && "text-slate-400 italic opacity-50"
+                    !value && "text-tertiary italic opacity-50"
                 )}
             >
                 {value ? (
                     isList ? <SmartList content={value} /> : (
-                        <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-800 prose-h2:text-base prose-h2:mt-3 prose-h2:mb-1 prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-700">
+                        <article className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-primary prose-h2:text-base prose-h2:mt-3 prose-h2:mb-1 prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-primary">
                             <ReactMarkdown>{value}</ReactMarkdown>
                         </article>
                     )
@@ -85,7 +85,7 @@ export function EditableText({ id, field, value: initialValue, className, placeh
                 onBlur={handleBlur}
                 autoFocus
                 className={cn(
-                    "w-full bg-white outline-none resize-none overflow-hidden rounded px-1 -mx-1 ring-1 ring-brand-blue/30 border-brand-blue/20 shadow-sm text-slate-900",
+                    "w-full bg-white outline-none resize-none overflow-hidden rounded px-1 -mx-1 ring-1 ring-brand-blue/30 border-brand-blue/20 shadow-sm text-primary",
                     className
                 )}
                 rows={1}

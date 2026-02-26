@@ -301,14 +301,14 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             return (
                 <div className="space-y-2">
                     <div className="flex justify-between items-end">
-                        <div className="flex items-center gap-2 text-sm font-bold text-slate-700 uppercase tracking-wider">
+                        <div className="flex items-center gap-2 text-sm font-bold text-primary uppercase tracking-wider">
                             {icon} {label}
                         </div>
-                        <div className="text-xs font-mono text-slate-400">
+                        <div className="text-xs font-mono text-tertiary">
                             {current} / {total} Items
                         </div>
                     </div>
-                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
                         <div className={cn("h-full transition-all duration-500 ease-out", colorClass)} style={{ width: `${percent}%` }} />
                     </div>
                 </div>
@@ -316,10 +316,10 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
         };
 
         return (
-            <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-muted p-6 mb-8">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-muted">
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                        <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-success animate-pulse" : "bg-slate-300")} />
                         <h3 className="font-bold text-slate-900 flex items-center gap-2">
                             Deep-Chain Analysis Engine
                             {intelligenceState === 'analyzing' && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
@@ -327,14 +327,14 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     </div>
                     <div className="flex gap-3">
                         <Badge variant="outline" className="font-mono bg-white">{completedCards.length} Generated</Badge>
-                        <div className="font-mono text-xs text-slate-500 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                        <div className="font-mono text-xs text-secondary bg-surface-subtle px-3 py-1 rounded-md border border-muted">
                             {currentLog}
                         </div>
                     </div>
                 </div>
                 <div className="grid gap-8">
-                    {renderProgressBar(backlogQueue.length, backlogComplete, "bg-blue-600", "Backlog Enrichment", <div className="p-1 bg-blue-100 text-blue-700 rounded"><CheckCircle className="w-3 h-3" /></div>)}
-                    {renderProgressBar(researchQueue.length, researchComplete, "bg-purple-600", "Strategic Ideation", <div className="p-1 bg-purple-100 text-purple-700 rounded"><Zap className="w-3 h-3" /></div>)}
+                    {renderProgressBar(backlogQueue.length, backlogComplete, "bg-info", "Backlog Enrichment", <div className="p-1 bg-info-subtle text-info rounded"><CheckCircle className="w-3 h-3" /></div>)}
+                    {renderProgressBar(researchQueue.length, researchComplete, "bg-intelligence", "Strategic Ideation", <div className="p-1 bg-intelligence-subtle text-intelligence rounded"><Zap className="w-3 h-3" /></div>)}
                 </div>
             </div>
         );
@@ -349,9 +349,9 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
     return (
         <WorkshopPageShell
             header={
-                <div className="px-8 py-5 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10 border-b border-slate-100/50">
+                <div className="px-8 py-5 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10 border-b border-muted/50">
                     <div className="flex items-baseline gap-3">
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <h1 className="text-2xl font-black text-primary tracking-tight flex items-center gap-2">
                             <BrainCircuit className="w-6 h-6 text-brand-blue" />
                             Deep-Chain Intelligence
                         </h1>
@@ -359,7 +359,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 </div>
             }
         >
-            <div className="flex justify-between items-center mb-8 pb-2 border-b border-slate-100">
+            <div className="flex justify-between items-center mb-8 pb-2 border-b border-muted">
                 <div className="flex space-x-8">
                     {Tabs.map((tab) => (
                         <button
@@ -368,7 +368,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             disabled={tab.disabled}
                             className={cn(
                                 "pb-4 text-xs font-bold tracking-widest transition-all relative",
-                                activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-slate-300 cursor-not-allowed" : "text-slate-400 hover:text-slate-600"
+                                activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-disabled cursor-not-allowed" : "text-tertiary hover:text-slate-600"
                             )}
                         >
                             {tab.label}
@@ -382,7 +382,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                     )}
                     {activeTab === 'intelligence' && intelligenceState === 'complete' && (
                         <div className="flex gap-2">
-                            <Button variant="outline" size="icon" className="h-10 w-10 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-200" disabled={isResetting} onClick={() => setIsResetModalOpen(true)}>
+                            <Button variant="outline" size="icon" className="h-10 w-10 text-tertiary hover:text-destructive hover:bg-destructive/10 border-muted" disabled={isResetting} onClick={() => setIsResetModalOpen(true)}>
                                 <RotateCcw className="w-4 h-4" />
                             </Button>
                             <ConfirmModal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)} onConfirm={handleResetAnalysis} title="Rerun Deep-Chain Analysis?" description="Permanently delete generated opportunities and reset the board." confirmLabel="Yes, Overwrite Data" isLoading={isResetting} variant="danger" />
@@ -404,9 +404,9 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
 
                 {activeTab === 'research' && (
                     <div className="grid grid-cols-2 gap-8 min-h-[600px]">
-                        <Card className="bg-slate-50 border-slate-200 shadow-sm flex flex-col h-full">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white border-b border-slate-100 rounded-t-xl">
-                                <CardTitle className="text-indigo-600 font-mono flex items-center gap-2 text-sm uppercase tracking-wider">
+                        <Card className="bg-surface-subtle border-muted shadow-sm flex flex-col h-full">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white border-b border-muted rounded-t-xl">
+                                <CardTitle className="text-intelligence font-mono flex items-center gap-2 text-sm uppercase tracking-wider">
                                     <Search className="h-4 w-4" /> AI Research Briefs
                                 </CardTitle>
                                 <Badge variant="outline">{generatedBriefs.length} Briefs</Badge>
@@ -415,7 +415,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                                 {generatedBriefs.length > 0 ? (
                                     <div className="p-4"><ResearchBriefList briefs={generatedBriefs} /></div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center"><p>No research generated yet.</p></div>
+                                    <div className="flex flex-col items-center justify-center h-full text-tertiary p-8 text-center"><p>No research generated yet.</p></div>
                                 )}
                             </CardContent>
                         </Card>
@@ -428,15 +428,15 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 {activeTab === 'intelligence' && (
                     <div className="min-h-[600px]">
                         {intelligenceState === 'idle' && (
-                            <div className="flex flex-col items-center justify-center h-[500px] border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                            <div className="flex flex-col items-center justify-center h-[500px] border-2 border-dashed border-muted rounded-xl bg-surface-subtle/50">
                                 <div className="text-center max-w-lg space-y-6">
-                                    <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto text-purple-600"><Sparkles className="w-8 h-8" /></div>
-                                    <h2 className="text-2xl font-black text-slate-800">Ready to Analyse Backlog?</h2>
-                                    <p className="text-slate-500">The Deep-Chain Engine will forensically audit each item, cross-reference it with our research, and generate strategic opportunity cards.</p>
+                                    <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto text-intelligence"><Sparkles className="w-8 h-8" /></div>
+                                    <h2 className="text-2xl font-black text-primary">Ready to Analyse Backlog?</h2>
+                                    <p className="text-secondary">The Deep-Chain Engine will forensically audit each item, cross-reference it with our research, and generate strategic opportunity cards.</p>
                                     <Button variant="ai" size="lg" onClick={handleStartAnalysis} className="h-14 px-8 text-lg shadow-xl shadow-purple-500/20 hover:scale-105 transition-all">
                                         <Zap className="mr-2 h-5 w-5" /> Initialize Deep-Chain Sequence
                                     </Button>
-                                    <div className="flex items-center justify-center gap-4 text-xs font-mono text-slate-400">
+                                    <div className="flex items-center justify-center gap-4 text-xs font-mono text-tertiary">
                                         <span>{backlogAssets.length} Items Queued</span><span>•</span><span>{dossierReadyCount > 0 ? "DNA Loaded" : "No DNA"}</span><span>•</span><span>{generatedBriefs.length} Research Briefs</span>
                                     </div>
                                 </div>
@@ -444,7 +444,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         )}
                         {intelligenceState === 'initializing' && (
                             <div className="flex flex-col items-center justify-center h-[500px]">
-                                <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" /><h3 className="font-bold text-lg text-slate-700">Hydrating Deep-Chain Context...</h3><p className="text-slate-500 text-sm">Parsing backlog logic and loading technical DNA</p>
+                                <Loader2 className="w-12 h-12 text-intelligence animate-spin mb-4" /><h3 className="font-bold text-lg text-primary">Hydrating Deep-Chain Context...</h3><p className="text-secondary text-sm">Parsing backlog logic and loading technical DNA</p>
                             </div>
                         )}
                         {(intelligenceState === 'analyzing' || intelligenceState === 'complete') && (
