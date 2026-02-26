@@ -27,12 +27,22 @@ export async function POST(request: Request) {
                     'unknown';
 
         // Check rate limit (5 attempts per 15 minutes per IP)
-        const { success: rateLimitSuccess, remaining } = await loginRateLimiter.limit(ip);
+        const { success: rateLimitSuccess, remaining, reset } = await loginRateLimiter.limit(ip);
 
         if (!rateLimitSuccess) {
+            // Calculate minutes until reset
+            const now = Date.now();
+            const resetTime = reset * 1000; // Convert to milliseconds
+            const minutesUntilReset = Math.ceil((resetTime - now) / 1000 / 60);
+
             console.warn(`[Security] Rate limit exceeded for IP: ${ip}`);
             return NextResponse.json(
-                { error: 'Too many login attempts. Please try again in 15 minutes.' },
+                {
+                    error: 'Too many login attempts',
+                    details: `Account temporarily locked. Please try again in ${minutesUntilReset} minute${minutesUntilReset !== 1 ? 's' : ''}.`,
+                    remainingAttempts: 0,
+                    resetIn: minutesUntilReset
+                },
                 { status: 429 }
             );
         }
@@ -96,7 +106,21 @@ export async function POST(request: Request) {
 
         // Log failed authentication attempts
         console.warn(`[Security] Failed login attempt from IP: ${ip} - attempts remaining: ${remaining}`);
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+
+        // Build user-friendly error response
+        let errorMessage = 'Invalid username or password';
+        let warningMessage = null;
+
+        // Warn user when running low on attempts
+        if (remaining <= 2 && remaining > 0) {
+            warningMessage = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before temporary lockout (15 minutes)`;
+        }
+
+        return NextResponse.json({
+            error: errorMessage,
+            warning: warningMessage,
+            remainingAttempts: remaining
+        }, { status: 401 });
     } catch (error) {
         console.error('Login error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });

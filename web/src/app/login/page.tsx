@@ -7,6 +7,8 @@ export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [warning, setWarning] = useState('');
+    const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -14,6 +16,7 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setWarning('');
 
         try {
             const res = await fetch('/api/auth/login', {
@@ -26,10 +29,31 @@ export default function LoginPage() {
                 router.push('/');
                 router.refresh(); // Refresh to update middleware state
             } else {
-                setError('Incorrect credentials');
+                const data = await res.json();
+
+                // Handle rate limiting (429)
+                if (res.status === 429) {
+                    setError(data.error || 'Too many login attempts');
+                    if (data.details) {
+                        setWarning(data.details);
+                    }
+                    setRemainingAttempts(0);
+                }
+                // Handle failed login (401)
+                else if (res.status === 401) {
+                    setError(data.error || 'Invalid credentials');
+                    if (data.warning) {
+                        setWarning(data.warning);
+                    }
+                    setRemainingAttempts(data.remainingAttempts ?? null);
+                }
+                // Handle other errors
+                else {
+                    setError(data.error || 'Login failed');
+                }
             }
         } catch {
-            setError('Login failed');
+            setError('Connection failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -63,10 +87,25 @@ export default function LoginPage() {
                         />
                     </div>
 
+                    {/* Error message (red) */}
                     {error && (
-                        <p className="text-red-400 text-xs text-center font-medium bg-red-900/20 py-2 rounded">
+                        <div className="text-red-400 text-sm text-center font-medium bg-red-900/20 py-3 px-4 rounded-lg border border-red-800/30">
                             {error}
-                        </p>
+                        </div>
+                    )}
+
+                    {/* Warning message (yellow/orange) */}
+                    {warning && (
+                        <div className="text-orange-400 text-sm text-center font-medium bg-orange-900/20 py-3 px-4 rounded-lg border border-orange-800/30">
+                            ⚠️ {warning}
+                        </div>
+                    )}
+
+                    {/* Remaining attempts indicator */}
+                    {remainingAttempts !== null && remainingAttempts > 0 && remainingAttempts <= 2 && (
+                        <div className="text-center text-xs text-slate-400">
+                            {remainingAttempts} {remainingAttempts === 1 ? 'attempt' : 'attempts'} remaining
+                        </div>
                     )}
 
                     <button
