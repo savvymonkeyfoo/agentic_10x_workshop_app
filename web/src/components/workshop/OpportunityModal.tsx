@@ -135,14 +135,14 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                 {/* --- VIEW 1: DELETE CONFIRMATION --- */}
                 {isDeleteConfirm ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                            <AlertTriangle className="w-8 h-8 text-red-600" strokeWidth={2.5} />
+                        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                            <AlertTriangle className="w-8 h-8 text-destructive" strokeWidth={2.5} />
                         </div>
 
-                        <h3 className="text-2xl font-bold text-slate-900 mb-2">Delete Opportunity?</h3>
+                        <h3 className="text-2xl font-bold text-primary mb-2">Delete Opportunity?</h3>
 
-                        <p className="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
-                            Are you sure you want to delete <span className="font-bold text-slate-800">"{localCard.title}"</span>?
+                        <p className="text-secondary max-w-md mx-auto mb-8 leading-relaxed">
+                            Are you sure you want to delete <span className="font-bold text-primary">"{localCard.title}"</span>?
                             <br />
                             This action cannot be undone and will remove it from all analysis views.
                         </p>
@@ -150,13 +150,13 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                         <div className="flex gap-4 w-full max-w-xs">
                             <button
                                 onClick={() => setIsDeleteConfirm(false)}
-                                className="flex-1 px-4 py-3 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                                className="flex-1 px-4 py-3 rounded-xl border border-muted font-bold text-secondary hover:bg-surface-subtle hover:text-primary transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => onDelete && onDelete(localCard)}
-                                className="flex-1 px-4 py-3 rounded-xl bg-red-600 font-bold text-white shadow-lg shadow-red-200 hover:bg-red-700 hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-3 rounded-xl bg-destructive font-bold text-white shadow-lg shadow-destructive/20 hover:bg-destructive hover:shadow-xl transition-all flex items-center justify-center gap-2"
                             >
                                 <Trash2 className="w-4 h-4" /> Yes, Delete
                             </button>
@@ -177,10 +177,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 <Badge variant="outline" className={cn(
                                     "px-3 py-1 text-xs font-bold tracking-wide border",
                                     isMarketSignal
-                                        ? "bg-purple-100 text-purple-700 border-purple-200"
+                                        ? "bg-intelligence-subtle text-intelligence border-intelligence"
                                         : isWorkshop
                                             ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                            : "bg-slate-100 text-slate-700 border-slate-200"
+                                            : "bg-muted text-primary border-muted"
                                 )}>
                                     {isMarketSignal
                                         ? <><Zap className="w-3 h-3 mr-2" /> Market Signal</>
@@ -190,7 +190,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     }
                                 </Badge>
                                 <div className="flex items-center gap-2">
-                                    {isSaving && <span className="text-xs text-slate-400 animate-pulse">Saving...</span>}
+                                    {isSaving && <span className="text-xs text-tertiary animate-pulse">Saving...</span>}
                                     {isEnriching && <span className="text-xs text-emerald-600 animate-pulse font-bold">✨ Enriching...</span>}
                                 </div>
                             </div>
@@ -200,7 +200,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 <Textarea
                                     ref={titleRef}
                                     rows={1}
-                                    className="!text-4xl md:!text-4xl font-black tracking-tight text-slate-900 border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-slate-300"
+                                    className="!text-4xl md:!text-4xl font-black tracking-tight text-primary border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none resize-none overflow-hidden leading-[1.1] min-h-[50px] placeholder:text-disabled"
                                     placeholder="Opportunity Title"
                                     value={localCard.title}
                                     onChange={(e) => handleChange('title', e.target.value)}
@@ -208,11 +208,11 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
 
                                 {/* DESCRIPTION -> PROBLEM STATEMENT */}
                                 <div className="space-y-1">
-                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Problem Statement</Label>
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-tertiary">Problem Statement</Label>
                                     <Textarea
                                         ref={probRef}
                                         rows={1}
-                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] resize-none overflow-hidden"
+                                        className="text-base text-secondary leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] resize-none overflow-hidden"
                                         placeholder="Describe the problem..."
                                         value={localCard.description}
                                         onChange={(e) => handleChange('description', e.target.value)}
@@ -222,7 +222,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 {/* PROPOSED SOLUTION */}
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-end mb-1">
-                                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Proposed Solution</Label>
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-tertiary">Proposed Solution</Label>
 
                                         {/* ENRICH BUTTON (Relocated) */}
                                         {onEnrich && (
@@ -244,7 +244,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     <Textarea
                                         ref={solRef}
                                         rows={1}
-                                        className="text-base text-slate-600 leading-relaxed border-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
+                                        className="text-base text-secondary leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
                                         placeholder="Describe the proposed solution..."
                                         value={localCard.proposedSolution || ''}
                                         onChange={(e) => handleChange('proposedSolution', e.target.value)}
@@ -257,9 +257,9 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                             {/* Context & Notes */}
                             <div className="pt-4 border-t border-border/50 mt-4">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
-                                    <NotebookPen className="w-4 h-4 text-blue-500" /> Context & Notes
+                                    <NotebookPen className="w-4 h-4 text-info" /> Context & Notes
                                 </Label>
-                                <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4">
+                                <div className="bg-info/5 border border-info/10 rounded-xl p-4">
                                     <SmartBulletEditor
                                         value={localCard.notes || ''}
                                         onChange={(val) => handleChange('notes', val)}
@@ -270,63 +270,63 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                             </div>
 
                             {/* 1. FRICTION (RED) */}
-                            <div className="bg-red-50/50 p-4 rounded-xl border border-red-100/50 hover:border-red-200 transition-colors group">
-                                <Label className="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-2">
+                            <div className="bg-destructive/5 p-4 rounded-xl border border-destructive/10 hover:border-destructive transition-colors group">
+                                <Label className="text-xs font-bold text-destructive uppercase mb-3 flex items-center gap-2">
                                     <AlertTriangle className="w-4 h-4" /> Operational Friction
                                 </Label>
                                 <SmartBulletEditor
                                     value={localCard.friction || ""}
                                     onChange={(val) => handleChange('friction', val)}
-                                    colorClass="text-red-900/80"
+                                    colorClass="text-destructive"
                                     placeholder="Add friction point..."
                                 />
                             </div>
 
                             {/* 2. TECH (BLUE) */}
-                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-colors group">
-                                <Label className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2">
+                            <div className="bg-info/5 p-4 rounded-xl border border-info/10 hover:border-info transition-colors group">
+                                <Label className="text-xs font-bold text-info uppercase mb-3 flex items-center gap-2">
                                     <ShieldCheck className="w-4 h-4" /> Technical DNA
                                 </Label>
                                 <SmartBulletEditor
                                     value={localCard.techAlignment || ""}
                                     onChange={(val) => handleChange('techAlignment', val)}
-                                    colorClass="text-blue-900/80"
+                                    colorClass="text-info"
                                     placeholder="Add tech detail..."
                                 />
                             </div>
 
                             {/* 3. STRATEGY (AMBER) */}
-                            <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 hover:border-amber-200 transition-colors group">
-                                <Label className="text-xs font-bold text-amber-700 uppercase mb-3 flex items-center gap-2">
+                            <div className="bg-warning/5 p-4 rounded-xl border border-warning/10 hover:border-warning transition-colors group">
+                                <Label className="text-xs font-bold text-warning uppercase mb-3 flex items-center gap-2">
                                     <Target className="w-4 h-4" /> Strategy Alignment
                                 </Label>
                                 <SmartBulletEditor
                                     value={localCard.strategyAlignment || ""}
                                     onChange={(val) => handleChange('strategyAlignment', val)}
-                                    colorClass="text-amber-900/80"
+                                    colorClass="text-warning"
                                     placeholder="Add strategic goal..."
                                 />
                             </div>
                         </div>
 
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                        <div className="mt-6 pt-4 border-t border-muted flex items-center justify-between text-xs text-tertiary">
                             <div className="flex items-center gap-4">
                                 {/* DELETE TRIGGER */}
                                 {onDelete && (
                                     <button
                                         onClick={() => setIsDeleteConfirm(true)}
-                                        className="flex items-center gap-1 text-red-400 hover:text-red-600 transition-colors group/delete"
+                                        className="flex items-center gap-1 text-destructive hover:text-destructive transition-colors group/delete"
                                     >
                                         <Trash2 className="w-4 h-4 group-hover/delete:scale-110 transition-transform" />
                                         <span className="font-bold">Delete</span>
                                     </button>
                                 )}
-                                <span className="font-mono bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                                <span className="font-mono bg-surface-subtle px-2 py-1 rounded border border-muted">
                                     ID: {localCard.originalId || 'UNKNOWN_ID'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Sparkles className="w-3 h-3 text-purple-400" />
+                                <Sparkles className="w-3 h-3 text-intelligence-muted" />
                                 <span className="italic">
                                     {localCard.provenance || "AI Generated via Deep-Chain"}
                                 </span>

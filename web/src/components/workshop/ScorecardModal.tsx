@@ -33,11 +33,11 @@ const STEP_STYLES = {
         inactive: 'text-muted-foreground hover:text-foreground'
     },
     mid: {
-        active: 'bg-blue-500/10 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-sm',
+        active: 'bg-info/10 text-info border border-info shadow-sm',
         inactive: 'text-muted-foreground hover:text-foreground'
     },
     right: {
-        active: 'bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-sm',
+        active: 'bg-warning/10 text-warning border border-warning shadow-sm',
         inactive: 'text-muted-foreground hover:text-foreground'
     }
 };

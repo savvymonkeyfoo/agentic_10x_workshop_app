@@ -170,10 +170,10 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
     // Helper function for Strategic Horizon pill colors
     const getHorizonStyle = (horizon: string) => {
         const h = horizon.toLowerCase();
-        if (h.includes('growth')) return 'bg-blue-100 text-blue-800 border-blue-200';
-        if (h.includes('operational')) return 'bg-amber-100 text-amber-800 border-amber-200';
-        if (h.includes('strategic')) return 'bg-purple-100 text-purple-800 border-purple-200';
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        if (h.includes('growth')) return 'bg-info-subtle text-info border-info';
+        if (h.includes('operational')) return 'bg-warning-subtle text-warning border-warning';
+        if (h.includes('strategic')) return 'bg-intelligence-subtle text-intelligence border-intelligence';
+        return 'bg-muted text-foreground border-border';
     };
 
     const sectionTitleClass = "text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 border-b border-border pb-1 block";

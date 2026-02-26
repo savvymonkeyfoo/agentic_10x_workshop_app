@@ -9,14 +9,14 @@ import { GripVertical, Infinity, Trash2, Info, Zap, CheckCircle } from 'lucide-r
 const TIER_CONFIG = {
     UNSCORED: { label: '❓ Needs Scoring', badgeClass: 'bg-card text-muted-foreground border-border', cardClass: 'border border-border bg-card shadow-sm' },
     AGENTIC_AUTO: { label: '🤖 Agentic Auto', badgeClass: 'bg-muted text-muted-foreground border-border', cardClass: 'border border-border bg-muted/50 shadow-md' },
-    TABLE_STAKES: { label: '🛡️ Table Stakes', badgeClass: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800', cardClass: 'border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 shadow-lg' },
-    STRATEGIC_BET: { label: '🌟 Strategic Bet', badgeClass: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800', cardClass: 'border-2 border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10 shadow-lg' }
+    TABLE_STAKES: { label: '🛡️ Table Stakes', badgeClass: 'bg-info/10 text-info border-info', cardClass: 'border border-info bg-info-subtle shadow-lg' },
+    STRATEGIC_BET: { label: '🌟 Strategic Bet', badgeClass: 'bg-warning/10 text-warning border-warning', cardClass: 'border-2 border-warning bg-warning-subtle shadow-lg' }
 } as const;
 
 const SOURCE_CONFIG = {
-    MARKET_SIGNAL: { label: 'Market Signal', class: 'bg-purple-500/10 text-purple-600 border-purple-200', icon: <Zap className="w-3 h-3 mr-1" /> },
+    MARKET_SIGNAL: { label: 'Market Signal', class: 'bg-intelligence/10 text-intelligence border-intelligence', icon: <Zap className="w-3 h-3 mr-1" /> },
     CLIENT_BACKLOG: { label: 'Backlog Item', class: 'bg-muted text-muted-foreground border-border', icon: <CheckCircle className="w-3 h-3 mr-1" /> },
-    WORKSHOP_GENERATED: { label: 'Workshop Idea', class: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', icon: <Info className="w-3 h-3 mr-1" /> }
+    WORKSHOP_GENERATED: { label: 'Workshop Idea', class: 'bg-success/10 text-success border-success', icon: <Info className="w-3 h-3 mr-1" /> }
 } as const;
 
 export interface IdeaCardProps {
