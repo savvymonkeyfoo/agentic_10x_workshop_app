@@ -31,11 +31,12 @@ export async function POST(request: Request) {
 
         if (!rateLimitSuccess) {
             // Calculate minutes until reset
-            const now = Date.now();
-            const resetTime = reset * 1000; // Convert to milliseconds
-            const minutesUntilReset = Math.ceil((resetTime - now) / 1000 / 60);
+            // reset is Unix timestamp in seconds, convert both to seconds for calculation
+            const nowInSeconds = Math.floor(Date.now() / 1000);
+            const secondsUntilReset = reset - nowInSeconds;
+            const minutesUntilReset = Math.ceil(secondsUntilReset / 60);
 
-            console.warn(`[Security] Rate limit exceeded for IP: ${ip}`);
+            console.warn(`[Security] Rate limit exceeded for IP: ${ip}, resets in ${minutesUntilReset} minutes`);
             return NextResponse.json(
                 {
                     error: 'Too many login attempts',
