@@ -2,7 +2,6 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { safeAction } from '@/lib/safe-action';
 import { promotionSchema, validateData } from '@/lib/validation';
 
 /**
@@ -19,11 +18,14 @@ interface PromoteOptions {
 }
 
 export async function promoteToCapture(options: PromoteOptions) {
-    return await safeAction(async () => {
+    try {
         // Validate input
         const validation = validateData(promotionSchema, options);
         if (!validation.success) {
-            throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+            return {
+                success: false,
+                error: `Validation failed: ${validation.errors?.join(', ')}`
+            };
         }
 
         const { workshopId, opportunityIds, keepInIdeation = true } = validation.data!;
@@ -48,8 +50,11 @@ export async function promoteToCapture(options: PromoteOptions) {
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { count };
-    }, 'Failed to promote opportunities');
+        return { success: true, data: { count } };
+    } catch (error) {
+        console.error('Failed to promote opportunities:', error);
+        return { success: false, error: 'Failed to promote opportunities' };
+    }
 }
 
 /**
@@ -59,9 +64,9 @@ export async function promoteToCapture(options: PromoteOptions) {
  * Items remain visible in Ideation
  */
 export async function demoteFromCapture({ workshopId, opportunityIds }: { workshopId: string; opportunityIds: string[] }) {
-    return await safeAction(async () => {
+    try {
         if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-            throw new Error('Invalid arguments');
+            return { success: false, error: 'Invalid arguments' };
         }
 
         const result = await prisma.opportunity.updateMany({
@@ -76,6 +81,9 @@ export async function demoteFromCapture({ workshopId, opportunityIds }: { worksh
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { count: result.count };
-    }, 'Failed to demote opportunities');
+        return { success: true, data: { count: result.count } };
+    } catch (error) {
+        console.error('Failed to demote opportunities:', error);
+        return { success: false, error: 'Failed to demote opportunities' };
+    }
 }

@@ -100,8 +100,8 @@ ${context}`
                             sequenceRank: item.rank,
                             strategicRationale: item.rationale
                         }
-                    });
-                })
+                    })
+                )
             );
 
             // Save FULL Strategy to Workshop
