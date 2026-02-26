@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles, Target, ShieldCheck, CheckCircle, Zap, Trash2, NotebookPen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
-import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";

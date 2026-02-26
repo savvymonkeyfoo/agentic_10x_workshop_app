@@ -4,7 +4,7 @@ import { Opportunity } from '@prisma/client';
 import { EditableText } from './EditableText';
 import { Download, RefreshCw, CheckSquare, BrainCircuit, Activity, Layers } from 'lucide-react';
 import { updateOpportunity } from '@/app/actions/update-opportunity';
-import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { SpiderChart } from '@/components/shared/SpiderChart';
 import { MatrixChart } from '@/components/shared/MatrixChart';
 import { DfvChartSmall } from '@/components/shared/DFVChart';
@@ -457,7 +457,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                 </button>
             </div>
 
-            <ActionConfirmationModal
+            <ConfirmModal
                 isOpen={showSyncModal}
                 onClose={() => setShowSyncModal(false)}
                 onConfirm={handleGenerateTimestamp}

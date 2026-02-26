@@ -15,8 +15,7 @@ import { demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
 import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
-import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
 import { BulletListEditor } from '@/components/ui/BulletListEditor';
@@ -1229,7 +1228,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         <div className="min-h-screen bg-background text-foreground font-sans flex flex-col relative">
 
             {/* Confirmation Modal (Opportunity) - Conditional Demote vs Delete */}
-            <DeleteConfirmationModal
+            <ConfirmModal
                 isOpen={!!opportunityToDelete}
                 title={opportunityToDelete?.showInIdeation
                     ? "Remove from Capture?"
@@ -1239,15 +1238,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     : `Are you sure you want to permanently delete "${opportunityToDelete?.projectName || 'this item'}"? This action cannot be undone.`}
                 onClose={() => setOpportunityToDelete(null)}
                 onConfirm={confirmDeleteOpportunity}
-                isDeleting={isDeletingOpportunity}
-                variant={opportunityToDelete?.showInIdeation ? 'demote' : 'delete'}
+                isLoading={isDeletingOpportunity}
+                variant={opportunityToDelete?.showInIdeation ? 'demote' : 'danger'}
                 confirmLabel={opportunityToDelete?.showInIdeation
                     ? 'Yes, Remove from Capture'
                     : 'Yes, Delete Permanently'}
             />
 
-            <ActionConfirmationModal
+            <ConfirmModal
                 isOpen={showOverwriteModal}
+                variant="warning"
                 title="Overwrite Execution Plan?"
                 description="You have already entered content in the Execution Strategy fields. Using AI Recommendation will overwrite your current notes with a new draft. This action cannot be undone."
                 confirmLabel="Yes, Overwrite"
