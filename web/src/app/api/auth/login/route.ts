@@ -31,10 +31,10 @@ export async function POST(request: Request) {
 
         if (!rateLimitSuccess) {
             // Calculate minutes until reset
-            // reset is Unix timestamp in seconds, convert both to seconds for calculation
-            const nowInSeconds = Math.floor(Date.now() / 1000);
-            const secondsUntilReset = reset - nowInSeconds;
-            const minutesUntilReset = Math.ceil(secondsUntilReset / 60);
+            // reset is Unix timestamp in MILLISECONDS (from Upstash)
+            const now = Date.now(); // also in milliseconds
+            const millisecondsUntilReset = reset - now;
+            const minutesUntilReset = Math.max(1, Math.ceil(millisecondsUntilReset / 1000 / 60));
 
             console.warn(`[Security] Rate limit exceeded for IP: ${ip}, resets in ${minutesUntilReset} minutes`);
             return NextResponse.json(
