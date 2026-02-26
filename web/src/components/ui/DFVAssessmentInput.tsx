@@ -110,7 +110,7 @@ export function DFVAssessmentInput({ value, onChange }: DFVAssessmentInputProps)
                     label="Viability"
                     dimension={value.viability}
                     onChange={(v) => onChange({ ...value, viability: v })}
-                    color="text-amber-500"
+                    color="text-warning"
                 />
             </div>
         </div>

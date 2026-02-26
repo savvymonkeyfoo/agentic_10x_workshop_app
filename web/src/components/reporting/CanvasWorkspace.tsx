@@ -216,7 +216,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                 id={data.id}
                                 field="frictionStatement"
                                 value={data.frictionStatement}
-                                className="text-lg leading-relaxed text-slate-700"
+                                className="text-lg leading-relaxed text-primary"
                                 placeholder="What is the core problem?"
                             />
                         </div>
@@ -252,7 +252,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                 id={data.id}
                                 field="whyDoIt"
                                 value={cleanText(data.whyDoIt)}
-                                className="text-base leading-relaxed text-slate-700"
+                                className="text-base leading-relaxed text-primary"
                                 placeholder="As a User, I want..."
                             />
                         </div>
@@ -329,7 +329,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                     <WorkshopCard title="T-SHIRT SIZE" className="flex-1" noPadding>
                                         <div className="flex h-full items-center justify-center p-2">
                                             <div className="relative flex items-center justify-center">
-                                                <svg viewBox="0 0 24 24" className="h-12 w-12 text-blue-600 drop-shadow-sm" fill="currentColor">
+                                                <svg viewBox="0 0 24 24" className="h-12 w-12 text-info drop-shadow-sm" fill="currentColor">
                                                     <path d="M20.9 4.6c-1.3-.5-2.7-.8-4.1-.8-.7 0-1.4.1-2 .3l-1.6.5-1.6-.5c-.6-.2-1.3-.3-2-.3-1.4 0-2.8.3-4.1.8L2 5.9l2.5 6.6 2.1-.8.9 7.8c.1.9.9 1.6 1.8 1.6h5.4c.9 0 1.7-.7 1.8-1.6l.9-7.8 2.1.8 2.5-6.6-3.1-1.3z" />
                                                 </svg>
                                                 <span className={`absolute inset-0 flex items-center justify-center pt-1 font-black text-white ${(data.tShirtSize || '').length > 1 ? 'text-[10px]' : 'text-sm'}`}>
@@ -357,7 +357,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                         <div className="flex-1 grid grid-cols-4 divide-x bg-card border-b border-border">
                             {/* Box 1: DoD */}
                             <div className="p-8 flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-green-600 mb-2">
+                                <div className="flex items-center gap-2 text-success mb-2">
                                     <CheckSquare size={16} strokeWidth={2.5} />
                                     <span className={sectionTitleClass + " border-none mb-0 pb-0"}>Definition of Done</span>
                                 </div>
@@ -373,7 +373,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
 
                             {/* Box 2: Decisions */}
                             <div className="p-8 flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-amber-600 mb-2">
+                                <div className="flex items-center gap-2 text-warning mb-2">
                                     <BrainCircuit size={16} strokeWidth={2.5} />
                                     <span className={sectionTitleClass + " border-none mb-0 pb-0"}>Key Decisions</span>
                                 </div>
@@ -388,8 +388,8 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                             </div>
 
                             {/* Box 3: Risks */}
-                            <div className="p-8 flex flex-col gap-2 bg-red-50/10">
-                                <div className="flex items-center gap-2 text-red-600 mb-2">
+                            <div className="p-8 flex flex-col gap-2 bg-destructive/10">
+                                <div className="flex items-center gap-2 text-destructive mb-2">
                                     <Activity size={16} strokeWidth={2.5} />
                                     <span className={sectionTitleClass + " border-none mb-0 pb-0"}>Key Risks</span>
                                 </div>
@@ -405,7 +405,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
 
                             {/* Box 4: Capabilities (Split) */}
                             <div className="p-8 flex flex-col gap-4">
-                                <div className="flex items-center gap-2 text-blue-600 mb-1">
+                                <div className="flex items-center gap-2 text-info mb-1">
                                     <Layers size={16} strokeWidth={2.5} />
                                     <span className={sectionTitleClass + " border-none mb-0 pb-0"}>Capabilities</span>
                                 </div>
@@ -450,7 +450,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                 <button
                     onClick={handleExportPDF}
                     disabled={isExporting}
-                    className="flex items-center rounded-md bg-blue-600 px-6 py-3 font-bold text-white shadow-xl transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    className="flex items-center rounded-md bg-info px-6 py-3 font-bold text-white shadow-xl transition-colors hover:bg-info/90 disabled:opacity-50"
                 >
                     {isExporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     {isExporting ? 'Generating...' : 'Export'}

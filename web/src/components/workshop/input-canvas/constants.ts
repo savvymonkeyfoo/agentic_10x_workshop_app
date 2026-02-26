@@ -50,9 +50,9 @@ export const TABS = [
 
 // --- Config: Strategic Horizons ---
 export const HORIZONS = [
-    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-blue-500 text-white', border: 'border-blue-500' },
-    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-amber-500 text-white', border: 'border-amber-500' },
-    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-purple-500 text-white', border: 'border-purple-500' }
+    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-info-subtle text-white', border: 'border-info' },
+    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-warning-subtle text-white', border: 'border-warning' },
+    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-intelligence text-white', border: 'border-intelligence' }
 ] as const;
 
 export const AUTONOMY_LABELS: Record<string, string> = {

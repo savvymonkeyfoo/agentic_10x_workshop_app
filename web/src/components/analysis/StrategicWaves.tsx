@@ -184,7 +184,7 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
     // Headers configuration
     const columns = [
         { rank: 1, title: "WAVE 1: MOBILISE", color: "border-emerald-500", bg: "bg-emerald-500/10" },
-        { rank: 2, title: "WAVE 2: SCALE", color: "border-blue-500", bg: "bg-blue-500/10" },
+        { rank: 2, title: "WAVE 2: SCALE", color: "border-info", bg: "bg-info-subtle/10" },
         { rank: 3, title: "WAVE 3: OPTIMISE", color: "border-violet-500", bg: "bg-violet-500/10" },
         { rank: 4, title: "WAVE 4: DEFER", color: "border-border", bg: "bg-muted/30" },
     ];
@@ -235,7 +235,7 @@ export default function StrategicWaves({ nodes, workshopId, edges = [] }: { node
                 {/* Drag Overlay (Visual feedback) */}
                 <DragOverlay>
                     {activeId ? (
-                        <div className="bg-card p-3 rounded shadow-xl border border-blue-500 rotate-3 cursor-grabbing w-[200px]">
+                        <div className="bg-card p-3 rounded shadow-xl border border-info rotate-3 cursor-grabbing w-[200px]">
                             <span className="font-bold text-sm text-foreground">Moving Project...</span>
                         </div>
                     ) : null}

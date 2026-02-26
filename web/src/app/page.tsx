@@ -30,7 +30,7 @@ export default async function Dashboard() {
       <header className="max-w-6xl mx-auto flex justify-between items-center mb-12">
         <div>
           <h1 className="text-3xl font-bold text-brand-navy dark:text-white">Workshop Dashboard</h1>
-          <p className="text-slate-500">Manage your strategic planning sessions</p>
+          <p className="text-secondary">Manage your strategic planning sessions</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export default async function Dashboard() {
         ))}
 
         {workshops.length === 0 && (
-          <div className="col-span-full py-20 text-center text-slate-400">
+          <div className="col-span-full py-20 text-center text-tertiary">
             <p>No workshops found. Start a new session above.</p>
           </div>
         )}

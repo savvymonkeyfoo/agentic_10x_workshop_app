@@ -27,7 +27,7 @@ export function SmartList({ content, className }: { content: string, className?:
                     const text = match[2];
                     return (
                         <div key={i} className="flex gap-2 items-start text-left">
-                            <span className="text-slate-400 font-bold shrink-0 select-none w-4 text-center mt-[2px]">{bullet.replace(/\d+\./, '•')}</span> {/* Normalized bullet to • unless we want numbers. Let's stick to • for clean look */}
+                            <span className="text-tertiary font-bold shrink-0 select-none w-4 text-center mt-[2px]">{bullet.replace(/\d+\./, '•')}</span> {/* Normalized bullet to • unless we want numbers. Let's stick to • for clean look */}
                             <span className="flex-1 min-w-0">{text}</span>
                         </div>
                     );

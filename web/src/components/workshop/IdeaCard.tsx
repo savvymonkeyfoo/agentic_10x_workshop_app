@@ -136,7 +136,7 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
                 {/* IDEATION LENSES (Legacy Support) */}
                 {!isIntelligenceCard && card.lenses && card.lenses.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-2">
-                        {card.lenses.includes('infinite_capacity') && <Badge className="bg-indigo-500/10 text-indigo-600 border-indigo-200 text-[9px]"><Infinity size={10} className="mr-1" /> Scale</Badge>}
+                        {card.lenses.includes('infinite_capacity') && <Badge className="bg-intelligence-subtle/10 text-intelligence border-intelligence text-[9px]"><Infinity size={10} className="mr-1" /> Scale</Badge>}
                     </div>
                 )}
             </CardContent>

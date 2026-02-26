@@ -123,8 +123,8 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
 
     // Dynamic header background based on tier
     const headerBg = useMemo(() => {
-        if (projectedTier === 'STRATEGIC_BET') return 'bg-amber-500/10';
-        if (projectedTier === 'TABLE_STAKES') return 'bg-blue-500/10';
+        if (projectedTier === 'STRATEGIC_BET') return 'bg-warning-subtle0/10';
+        if (projectedTier === 'TABLE_STAKES') return 'bg-info-subtle0/10';
         return 'bg-muted/30';
     }, [projectedTier]);
 
@@ -166,7 +166,7 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                     <div className="flex-1 flex justify-between items-start">
                         <div className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-2">
-                                <div className="bg-indigo-500/10 p-1 rounded-md text-indigo-600">
+                                <div className="bg-intelligence-subtle0/10 p-1 rounded-md text-intelligence">
                                     <Brain size={16} />
                                 </div>
                                 <h2 className="text-lg font-bold text-foreground leading-none">Strategic Assessment</h2>
@@ -180,7 +180,7 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                                         <Loader2 className="w-3 h-3 animate-spin" /> Saving...
                                     </span>
                                 ) : (
-                                    <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                                    <span className="flex items-center gap-1 text-success font-medium">
                                         <CheckCircle2 className="w-3 h-3" /> Auto-saved
                                     </span>
                                 )}

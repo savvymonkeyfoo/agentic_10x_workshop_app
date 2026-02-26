@@ -84,7 +84,7 @@ const TABS = [
 // --- Config: Strategic Horizons ---
 const HORIZONS = [
     { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-info text-white', border: 'border-info' },
-    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-warning-subtle0 text-white', border: 'border-warning' },
+    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-warning-subtle text-white', border: 'border-warning' },
     { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-intelligence text-white', border: 'border-intelligence' }
 ] as const;
 
@@ -239,7 +239,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
 }) => {
     return (
         <Reorder.Item value={phase} id={phase.id} className="flex items-center cursor-grab active:cursor-grabbing">
-            <div className="bg-[#fff9c4] rounded-sm shadow-md border-t border-warning-subtle p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
+            <div className="bg-warning-subtle rounded-sm shadow-md border-t border-warning-subtle p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
                 <div className="flex justify-between items-start border-b border-warning-subtle/50 pb-2 mb-1">
                     <input
                         type="text"
@@ -310,7 +310,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                                 key={level}
                                 onClick={() => updatePhase(phase.id, 'autonomy', level as any)}
                                 className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
-                                    ? 'bg-slate-800 text-white shadow-sm scale-110'
+                                    ? 'bg-card text-white shadow-sm scale-110'
                                     : 'text-warning hover:bg-warning-subtle'
                                     }`}
                             >
@@ -1329,7 +1329,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     {/* Completeness Ring */}
                     <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
                         ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
-                        : 'bg-transparent border-input text-emerald-600'
+                        : 'bg-transparent border-input text-success'
                         }`}>
                         {isComplete || isGlobalReady ? (
                             <Check className="w-5 h-5 text-white" strokeWidth={3} />

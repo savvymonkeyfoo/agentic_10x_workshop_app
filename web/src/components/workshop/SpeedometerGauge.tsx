@@ -62,7 +62,7 @@ export function SpeedometerGauge({ score, size = 200 }: SpeedometerGaugeProps) {
                 {/* Zone Labels - Properly positioned */}
                 <text x="25" y="80" className="text-[9px] font-bold text-muted-foreground fill-current">AUTO</text>
                 <text x="100" y="18" textAnchor="middle" className="text-[9px] font-bold text-primary fill-current">TABLE STAKES</text>
-                <text x="175" y="80" textAnchor="end" className="text-[9px] font-bold text-amber-500 fill-current">BIG BET</text>
+                <text x="175" y="80" textAnchor="end" className="text-[9px] font-bold text-warning fill-current">BIG BET</text>
 
                 {/* Center Point */}
                 <circle cx="100" cy="100" r="8" className="fill-background stroke-foreground" strokeWidth="2" />

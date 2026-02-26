@@ -61,16 +61,16 @@ export function SpiderChart({ data, className = '', width: _width, height: _heig
             const rawVal = isInverted ? 6 - chartVal : chartVal;
 
             if (isEmpty) return (
-                <div className="bg-white/90 backdrop-blur-md p-2 rounded border border-slate-200 text-xs shadow-xl">
-                    <span className="text-slate-400 italic">No Data</span>
+                <div className="bg-white/90 backdrop-blur-md p-2 rounded border border-muted text-xs shadow-xl">
+                    <span className="text-tertiary italic">No Data</span>
                 </div>
             );
 
             return (
-                <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-xs shadow-xl">
+                <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl border border-muted text-xs shadow-xl">
                     <p className="font-bold text-brand-navy mb-1">{subject}</p>
-                    <p className="text-slate-600">
-                        Score: <span className="font-bold">{rawVal}/5</span> <span className="text-slate-400">{getQualitative(subject, rawVal)}</span>
+                    <p className="text-secondary">
+                        Score: <span className="font-bold">{rawVal}/5</span> <span className="text-tertiary">{getQualitative(subject, rawVal)}</span>
                     </p>
                 </div>
             );

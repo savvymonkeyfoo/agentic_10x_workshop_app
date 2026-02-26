@@ -319,8 +319,8 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-muted p-6 mb-8">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-muted">
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-success animate-pulse" : "bg-slate-300")} />
-                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                        <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-success animate-pulse" : "bg-muted")} />
+                        <h3 className="font-bold text-primary flex items-center gap-2">
                             Deep-Chain Analysis Engine
                             {intelligenceState === 'analyzing' && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
                         </h3>
@@ -368,7 +368,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             disabled={tab.disabled}
                             className={cn(
                                 "pb-4 text-xs font-bold tracking-widest transition-all relative",
-                                activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-disabled cursor-not-allowed" : "text-tertiary hover:text-slate-600"
+                                activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-disabled cursor-not-allowed" : "text-tertiary hover:text-secondary"
                             )}
                         >
                             {tab.label}

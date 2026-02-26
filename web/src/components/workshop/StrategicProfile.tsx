@@ -21,7 +21,7 @@ export function StrategicProfile({ data, dfvAssessment = DEFAULT_DFV_ASSESSMENT 
     const efficiency = calculateEfficiencyRatio(data.value);
 
     let efficiencyColor = "text-muted-foreground"; // Default Grey (1.7x - 2.5x)
-    if (efficiency >= 10.0) efficiencyColor = "text-yellow-500 drop-shadow-md"; // Gold (10x)
+    if (efficiency >= 10.0) efficiencyColor = "text-warning drop-shadow-md"; // Gold (10x)
     else if (efficiency >= 4.0) efficiencyColor = "text-primary"; // Blue (4.0x - 7.0x)
 
     return (

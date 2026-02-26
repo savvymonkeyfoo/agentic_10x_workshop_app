@@ -69,7 +69,7 @@ export function EditableText({ id, field, value: initialValue, className, placeh
                     placeholder || "Click to edit..."
                 )}
                 {isSaving && (
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm" title="Saving..." />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-success-subtle0 rounded-full animate-pulse shadow-sm" title="Saving..." />
                 )}
             </div>
         );
