@@ -44,11 +44,16 @@ hover:bg-destructive/10 // hover:bg-red-50
 
 #### Text Emphasis
 ```typescript
-// Replaces slate-* text colors
-text-primary          // text-slate-900, text-slate-800, text-slate-700
-text-secondary        // text-slate-600, text-slate-500
-text-tertiary         // text-slate-400
-text-disabled         // text-slate-300
+// For user input (textareas, inputs) - use foreground for readability
+text-foreground       // Main input text (dark, readable)
+text-primary          // Headings, important labels (text-slate-900, text-slate-800)
+
+// For secondary content (labels, captions, metadata)
+text-secondary        // Labels, timestamps (text-slate-600, text-slate-500)
+text-tertiary         // De-emphasized text (text-slate-400)
+text-disabled         // Disabled state (text-slate-300)
+
+⚠️ IMPORTANT: Never use text-secondary for input field text - it's too light!
 ```
 
 #### Surfaces

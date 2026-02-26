@@ -212,7 +212,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     <Textarea
                                         ref={probRef}
                                         rows={1}
-                                        className="text-base text-secondary leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] resize-none overflow-hidden"
+                                        className="text-base text-foreground leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] resize-none overflow-hidden"
                                         placeholder="Describe the problem..."
                                         value={localCard.description}
                                         onChange={(e) => handleChange('description', e.target.value)}
@@ -244,7 +244,7 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     <Textarea
                                         ref={solRef}
                                         rows={1}
-                                        className="text-base text-secondary leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
+                                        className="text-base text-foreground leading-relaxed border-none hover:bg-surface-subtle focus:bg-surface-subtle focus:ring-0 px-0 shadow-none min-h-[60px] max-h-[12rem] resize-y overflow-y-auto"
                                         placeholder="Describe the proposed solution..."
                                         value={localCard.proposedSolution || ''}
                                         onChange={(e) => handleChange('proposedSolution', e.target.value)}
