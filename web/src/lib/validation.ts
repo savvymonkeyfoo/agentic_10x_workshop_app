@@ -20,7 +20,7 @@ export const saveOpportunitySchema = z.object({
   description: z.string().optional(),
   frictionStatement: z.string().min(1, 'Friction statement is required'),
   strategicHorizon: z.enum(['GROWTH', 'OPS', 'STRATEGY'], {
-    errorMap: () => ({ message: 'Strategic horizon must be GROWTH, OPS, or STRATEGY' }),
+    message: 'Strategic horizon must be GROWTH, OPS, or STRATEGY',
   }),
   whyDoIt: z.string().min(1, 'Why do it is required'),
   notes: z.string().optional(),
@@ -36,7 +36,7 @@ export const saveOpportunitySchema = z.object({
   }),
 
   tShirtSize: z.enum(['XS', 'S', 'M', 'L', 'XL'], {
-    errorMap: () => ({ message: 'T-shirt size must be XS, S, M, L, or XL' }),
+    message: 'T-shirt size must be XS, S, M, L, or XL',
   }),
 
   // Financials
@@ -74,6 +74,122 @@ export const saveOpportunitySchema = z.object({
 });
 
 // ============================================================================
+// Update Opportunity Schema (for partial updates)
+// ============================================================================
+
+export const updateOpportunitySchema = z.object({
+  projectName: z.string().min(1).max(200).optional(),
+  description: z.string().optional(),
+  frictionStatement: z.string().optional(),
+  strategicHorizon: z.enum(['GROWTH', 'OPS', 'STRATEGY']).optional(),
+  whyDoIt: z.string().optional(),
+  notes: z.string().optional(),
+
+  // Scores (all optional for partial updates)
+  scoreValue: z.number().int().min(1).max(5).optional(),
+  scoreCapability: z.number().int().min(1).max(5).optional(),
+  scoreComplexity: z.number().int().min(1).max(5).optional(),
+  scoreRiskFinal: z.number().int().min(0).max(5).optional(),
+  scoreRiskAI: z.number().int().min(0).max(5).optional(),
+
+  // Other fields
+  tShirtSize: z.enum(['XS', 'S', 'M', 'L', 'XL']).optional(),
+  sequenceRank: z.number().int().min(1).optional(),
+  boardX: z.number().optional(),
+  boardY: z.number().optional(),
+  boardStatus: z.enum(['inbox', 'placed', 'archived']).optional(),
+}).refine(data => Object.keys(data).length > 0, {
+  message: "At least one field must be provided for update"
+});
+
+// ============================================================================
+// Canvas Optimization Schema
+// ============================================================================
+
+export const optimizeCanvasSchema = z.object({
+  projectName: z.string().min(1),
+  strategicHorizon: z.string(),
+  frictionStatement: z.string(),
+  strategicRationale: z.string().optional(),
+  whyDoIt: z.string().optional(),
+  systemGuardrails: z.string().optional(),
+  workflowPhases: z.array(z.object({
+    name: z.string(),
+    autonomy: z.string().optional(),
+    guardrail: z.string().optional(),
+  })).optional(),
+});
+
+// ============================================================================
+// Execution Plan Schema
+// ============================================================================
+
+export const draftExecutionSchema = z.object({
+  name: z.string().optional(),
+  friction: z.string().optional(),
+  strategy: z.string().optional(),
+  revenue: z.union([z.number(), z.string()]).optional(),
+  costAvoidance: z.union([z.number(), z.string()]).optional(),
+  phases: z.array(z.any()).optional(),
+});
+
+// ============================================================================
+// Capability Recommendation Schema
+// ============================================================================
+
+export const recommendCapabilitiesSchema = z.any().refine(
+  (data) => data !== null && data !== undefined && typeof data === 'object',
+  { message: 'Workflow context must be a valid object' }
+);
+
+// ============================================================================
+// Board Position Update Schema
+// ============================================================================
+
+export const updateBoardPositionSchema = z.object({
+  workshopId: z.string().uuid(),
+  opportunityId: z.string().uuid(),
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
+});
+
+// ============================================================================
+// Wave Update Schema
+// ============================================================================
+
+export const updateWaveSchema = z.object({
+  id: z.string().uuid(),
+  newRank: z.number().int().min(1),
+  justification: z.string().min(1),
+  workshopId: z.string().uuid(),
+});
+
+// ============================================================================
+// Promotion Schema
+// ============================================================================
+
+export const promotionSchema = z.object({
+  workshopId: z.string().uuid(),
+  opportunityIds: z.array(z.string().uuid()).min(1),
+  keepInIdeation: z.boolean().optional(),
+});
+
+// ============================================================================
+// Delete Schemas
+// ============================================================================
+
+export const deleteOpportunitySchema = z.object({
+  opportunityId: z.string().uuid(),
+  workshopId: z.string().uuid(),
+});
+
+export const deleteWorkshopSchema = z.object({
+  id: z.string().uuid(),
+});
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -96,7 +212,7 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): {
   } else {
     return {
       success: false,
-      errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+      errors: result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`),
     };
   }
 }

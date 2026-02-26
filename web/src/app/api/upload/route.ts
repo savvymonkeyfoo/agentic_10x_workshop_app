@@ -2,6 +2,7 @@ import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { processAssetForRAG } from '@/lib/rag-service';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 // Route Segment Config
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,22 @@ const ALLOWED_IMAGE_TYPES = [
 
 export async function POST(request: Request): Promise<NextResponse> {
     console.log(`[Upload] ========== New Upload Request ==========`);
+
+    // Rate limiting: Prevent abuse of expensive upload/indexing operations
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
+    const { success, remaining } = await apiRateLimiter.limit(ip);
+
+    if (!success) {
+        console.warn(`[Upload] Rate limit exceeded for IP: ${ip}`);
+        return NextResponse.json(
+            {
+                error: 'Too many upload requests',
+                details: 'Please wait a moment before uploading again',
+                remainingRequests: remaining
+            },
+            { status: 429 }
+        );
+    }
 
     try {
         const form = await request.formData();

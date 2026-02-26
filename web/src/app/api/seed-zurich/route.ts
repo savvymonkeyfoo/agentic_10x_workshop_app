@@ -3,6 +3,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; // Assuming this exists, based on earlier file reads
 
 export async function GET() {
+    // Security: Block seed endpoint in production to prevent data deletion
+    if (process.env.NODE_ENV === 'production') {
+        console.warn('[seed-zurich] Attempted access in production environment - blocked');
+        return NextResponse.json(
+            {
+                error: 'Seed endpoint not available in production',
+                details: 'This endpoint is only available in development environments'
+            },
+            { status: 403 }
+        );
+    }
+
     try {
         console.log('🚑 Starting Surgical Data Repair for "Zurich Insurance Australia"...');
 

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { safeAction } from '@/lib/safe-action';
+import { promotionSchema, validateData } from '@/lib/validation';
 
 /**
  * UNIFIED PROMOTION ACTION
@@ -19,28 +20,35 @@ interface PromoteOptions {
 
 export async function promoteToCapture(options: PromoteOptions) {
     return await safeAction(async () => {
-        const { workshopId, opportunityIds, keepInIdeation = true } = options;
-        if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-            throw new Error('Invalid arguments');
+        // Validate input
+        const validation = validateData(promotionSchema, options);
+        if (!validation.success) {
+            throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
         }
 
-        // Set showInCapture = true (makes visible in Capture view)
-        // Optionally keep showInIdeation = true (stays on whiteboard)
-        const result = await prisma.opportunity.updateMany({
-            where: {
-                id: { in: opportunityIds },
-                workshopId
-            },
-            data: {
-                showInCapture: true,
-                showInIdeation: keepInIdeation,
-                promotionStatus: 'PROMOTED',
-                boardStatus: 'placed'
-            }
+        const { workshopId, opportunityIds, keepInIdeation = true } = validation.data!;
+
+        // Use transaction for atomicity
+        const count = await prisma.$transaction(async (tx) => {
+            // Set showInCapture = true (makes visible in Capture view)
+            // Optionally keep showInIdeation = true (stays on whiteboard)
+            const result = await tx.opportunity.updateMany({
+                where: {
+                    id: { in: opportunityIds },
+                    workshopId
+                },
+                data: {
+                    showInCapture: true,
+                    showInIdeation: keepInIdeation,
+                    promotionStatus: 'PROMOTED',
+                    boardStatus: 'placed'
+                }
+            });
+            return result.count;
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { count: result.count };
+        return { count };
     }, 'Failed to promote opportunities');
 }
 

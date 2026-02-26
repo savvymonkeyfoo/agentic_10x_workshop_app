@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { indexAsset } from '@/lib/indexing';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 // Use Node.js runtime because pdf-parse relies on Buffer/fs which are not fully supported in Edge
 // Increase maxDuration to prevent timeouts for large PDFs
@@ -15,6 +16,22 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
     console.log(`[index-rag] ========== WORKER HIT ==========`);
     console.log(`[index-rag] Timestamp: ${new Date().toISOString()}`);
+
+    // Rate limiting: Prevent abuse of expensive embedding operations
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
+    const { success, remaining } = await apiRateLimiter.limit(ip);
+
+    if (!success) {
+        console.warn(`[index-rag] Rate limit exceeded for IP: ${ip}`);
+        return NextResponse.json(
+            {
+                error: 'Too many indexing requests',
+                details: 'Please wait a moment before indexing again',
+                remainingRequests: remaining
+            },
+            { status: 429 }
+        );
+    }
 
     try {
         const { assetId } = await request.json();

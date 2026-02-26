@@ -2,9 +2,22 @@
 import { generateObject } from 'ai';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
+import { optimizeCanvasSchema, validateData } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function optimizeCanvasContent(data: any) {
+    // Validate input
+    const validation = validateData(optimizeCanvasSchema, data);
+    if (!validation.success) {
+        return {
+            success: false,
+            data: null,
+            error: validation.errors?.join(', ')
+        };
+    }
+
+    const validatedData = validation.data!;
+
     try {
         const result = await generateObject({
             model: AI_CONFIG.generalModel,
@@ -20,11 +33,11 @@ export async function optimizeCanvasContent(data: any) {
         TASK: Rewrite and polish the draft content for an Executive Canvas.
 
         INPUT CONTEXT:
-        - Project: "${data.projectName}" (${data.strategicHorizon})
-        - Draft Friction: "${data.frictionStatement}"
-        - Draft Rationale: "${data.strategicRationale} - ${data.whyDoIt}"
-        - Draft Risks: "${data.systemGuardrails}"
-        - Raw Workflow: ${JSON.stringify(data.workflowPhases || [])}
+        - Project: "${validatedData.projectName}" (${validatedData.strategicHorizon})
+        - Draft Friction: "${validatedData.frictionStatement}"
+        - Draft Rationale: "${validatedData.strategicRationale} - ${validatedData.whyDoIt}"
+        - Draft Risks: "${validatedData.systemGuardrails}"
+        - Raw Workflow: ${JSON.stringify(validatedData.workflowPhases || [])}
 
         STRICT EDITORIAL RULES:
         1. NO HALLUCINATIONS: Do NOT use placeholders like "Lazarus", "Lorem Ipsum", or "Insert Text Here". If input is missing, INFER reasonable content based on the Project Name.

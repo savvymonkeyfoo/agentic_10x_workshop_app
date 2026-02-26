@@ -61,9 +61,9 @@ export async function POST(request: Request) {
 
         // Constant-time comparison to prevent timing attacks
         const userBuf = Buffer.from(username.padEnd(256, '\0'));
-        const validUserBuf = Buffer.from(validUser.padEnd(256, '\0'));
+        const validUserBuf = Buffer.from(validUser!.padEnd(256, '\0'));
         const passBuf = Buffer.from(password.padEnd(256, '\0'));
-        const validPassBuf = Buffer.from(validPass.padEnd(256, '\0'));
+        const validPassBuf = Buffer.from(validPass!.padEnd(256, '\0'));
 
         let userMatch = false;
         let passMatch = false;
