@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 export type PipelineStep = 'idle' | 'auditing' | 'analysing' | 'architecting';
 export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
@@ -201,7 +201,7 @@ export function ResearchBriefButton({
                 </Tooltip>
             </TooltipProvider>
 
-            <ConfirmationModal
+            <ConfirmModal
                 isOpen={showWarning}
                 onClose={() => setShowWarning(false)}
                 onConfirm={() => {
@@ -211,6 +211,7 @@ export function ResearchBriefButton({
                 title="Overwrite Existing Briefs?"
                 description="This will replace your current Research Briefs with newly generated ones."
                 confirmLabel="Yes, Regenerate"
+                variant="warning"
             />
         </>
     );

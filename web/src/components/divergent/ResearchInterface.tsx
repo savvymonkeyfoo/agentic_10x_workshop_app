@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { ResearchBriefList } from './ResearchBriefList';
 import { OpportunityModal, OpportunityCardData } from '@/components/workshop/OpportunityModal';
 // Dialog components removed - not currently used
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RotateCcw } from 'lucide-react';
 import { IdeaCard } from '@/components/workshop/IdeaCard';
 
@@ -385,7 +385,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                             <Button variant="outline" size="icon" className="h-10 w-10 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-200" disabled={isResetting} onClick={() => setIsResetModalOpen(true)}>
                                 <RotateCcw className="w-4 h-4" />
                             </Button>
-                            <ConfirmationModal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)} onConfirm={handleResetAnalysis} title="Rerun Deep-Chain Analysis?" description="Permanently delete generated opportunities and reset the board." confirmLabel="Yes, Overwrite Data" isLoading={isResetting} />
+                            <ConfirmModal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)} onConfirm={handleResetAnalysis} title="Rerun Deep-Chain Analysis?" description="Permanently delete generated opportunities and reset the board." confirmLabel="Yes, Overwrite Data" isLoading={isResetting} variant="danger" />
                             <Button onClick={() => router.push(`/workshop/${workshopId}/ideation`)}>
                                 Proceed to Ideation <ArrowRight className="w-4 h-4 ml-1" />
                             </Button>
