@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { timingSafeEqual } from 'crypto';
+import { loginRateLimiter } from '@/lib/rate-limit';
 
 // Validate required environment variables at startup
 const validUser = process.env.BASIC_AUTH_USER;
@@ -20,6 +21,22 @@ const secret = new TextEncoder().encode(jwtSecret);
 
 export async function POST(request: Request) {
     try {
+        // Get IP address for rate limiting
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                    request.headers.get('x-real-ip') ||
+                    'unknown';
+
+        // Check rate limit (5 attempts per 15 minutes per IP)
+        const { success: rateLimitSuccess, remaining } = await loginRateLimiter.limit(ip);
+
+        if (!rateLimitSuccess) {
+            console.warn(`[Security] Rate limit exceeded for IP: ${ip}`);
+            return NextResponse.json(
+                { error: 'Too many login attempts. Please try again in 15 minutes.' },
+                { status: 429 }
+            );
+        }
+
         const { username, password } = await request.json();
 
         // Input validation
@@ -73,9 +90,12 @@ export async function POST(request: Request) {
                 maxAge: 60 * 60 * 24 * 7 // 7 days
             });
 
+            console.log(`[Security] Successful login for user: ${validUser} from IP: ${ip}`);
             return response;
         }
 
+        // Log failed authentication attempts
+        console.warn(`[Security] Failed login attempt from IP: ${ip} - attempts remaining: ${remaining}`);
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     } catch (error) {
         console.error('Login error:', error);
