@@ -2,21 +2,22 @@
 import { generateObject } from 'ai';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
-import { optimizeCanvasSchema, validateData } from '@/lib/validation';
+import { optimizeCanvasSchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function optimizeCanvasContent(data: any) {
     // Validate input
-    const validation = validateData(optimizeCanvasSchema, data);
+    const validation = optimizeCanvasSchema.safeParse(data);
     if (!validation.success) {
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
         return {
             success: false,
             data: null,
-            error: validation.errors?.join(', ')
+            error: errors
         };
     }
 
-    const validatedData = validation.data!;
+    const validatedData = validation.data;
 
     try {
         const result = await generateObject({

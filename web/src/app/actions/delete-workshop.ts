@@ -2,13 +2,14 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { deleteWorkshopSchema, validateData } from '@/lib/validation';
+import { deleteWorkshopSchema } from '@/lib/validation';
 
 export async function deleteWorkshop(id: string) {
     // Validate input
-    const validation = validateData(deleteWorkshopSchema, { id });
+    const validation = deleteWorkshopSchema.safeParse({ id });
     if (!validation.success) {
-        throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        throw new Error(`Validation failed: ${errors}`);
     }
 
     // Use transaction to ensure atomic delete

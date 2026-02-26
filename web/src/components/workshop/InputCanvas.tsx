@@ -10,7 +10,7 @@ import { VRCCSlider } from '@/components/ui/VRCCSlider';
 import { StrategicProfile } from '@/components/workshop/StrategicProfile';
 import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
-import { deletePromotedOpportunity } from '@/app/actions/delete-opportunity';
+import { deleteOpportunity } from '@/app/actions/delete-opportunity';
 import { demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
 import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
@@ -1039,7 +1039,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 toast.success(`"${opportunityToDelete.projectName}" returned to Ideation`);
             } else {
                 // DELETE: Permanently remove (Capture-only item)
-                await deletePromotedOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
+                await deleteOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
                 toast.success(`"${opportunityToDelete.projectName}" deleted`);
             }
 

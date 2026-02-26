@@ -3,18 +3,19 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
-import { saveOpportunitySchema, validateData } from '@/lib/validation';
+import { saveOpportunitySchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function saveOpportunity(workshopId: string, data: any, opportunityId?: string) {
     // Validate input data with Zod
-    const validation = validateData(saveOpportunitySchema, { workshopId, ...data });
+    const validation = saveOpportunitySchema.safeParse({ workshopId, ...data });
 
     if (!validation.success) {
-        throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        throw new Error(`Validation failed: ${errors}`);
     }
 
-    const validatedInput = validation.data!;
+    const validatedInput = validation.data;
 
     // Common data mapping
     const opportunityData = {

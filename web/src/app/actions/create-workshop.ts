@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { createWorkshopSchema, validateData } from '@/lib/validation';
+import { createWorkshopSchema } from '@/lib/validation';
 
 export async function createWorkshop(formData: FormData) {
     const rawData = {
@@ -12,13 +12,14 @@ export async function createWorkshop(formData: FormData) {
     };
 
     // Validate input data with Zod
-    const validation = validateData(createWorkshopSchema, rawData);
+    const validation = createWorkshopSchema.safeParse(rawData);
 
     if (!validation.success) {
-        throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        throw new Error(`Validation failed: ${errors}`);
     }
 
-    const validatedData = validation.data!;
+    const validatedData = validation.data;
 
     // Use validated data for workshop creation
     const workshopDate = new Date(validatedData.workshopDate);

@@ -1,13 +1,14 @@
 'use server';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { updateWaveSchema, validateData } from '@/lib/validation';
+import { updateWaveSchema } from '@/lib/validation';
 
 export async function updateProjectWave(id: string, newRank: number, justification: string, workshopId: string) {
     // Validate input
-    const validation = validateData(updateWaveSchema, { id, newRank, justification, workshopId });
+    const validation = updateWaveSchema.safeParse({ id, newRank, justification, workshopId });
     if (!validation.success) {
-        return { success: false, error: validation.errors?.join(', ') };
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        return { success: false, error: errors };
     }
 
     // 1. Fetch current rationale to append history

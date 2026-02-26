@@ -2,21 +2,22 @@
 import { generateObject } from 'ai';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
-import { draftExecutionSchema, validateData } from '@/lib/validation';
+import { draftExecutionSchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function draftExecutionPlan(context: any) {
     // Validate input
-    const validation = validateData(draftExecutionSchema, context);
+    const validation = draftExecutionSchema.safeParse(context);
     if (!validation.success) {
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
         return {
             success: false,
             data: null,
-            error: validation.errors?.join(', ')
+            error: errors
         };
     }
 
-    const validatedContext = validation.data!;
+    const validatedContext = validation.data;
 
     try {
         // 1. GROUNDING CHECK: Is there actually enough data to generate a plan?

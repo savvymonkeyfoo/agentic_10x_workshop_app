@@ -192,27 +192,3 @@ export const deleteWorkshopSchema = z.object({
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Validate data against a Zod schema and return structured result
- *
- * @param schema - Zod schema to validate against
- * @param data - Data to validate
- * @returns Validation result with success flag, data, and errors
- */
-export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): {
-  success: boolean;
-  data?: T;
-  errors?: string[];
-} {
-  const result = schema.safeParse(data);
-
-  if (result.success) {
-    return { success: true, data: result.data };
-  } else {
-    return {
-      success: false,
-      errors: result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`),
-    };
-  }
-}

@@ -2,23 +2,24 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { updateOpportunitySchema, validateData } from '@/lib/validation';
+import { updateOpportunitySchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function updateOpportunity(id: string, data: any) {
     // Validate input
-    const validation = validateData(updateOpportunitySchema, data);
+    const validation = updateOpportunitySchema.safeParse(data);
     if (!validation.success) {
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
         return {
             success: false,
-            error: `Validation failed: ${validation.errors?.join(', ')}`
+            error: `Validation failed: ${errors}`
         };
     }
 
     try {
         const result = await prisma.opportunity.update({
             where: { id },
-            data: validation.data!
+            data: validation.data
         });
         revalidatePath(`/workshop/${result.workshopId}/reporting`);
         return { success: true, data: result };

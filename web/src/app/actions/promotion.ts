@@ -2,11 +2,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { promotionSchema, validateData } from '@/lib/validation';
+import { promotionSchema } from '@/lib/validation';
 
 /**
  * UNIFIED PROMOTION ACTION
- * 
+ *
  * With unified SQL storage, promotion sets showInCapture = true
  * The item can optionally remain visible in ideation (showInIdeation stays true)
  */
@@ -20,15 +20,16 @@ interface PromoteOptions {
 export async function promoteToCapture(options: PromoteOptions) {
     try {
         // Validate input
-        const validation = validateData(promotionSchema, options);
+        const validation = promotionSchema.safeParse(options);
         if (!validation.success) {
+            const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
             return {
                 success: false,
-                error: `Validation failed: ${validation.errors?.join(', ')}`
+                error: `Validation failed: ${errors}`
             };
         }
 
-        const { workshopId, opportunityIds, keepInIdeation = true } = validation.data!;
+        const { workshopId, opportunityIds, keepInIdeation = true } = validation.data;
 
         // Use transaction for atomicity
         const count = await prisma.$transaction(async (tx) => {
