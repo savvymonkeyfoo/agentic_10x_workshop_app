@@ -50,10 +50,10 @@ const CLUSTER_OPTIONS = [
 
 // Tier display config
 const TIER_DISPLAY = {
-    UNSCORED: { label: '❓ Needs Scoring', class: 'bg-white text-slate-500 border-slate-300' },
-    AGENTIC_AUTO: { label: '🤖 Agentic Auto', class: 'bg-slate-100 text-slate-700 border-slate-300' },
-    TABLE_STAKES: { label: '🛡️ Table Stakes', class: 'bg-blue-100 text-blue-800 border-blue-300' },
-    STRATEGIC_BET: { label: '🌟 Strategic Bet', class: 'bg-amber-100 text-amber-800 border-amber-300' }
+    UNSCORED: { label: '❓ Needs Scoring', class: 'bg-card text-secondary border-border' },
+    AGENTIC_AUTO: { label: '🤖 Agentic Auto', class: 'bg-surface-hover text-primary border-border' },
+    TABLE_STAKES: { label: '🛡️ Table Stakes', class: 'bg-info-subtle text-info border-info' },
+    STRATEGIC_BET: { label: '🌟 Strategic Bet', class: 'bg-warning-subtle text-warning border-warning' }
 } as const;
 
 export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDetailProps) {
@@ -119,18 +119,18 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
     return (
         <div className="flex flex-col h-full max-h-[80vh]">
             {/* Header - Badge + Auto-Save Indicator */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-                <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+                <Badge variant="outline" className="text-xs bg-intelligence-subtle text-intelligence border-intelligence">
                     Editing Idea
                 </Badge>
 
                 {/* Auto-Save Status */}
                 {saveStatus === 'saving' ? (
-                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                    <div className="flex items-center gap-1 text-xs text-tertiary">
                         <Loader2 className="w-3 h-3 animate-spin" /> Saving...
                     </div>
                 ) : (
-                    <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                    <div className="flex items-center gap-1 text-xs text-success font-medium">
                         <CheckCircle2 className="w-3 h-3" /> Auto-saved
                     </div>
                 )}
@@ -140,7 +140,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
             <div className="flex-1 overflow-y-auto py-6 space-y-6">
                 {/* Title Input */}
                 <div className="space-y-2">
-                    <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-secondary">
                         Idea Title
                     </Label>
                     <Input
@@ -154,7 +154,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
 
                 {/* Description - Moved up */}
                 <div className="space-y-2">
-                    <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-secondary">
                         Description
                     </Label>
                     <Textarea
@@ -164,7 +164,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                         className="min-h-[120px] resize-none"
                         placeholder="Describe the opportunity in detail..."
                     />
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-tertiary">
                         {description.split(' ').filter(Boolean).length} words
                     </p>
                 </div>
@@ -172,7 +172,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                 {/* Meta Row: Source, Cluster */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-secondary">
                             Source
                         </Label>
                         <Select value={source} onValueChange={setSource}>
@@ -190,7 +190,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-secondary">
                             Strategic Cluster
                         </Label>
                         <Select value={cluster} onValueChange={setCluster}>
@@ -209,9 +209,9 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                 </div>
 
                 {/* Auto-Tier Display & Scorecard Trigger - Moved to bottom, no score text */}
-                <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-between">
+                <div className="bg-surface-subtle rounded-lg p-4 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Current Tier</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-secondary mb-1">Current Tier</p>
                         <Badge variant="outline" className={`text-sm font-bold px-3 py-1 ${tierDisplay.class}`}>
                             {tierDisplay.label}
                         </Badge>
@@ -219,7 +219,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                     <Button
                         variant="outline"
                         onClick={() => setShowScorecard(true)}
-                        className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                        className="border-intelligence text-intelligence hover:bg-intelligence-subtle"
                     >
                         <Brain size={16} className="mr-2" />
                         {score ? 'Edit Assessment' : 'Run Assessment'}

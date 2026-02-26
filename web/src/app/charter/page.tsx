@@ -39,7 +39,7 @@ export default function CharterPage() {
             <header className="w-full max-w-4xl flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-brand-navy">Project Charter</h1>
-                    <p className="text-slate-500 text-sm">Review & Export</p>
+                    <p className="text-secondary text-sm">Review & Export</p>
                 </div>
 
                 <PDFDownloadLink document={<CharterPDF data={data} />} fileName={`Charter-${data.id}.pdf`}>
@@ -57,9 +57,9 @@ export default function CharterPage() {
             </header>
 
             {/* Preview Card (Screen View) */}
-            <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xl border border-slate-100 p-10 space-y-8">
+            <div className="w-full max-w-4xl bg-card rounded-3xl shadow-xl border border-muted p-10 space-y-8">
 
-                <div className="flex justify-between items-start border-b border-slate-100 pb-6">
+                <div className="flex justify-between items-start border-b border-muted pb-6">
                     <div>
                         <h2 className="text-3xl font-bold text-brand-navy mb-2">{data.projectName}</h2>
                         <div className="flex gap-3">
@@ -74,47 +74,47 @@ export default function CharterPage() {
 
                 <div className="grid grid-cols-2 gap-10">
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold uppercase text-slate-400">Context</h3>
+                        <h3 className="text-xs font-bold uppercase text-tertiary">Context</h3>
                         <div>
-                            <label className="text-xs text-slate-500">The Problem</label>
+                            <label className="text-xs text-secondary">The Problem</label>
                             <p className="text-brand-navy font-medium leading-relaxed">{data.frictionStatement}</p>
                         </div>
                         <div>
-                            <label className="text-xs text-slate-500">The Why</label>
+                            <label className="text-xs text-secondary">The Why</label>
                             <p className="text-brand-navy font-medium leading-relaxed">{data.whyDoIt}</p>
                         </div>
                     </div>
 
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
-                        <h3 className="text-xs font-bold uppercase text-slate-400">Agent Directive</h3>
+                    <div className="bg-surface-subtle p-6 rounded-2xl border border-muted space-y-4">
+                        <h3 className="text-xs font-bold uppercase text-tertiary">Agent Directive</h3>
                         <div className="grid grid-cols-1 gap-3">
                             <div>
-                                <label className="text-[10px] text-slate-400 uppercase">Trigger</label>
+                                <label className="text-[10px] text-tertiary uppercase">Trigger</label>
                                 <div className="text-sm font-semibold text-brand-navy">{data.agentDirective.trigger}</div>
                             </div>
                             <div>
-                                <label className="text-[10px] text-slate-400 uppercase">Action</label>
+                                <label className="text-[10px] text-tertiary uppercase">Action</label>
                                 <div className="text-sm font-semibold text-brand-navy">{data.agentDirective.action}</div>
                             </div>
                             <div>
-                                <label className="text-[10px] text-slate-400 uppercase">Guardrail</label>
+                                <label className="text-[10px] text-tertiary uppercase">Guardrail</label>
                                 <div className="text-sm font-semibold text-brand-navy">{data.agentDirective.guardrail}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-100 grid grid-cols-3 gap-6 text-center">
+                <div className="pt-6 border-t border-muted grid grid-cols-3 gap-6 text-center">
                     <div>
-                        <div className="text-xs text-slate-400 uppercase mb-1">Cost Reduction</div>
+                        <div className="text-xs text-tertiary uppercase mb-1">Cost Reduction</div>
                         <div className="text-xl font-bold text-brand-blue">${data.financials.costReduction?.toLocaleString() ?? 0}</div>
                     </div>
                     <div>
-                        <div className="text-xs text-slate-400 uppercase mb-1">Revenue Uplift</div>
+                        <div className="text-xs text-tertiary uppercase mb-1">Revenue Uplift</div>
                         <div className="text-xl font-bold text-brand-blue">${data.financials.revenue?.toLocaleString() ?? 0}</div>
                     </div>
                     <div>
-                        <div className="text-xs text-slate-400 uppercase mb-1">Efficiency</div>
+                        <div className="text-xs text-tertiary uppercase mb-1">Efficiency</div>
                         <div className="text-xl font-bold text-brand-blue">{data.financials.hoursSaved ?? 0} hrs/wk</div>
                     </div>
                 </div>

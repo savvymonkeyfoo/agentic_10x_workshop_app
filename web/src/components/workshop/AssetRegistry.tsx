@@ -163,7 +163,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
 
     return (
         <div className="flex flex-col space-y-4 h-full">
-            <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+            <h3 className="text-lg font-semibold text-primary">{title}</h3>
 
             {/* Drop Zone */}
             <div
@@ -174,70 +174,70 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                     border-2 border-dashed rounded-xl p-6 transition-all duration-200
                     flex flex-col items-center justify-center text-center cursor-pointer
                     ${isDragging
-                        ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01]'
-                        : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                        ? 'border-intelligence bg-intelligence-subtle scale-[1.01]'
+                        : 'border-muted hover:border-intelligence hover:bg-surface-subtle'
                     }
                 `}
             >
-                <div className="p-3 bg-white rounded-full shadow-sm mb-3">
+                <div className="p-3 bg-card rounded-full shadow-sm mb-3">
                     {isUploading ? (
-                        <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+                        <Loader2 className="w-6 h-6 text-intelligence animate-spin" />
                     ) : (
-                        <UploadCloud className={`w-6 h-6 ${isDragging ? 'text-indigo-600' : 'text-slate-400'}`} />
+                        <UploadCloud className={`w-6 h-6 ${isDragging ? 'text-intelligence' : 'text-tertiary'}`} />
                     )}
                 </div>
-                <p className="text-sm font-medium text-slate-700">
+                <p className="text-sm font-medium text-primary">
                     {isUploading ? 'Uploading...' : 'Drag & drop files here'}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">PDF, JSON, Markdown, or Text</p>
+                <p className="text-xs text-tertiary mt-1">PDF, JSON, Markdown, or Text</p>
             </div>
 
             {/* Asset Table */}
-            <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+            <div className="flex-1 bg-card rounded-xl border border-border overflow-hidden flex flex-col">
                 {items.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+                    <div className="flex-1 flex flex-col items-center justify-center text-tertiary p-8">
                         <p className="text-sm">No assets registered</p>
                     </div>
                 ) : (
                     <div className="overflow-y-auto">
                         <table className="w-full text-sm text-left table-fixed">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100 sticky top-0">
+                            <thead className="text-xs text-secondary uppercase bg-surface-subtle border-b border-muted sticky top-0">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">Name</th>
                                     <th className="px-4 py-3 font-medium w-32">Status</th>
                                     <th className="px-4 py-3 font-medium w-16 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-border">
                                 {items.map((asset) => (
-                                    <tr key={asset.id} className="group hover:bg-slate-50 transition-colors">
+                                    <tr key={asset.id} className="group hover:bg-surface-hover transition-colors">
                                         <td className="px-4 py-3">
                                             <div className="flex items-center space-x-3 w-full">
-                                                <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                                <span className="font-medium text-slate-700 truncate flex-1 min-w-0" title={asset.name}>
+                                                <FileText className="w-4 h-4 text-tertiary flex-shrink-0" />
+                                                <span className="font-medium text-primary truncate flex-1 min-w-0" title={asset.name}>
                                                     {asset.name}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             {asset.status === 'READY' ? (
-                                                <div className="flex items-center space-x-1.5 text-emerald-600">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                <div className="flex items-center space-x-1.5 text-success">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-success" />
                                                     <span className="text-xs font-medium">Ready</span>
                                                 </div>
                                             ) : asset.status === 'PROCESSING' ? (
-                                                <div className="flex items-center space-x-2 text-indigo-600">
+                                                <div className="flex items-center space-x-2 text-intelligence">
                                                     <Loader2 className="w-3 h-3 animate-spin" />
                                                     <span className="text-xs font-medium">Processing...</span>
                                                 </div>
                                             ) : (
-                                                <span className="text-xs font-medium text-red-500">Error</span>
+                                                <span className="text-xs font-medium text-destructive">Error</span>
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <button
                                                 onClick={() => handleDelete(asset.id)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                                className="p-1.5 text-tertiary hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Delete Asset"
                                             >
                                                 <Trash2 className="w-4 h-4" />

@@ -47,12 +47,12 @@ const AddCapModal = ({ isOpen, onClose, onConfirm, title }: AddCapModalProps) =>
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/20 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl border border-slate-200 p-4 w-[300px] animate-in zoom-in-95">
-                <h4 className="text-sm font-bold text-slate-700 mb-3">{title}</h4>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="bg-card rounded-lg shadow-xl border border-border p-4 w-[300px] animate-in zoom-in-95">
+                <h4 className="text-sm font-bold text-primary mb-3">{title}</h4>
                 <input
                     autoFocus
-                    className="w-full border border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500 mb-4"
+                    className="w-full border border-input rounded p-2 text-sm outline-none focus:ring-2 focus:ring-ring mb-4"
                     placeholder="e.g. Custom Legacy API..."
                     value={val}
                     onChange={e => setVal(e.target.value)}
@@ -62,10 +62,10 @@ const AddCapModal = ({ isOpen, onClose, onConfirm, title }: AddCapModalProps) =>
                     }}
                 />
                 <div className="flex justify-end gap-2">
-                    <button onClick={onClose} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded">Cancel</button>
+                    <button onClick={onClose} className="px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-surface-hover rounded">Cancel</button>
                     <button
                         onClick={() => { if (val.trim()) { onConfirm(val); setVal(""); } }}
-                        className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm"
+                        className="px-3 py-1.5 text-xs font-semibold text-white bg-info hover:bg-info/90 rounded shadow-sm"
                     >
                         Add Item
                     </button>
@@ -115,19 +115,19 @@ const DropZone = ({ id, title, items, colorClass, placeholder, onDelete, onAdd }
             ref={setNodeRef}
             className={`
         flex-1 rounded-xl border-2 transition-all p-4 min-h-[120px] flex flex-col gap-3
-        ${isOver ? 'border-blue-400 bg-blue-50/50 scale-[1.01]' : 'border-slate-200 bg-slate-50/30'}
+        ${isOver ? 'border-info bg-info-subtle scale-[1.01]' : 'border-muted bg-surface-subtle'}
       `}
         >
             <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</h4>
+                <h4 className="text-xs font-bold text-secondary uppercase tracking-widest">{title}</h4>
                 <div className="flex items-center gap-2">
                     {/* Count Badge */}
-                    <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full">{items.length}</span>
+                    <span className="text-[10px] bg-surface-hover text-tertiary px-2 py-0.5 rounded-full">{items.length}</span>
                     {/* Add Button */}
                     {onAdd && (
                         <button
                             onClick={onAdd}
-                            className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+                            className="text-[10px] font-bold text-info hover:text-info hover:bg-info-subtle px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
                         >
                             <Plus size={10} /> Add New
                         </button>
@@ -137,7 +137,7 @@ const DropZone = ({ id, title, items, colorClass, placeholder, onDelete, onAdd }
 
             <div className="flex flex-wrap gap-2 content-start h-full">
                 {items.length === 0 && !isOver && (
-                    <div className="text-slate-300 text-xs italic w-full text-center mt-4 border-2 border-dashed border-slate-100 rounded-lg p-4">
+                    <div className="text-disabled text-xs italic w-full text-center mt-4 border-2 border-dashed border-muted rounded-lg p-4">
                         {placeholder}
                     </div>
                 )}
@@ -314,7 +314,7 @@ export default function CapabilitiesManager({
                         id="existing"
                         title="Existing Capabilities (Safe)"
                         items={existingCaps}
-                        colorClass="bg-emerald-100 text-emerald-800 border-emerald-200"
+                        colorClass="bg-success-subtle text-success border-success"
                         placeholder="Drag 'Safe' systems here..."
                         onDelete={(item: string) => handleDelete('existing', item)}
                         onAdd={() => setAddingZone('existing')}
@@ -323,7 +323,7 @@ export default function CapabilitiesManager({
                         id="missing"
                         title="Missing Capabilities (Gap)"
                         items={missingCaps}
-                        colorClass="bg-amber-100 text-amber-800 border-amber-200"
+                        colorClass="bg-warning-subtle text-warning border-warning"
                         placeholder="Drag 'Gap' systems here..."
                         onDelete={(item: string) => handleDelete('missing', item)}
                         onAdd={() => setAddingZone('missing')}
@@ -331,13 +331,13 @@ export default function CapabilitiesManager({
                 </div>
 
                 {/* BOTTOM: The Bank */}
-                <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 transition-all">
+                <div className="bg-surface-subtle rounded-xl border border-muted p-4 transition-all">
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Enterprise Capability Bank</h4>
+                        <h4 className="text-xs font-bold text-tertiary uppercase tracking-widest">Enterprise Capability Bank</h4>
                         <button
                             onClick={handleAIRecommend}
                             disabled={isRecommending || !workflowContext}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-intelligence to-intelligence text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isRecommending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                             {isRecommending ? "Analysing..." : "Recommend"}
@@ -345,7 +345,7 @@ export default function CapabilitiesManager({
                     </div>
                     <div className="flex flex-wrap gap-2 min-h-[60px]">
                         {bank.map(cap => (
-                            <CapChip key={cap} id={`bank-${cap}`} label={cap} color="bg-blue-500 text-white hover:bg-blue-600" />
+                            <CapChip key={cap} id={`bank-${cap}`} label={cap} color="bg-info text-white hover:bg-info/90" />
                         ))}
                     </div>
                 </div>
@@ -356,7 +356,7 @@ export default function CapabilitiesManager({
             {mounted && createPortal(
                 <DragOverlay>
                     {activeDrag ? (
-                        <div className="px-3 py-1.5 rounded-full text-xs font-bold shadow-2xl bg-blue-600 text-white border-2 border-white scale-110 flex items-center gap-2 cursor-grabbing z-[9999]">
+                        <div className="px-3 py-1.5 rounded-full text-xs font-bold shadow-2xl bg-info text-white border-2 border-white scale-110 flex items-center gap-2 cursor-grabbing z-[9999]">
                             <GripVertical size={10} /> {activeDrag.label}
                         </div>
                     ) : null}
