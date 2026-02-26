@@ -949,7 +949,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 setSaveStatus('saved');
                 fetchOpportunities(); // Refresh list to match
             } else {
-                setSaveStatus('error');
+                // Silently ignore validation errors during autosave (expected while typing)
+                // Only show error for actual save failures (network/database errors)
+                if (result.error && result.error.includes('Validation failed')) {
+                    setSaveStatus('idle'); // Don't show error for validation failures
+                } else {
+                    setSaveStatus('error'); // Show error for actual save failures
+                }
             }
         } catch (e) {
             console.error("Autosave failed", e);
