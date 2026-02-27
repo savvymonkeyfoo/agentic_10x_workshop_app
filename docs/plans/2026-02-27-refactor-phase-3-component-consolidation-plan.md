@@ -639,12 +639,12 @@ For each file in the audit:
 
 #### Acceptance Criteria
 
-- [ ] All `text-[10px]` instances removed
-- [ ] All `text-[11px]` instances removed
-- [ ] Standard Tailwind sizes used throughout
-- [ ] Optional: Custom `text-xxs` utility added if needed
-- [ ] No visual regressions (labels still readable, UI not broken)
-- [ ] Typography remains consistent across themes
+- [x] All `text-[10px]` instances removed
+- [x] All `text-[11px]` instances removed
+- [x] Standard Tailwind sizes used throughout
+- [x] Optional: Custom `text-xxs` utility added if needed
+- [x] No visual regressions (labels still readable, UI not broken)
+- [x] Typography remains consistent across themes
 
 **Estimated Time:** 2-3 hours
 
