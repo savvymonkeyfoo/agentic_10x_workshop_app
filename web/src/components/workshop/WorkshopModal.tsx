@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import { createWorkshop } from '@/app/actions/create-workshop';
 import { updateWorkshop } from '@/app/actions/update-workshop';
 
@@ -162,13 +164,15 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
                             {logoUrl ? (
                                 <div className="w-16 h-16 rounded-xl border border-border overflow-hidden relative">
                                     <Image src={logoUrl as string} alt="Logo Preview" fill className="object-contain" sizes="64px" />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="destructive"
+                                        size="icon"
                                         onClick={() => setLogoUrl(null)}
-                                        className="absolute top-0 right-0 bg-destructive text-destructive-foreground p-1 rounded-bl-lg text-xs z-10 hover:bg-destructive/90 transition-colors"
+                                        className="absolute top-0 right-0 rounded-bl-lg rounded-tr-none rounded-tl-none rounded-br-none h-6 w-6 text-xs z-10"
                                     >
-                                        ✕
-                                    </button>
+                                        <X className="h-3 w-3" />
+                                    </Button>
                                 </div>
                             ) : (
                                 <div
@@ -195,20 +199,21 @@ export function WorkshopModal({ onClose, workshopToEdit }: WorkshopModalProps) {
 
                     {/* Actions */}
                     <div className="flex justify-end gap-3 pt-4">
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={onClose}
-                            className="px-4 py-2 text-muted-foreground font-semibold hover:text-foreground transition-colors"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
                             disabled={uploading || submitting || !clientName}
-                            className="px-6 py-2 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            size="lg"
+                            className="shadow-lg"
                         >
                             {submitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Workshop')}
-                        </button>
+                        </Button>
                     </div>
 
                 </form>
