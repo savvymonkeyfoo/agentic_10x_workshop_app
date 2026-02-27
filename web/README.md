@@ -24,6 +24,34 @@ A guided, interactive canvas ("Input Canvas") for defining AI opportunities in r
 *   **Automated Analysis**: Generates comprehensive "Strategy One-Pagers" using the captured data.
 *   **Analysis Dashboard**: View detailed breakdowns including *Strategic Journey Maps*, *Financial Models*, and *Risk Assessments*.
 
+---
+
+## 📋 Recent Updates
+
+### Phase 3: Component Consolidation & Design System (February 2026) ✅
+
+Completed comprehensive UI component consolidation and design system standardization:
+
+* **Textarea Consolidation:** 7 implementations → 2 (base + SmartTextarea)
+  * Auto-grow, bullet lists, markdown preview, title variant
+  * ~380 LOC reduction
+* **SpiderChart Deduplication:** Removed duplicate, unified with semantic tokens
+* **Button Standardization:** Migrated 10 files with 20+ raw `<button>` elements to Button component
+* **Spinner Component:** Created unified Spinner with sm/md/lg sizes
+* **Text Size Cleanup:** Removed arbitrary sizes, standardized to Tailwind scale
+* **Design System Documentation:** Comprehensive design tokens and component usage guides
+
+**Total LOC Reduction:** ~500+ lines
+
+**Benefits:** Improved maintainability, theme consistency, developer experience
+
+**Documentation:**
+
+* [Design Tokens](/web/src/styles/design-tokens.md) - Complete design system reference
+* [Component Usage Guide](/web/docs/COMPONENT_USAGE.md) - Quick component reference
+
+---
+
 ## 🛠️ Tech Stack
 
 *   **Framework**: Next.js 14 (App Router)
