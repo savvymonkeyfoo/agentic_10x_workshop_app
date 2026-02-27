@@ -12,7 +12,7 @@ export async function getOpportunities(workshopId: string) {
                 workshopId,
                 showInCapture: true  // Only show items that have been explicitly promoted
             },
-            orderBy: { updatedAt: 'desc' }
+            orderBy: { createdAt: 'asc' }  // Fixed order by creation time
         });
         return opportunities;
     } catch (error) {
