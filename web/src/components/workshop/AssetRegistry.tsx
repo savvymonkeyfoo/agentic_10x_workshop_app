@@ -2,6 +2,7 @@
 
 import { Asset } from '@prisma/client';
 import { Trash2, FileText, UploadCloud } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -236,13 +237,15 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <button
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
                                                 onClick={() => handleDelete(asset.id)}
-                                                className="p-1.5 text-tertiary hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                                className="opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 h-8 w-8"
                                                 title="Delete Asset"
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}

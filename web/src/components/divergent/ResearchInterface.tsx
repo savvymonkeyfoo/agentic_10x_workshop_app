@@ -363,18 +363,19 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
             <div className="flex justify-between items-center mb-8 pb-2 border-b border-muted">
                 <div className="flex space-x-8">
                     {Tabs.map((tab) => (
-                        <button
+                        <Button
                             key={tab.id}
+                            variant="ghost"
                             onClick={() => !tab.disabled && setActiveTab(tab.id)}
                             disabled={tab.disabled}
                             className={cn(
-                                "pb-4 text-xs font-bold tracking-widest transition-all relative",
+                                "pb-4 text-xs font-bold tracking-widest transition-all relative h-auto px-0",
                                 activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-disabled cursor-not-allowed" : "text-tertiary hover:text-secondary"
                             )}
                         >
                             {tab.label}
                             {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-blue" />}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 <div>

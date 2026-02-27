@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Opportunity } from '@prisma/client';
 import { EditableText } from './EditableText';
 import { Download, CheckSquare, BrainCircuit, Activity, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { updateOpportunity } from '@/app/actions/update-opportunity';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -448,14 +449,15 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
 
             {/* Export PDF Button - Fixed Floating */}
             <div className="fixed bottom-8 right-8 z-50">
-                <button
+                <Button
                     onClick={handleExportPDF}
                     disabled={isExporting}
-                    className="flex items-center rounded-md bg-info px-6 py-3 font-bold text-white shadow-xl transition-colors hover:bg-info/90 disabled:opacity-50"
+                    size="lg"
+                    className="shadow-xl"
                 >
-                    {isExporting ? <Spinner size="sm" className="mr-2" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExporting ? <Spinner size="sm" /> : <Download className="h-4 w-4" />}
                     {isExporting ? 'Generating...' : 'Export'}
-                </button>
+                </Button>
             </div>
 
             <ConfirmModal
