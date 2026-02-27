@@ -24,7 +24,8 @@ import {
     getAllQuestionIds,
     LENS_DEFINITIONS
 } from '@/lib/scoring-constants';
-import { X, Check, Brain, Sparkles, Wand2, Loader2, Info, Zap, AlertTriangle, Infinity, RefreshCw, Split } from 'lucide-react';
+import { X, Check, Brain, Sparkles, Wand2, Info, Zap, AlertTriangle, Infinity, RefreshCw, Split } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { SpeedometerGauge } from '../workshop/SpeedometerGauge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -88,7 +89,7 @@ function ThreeStepPicker({ value, onChange, question }: any) {
 
 function SyncIndicator({ status }: { status: 'idle' | 'saving' | 'saved' }) {
     if (status === 'saving') {
-        return <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight text-primary fade-in"><Loader2 size={12} className="animate-spin" /> Saving changes...</div>;
+        return <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight text-primary fade-in"><Spinner size="sm" /> Saving changes...</div>;
     }
     return <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight text-muted-foreground fade-in"><Check size={12} className="text-emerald-500" /> Changes saved</div>;
 }
@@ -574,7 +575,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                                     isAnalyzing && "opacity-80 cursor-wait"
                                 )}
                             >
-                                {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                {isAnalyzing ? <Spinner size="sm" /> : <RefreshCw size={16} />}
                                 {isAnalyzing ? "Analysing Idea..." : "Re-analyse"}
                             </Button>
                         </div>

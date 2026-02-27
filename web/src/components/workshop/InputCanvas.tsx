@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Plus, Maximize2, Minimize2, Sparkles, Loader2 } from 'lucide-react';
+import { Check, X, Plus, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1372,10 +1373,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
-                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
+                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Spinner size="sm" className="text-intelligence" />}
 
                                     {tab.label}
                                     {isTabValid && <span className="w-1.5 h-1.5 rounded-full bg-status-safe" />}
@@ -1410,7 +1411,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 disabled={isMagicFilling}
                                                 className="gap-2 text-xs font-bold"
                                             >
-                                                {isMagicFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                {isMagicFilling ? <Spinner size="sm" /> : <Sparkles className="w-3 h-3" />}
                                                 {isMagicFilling ? "Analysing..." : "Start Magic Fill"}
                                             </Button>
                                         </div>
@@ -1523,7 +1524,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'VALUE_PROP'}
                                                     className="gap-2 text-xs font-bold"
                                                 >
-                                                    {isEnriching === 'VALUE_PROP' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'VALUE_PROP' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'VALUE_PROP' ? "Drafting..." : "Generate CVP"}
                                                 </Button>
                                             </div>
@@ -1569,7 +1570,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'WORKFLOW'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50"
                                                 >
-                                                    {isEnriching === 'WORKFLOW' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'WORKFLOW' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     Suggest Workflow
                                                 </button>
 
@@ -1751,7 +1752,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'EXECUTION'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {isEnriching === 'EXECUTION' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION' ? "Drafting..." : "Draft Execution Plan"}
                                                 </button>
                                             </div>
@@ -1780,7 +1781,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'EXECUTION_PARAMS'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {isEnriching === 'EXECUTION_PARAMS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION_PARAMS' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION_PARAMS' ? "Drafting..." : "Draft Execution Parameters"}
                                                 </button>
                                             </div>
@@ -1823,7 +1824,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 disabled={isEnriching === 'BUSINESS_CASE'}
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                                             >
-                                                {isEnriching === 'BUSINESS_CASE' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                {isEnriching === 'BUSINESS_CASE' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                 {isEnriching === 'BUSINESS_CASE' ? "Authoring..." : "Draft Business Case"}
                                             </button>
                                         </div>

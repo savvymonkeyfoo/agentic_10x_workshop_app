@@ -1,7 +1,8 @@
 'use client';
 
 import { Asset } from '@prisma/client';
-import { Loader2, Trash2, FileText, UploadCloud } from 'lucide-react';
+import { Trash2, FileText, UploadCloud } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -181,7 +182,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
             >
                 <div className="p-3 bg-card rounded-full shadow-sm mb-3">
                     {isUploading ? (
-                        <Loader2 className="w-6 h-6 text-intelligence animate-spin" />
+                        <Spinner size="md" className="text-intelligence" />
                     ) : (
                         <UploadCloud className={`w-6 h-6 ${isDragging ? 'text-intelligence' : 'text-tertiary'}`} />
                     )}
@@ -227,7 +228,7 @@ export function AssetRegistry({ workshopId, type, title, assets }: AssetRegistry
                                                 </div>
                                             ) : asset.status === 'PROCESSING' ? (
                                                 <div className="flex items-center space-x-2 text-intelligence">
-                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                    <Spinner size="sm" />
                                                     <span className="text-xs font-medium">Processing...</span>
                                                 </div>
                                             ) : (

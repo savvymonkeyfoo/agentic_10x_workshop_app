@@ -16,7 +16,8 @@ import {
     getAllQuestionIds
 } from '@/lib/scoring-constants';
 import { SpeedometerGauge } from './SpeedometerGauge';
-import { Brain, Loader2, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Brain, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 interface ScorecardModalProps {
@@ -177,7 +178,7 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                                 <span className="text-border">|</span>
                                 {saveStatus === 'saving' ? (
                                     <span className="flex items-center gap-1 text-muted-foreground">
-                                        <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+                                        <Spinner size="sm" /> Saving...
                                     </span>
                                 ) : (
                                     <span className="flex items-center gap-1 text-success font-medium">

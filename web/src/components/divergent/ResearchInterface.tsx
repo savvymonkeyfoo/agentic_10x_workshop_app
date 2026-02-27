@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Sparkles, BrainCircuit } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -322,7 +323,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-success animate-pulse" : "bg-muted")} />
                         <h3 className="font-bold text-primary flex items-center gap-2">
                             Deep-Chain Analysis Engine
-                            {intelligenceState === 'analyzing' && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
+                            {intelligenceState === 'analyzing' && <Spinner size="sm" className="text-emerald-500 ml-2" />}
                         </h3>
                     </div>
                     <div className="flex gap-3">
@@ -444,7 +445,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         )}
                         {intelligenceState === 'initializing' && (
                             <div className="flex flex-col items-center justify-center h-[500px]">
-                                <Loader2 className="w-12 h-12 text-intelligence animate-spin mb-4" /><h3 className="font-bold text-lg text-primary">Hydrating Deep-Chain Context...</h3><p className="text-secondary text-sm">Parsing backlog logic and loading technical DNA</p>
+                                <Spinner size="lg" className="text-intelligence mb-4" /><h3 className="font-bold text-lg text-primary">Hydrating Deep-Chain Context...</h3><p className="text-secondary text-sm">Parsing backlog logic and loading technical DNA</p>
                             </div>
                         )}
                         {(intelligenceState === 'analyzing' || intelligenceState === 'complete') && (

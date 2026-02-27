@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DndContext, useDraggable, useDroppable, DragOverlay, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import { X, GripVertical, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { X, GripVertical, Plus, Sparkles } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { recommendCapabilities } from '@/app/actions/recommend-capabilities';
 import { WorkflowPhase } from '@/types/workshop';
 
@@ -339,7 +340,7 @@ export default function CapabilitiesManager({
                             disabled={isRecommending || !workflowContext}
                             className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-intelligence to-intelligence text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isRecommending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                            {isRecommending ? <Spinner size="sm" /> : <Sparkles size={12} />}
                             {isRecommending ? "Analysing..." : "Recommend"}
                         </button>
                     </div>

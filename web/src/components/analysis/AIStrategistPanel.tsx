@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
+import { Spinner } from '@/components/ui/spinner';
 
 interface SequenceItem {
     id: string;
@@ -135,7 +136,7 @@ export function AIStrategistPanel({
                 {isLoading && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 text-primary">
-                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <Spinner size="md" className="text-primary" />
                             <span className="text-sm font-semibold">Analyzing portfolio...</span>
                         </div>
                         <div className="space-y-3 animate-pulse">

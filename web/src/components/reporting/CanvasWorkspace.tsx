@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Opportunity } from '@prisma/client';
 import { EditableText } from './EditableText';
-import { Download, RefreshCw, CheckSquare, BrainCircuit, Activity, Layers } from 'lucide-react';
+import { Download, CheckSquare, BrainCircuit, Activity, Layers } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { updateOpportunity } from '@/app/actions/update-opportunity';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { SpiderChart } from '@/components/shared/SpiderChart';
@@ -452,7 +453,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                     disabled={isExporting}
                     className="flex items-center rounded-md bg-info px-6 py-3 font-bold text-white shadow-xl transition-colors hover:bg-info/90 disabled:opacity-50"
                 >
-                    {isExporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExporting ? <Spinner size="sm" className="mr-2" /> : <Download className="mr-2 h-4 w-4" />}
                     {isExporting ? 'Generating...' : 'Export'}
                 </button>
             </div>
