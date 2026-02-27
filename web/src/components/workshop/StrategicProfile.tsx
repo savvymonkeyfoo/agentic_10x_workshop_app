@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { SpiderChart } from '@/components/ui/SpiderChart';
+import { SpiderChart } from '@/components/shared/SpiderChart';
 import { MiniMatrix } from '@/components/ui/MiniMatrix';
 import { VennDiagram } from '@/components/ui/VennDiagram';
 import { DFVAssessment, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
