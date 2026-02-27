@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { SmartBulletEditor } from "@/components/ui/smart-bullet-editor";
+import { SmartTextarea } from "@/components/ui/smart-textarea";
 
 export type OpportunityCardData = {
     title: string;
@@ -260,11 +260,11 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                     <NotebookPen className="w-4 h-4 text-info" /> Context & Notes
                                 </Label>
                                 <div className="bg-info/5 border border-info/10 rounded-xl p-4">
-                                    <SmartBulletEditor
+                                    <SmartTextarea
                                         value={localCard.notes || ''}
-                                        onChange={(val) => handleChange('notes', val)}
+                                        onValueChange={(val) => handleChange('notes', val)}
                                         placeholder="Add facilitator notes, context, or key constraints..."
-                                        colorClass="text-foreground"
+                                        bulletList="manual"
                                     />
                                 </div>
                             </div>
@@ -274,10 +274,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 <Label className="text-xs font-bold text-destructive uppercase mb-3 flex items-center gap-2">
                                     <AlertTriangle className="w-4 h-4" /> Operational Friction
                                 </Label>
-                                <SmartBulletEditor
+                                <SmartTextarea
                                     value={localCard.friction || ""}
-                                    onChange={(val) => handleChange('friction', val)}
-                                    colorClass="text-destructive"
+                                    onValueChange={(val) => handleChange('friction', val)}
+                                    bulletList="manual"
                                     placeholder="Add friction point..."
                                 />
                             </div>
@@ -287,10 +287,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 <Label className="text-xs font-bold text-info uppercase mb-3 flex items-center gap-2">
                                     <ShieldCheck className="w-4 h-4" /> Technical DNA
                                 </Label>
-                                <SmartBulletEditor
+                                <SmartTextarea
                                     value={localCard.techAlignment || ""}
-                                    onChange={(val) => handleChange('techAlignment', val)}
-                                    colorClass="text-info"
+                                    onValueChange={(val) => handleChange('techAlignment', val)}
+                                    bulletList="manual"
                                     placeholder="Add tech detail..."
                                 />
                             </div>
@@ -300,10 +300,10 @@ export function OpportunityModal({ card, isOpen, onClose, onSave, onEnrich, onDe
                                 <Label className="text-xs font-bold text-warning uppercase mb-3 flex items-center gap-2">
                                     <Target className="w-4 h-4" /> Strategy Alignment
                                 </Label>
-                                <SmartBulletEditor
+                                <SmartTextarea
                                     value={localCard.strategyAlignment || ""}
-                                    onChange={(val) => handleChange('strategyAlignment', val)}
-                                    colorClass="text-warning"
+                                    onValueChange={(val) => handleChange('strategyAlignment', val)}
+                                    bulletList="manual"
                                     placeholder="Add strategic goal..."
                                 />
                             </div>

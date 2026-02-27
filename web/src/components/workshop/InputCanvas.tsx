@@ -19,9 +19,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
-import { BulletListEditor } from '@/components/ui/BulletListEditor';
-import { MarkdownTextarea } from '@/components/ui/MarkdownTextarea';
-import { SmartBulletEditor } from '@/components/ui/smart-bullet-editor';
+import { SmartTextarea } from '@/components/ui/smart-textarea';
 import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
@@ -1445,11 +1443,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         <div>
                                             <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Friction / Problem</label>
-                                            <MarkdownTextarea
+                                            <SmartTextarea
                                                 id="frictionStatement"
                                                 name="frictionStatement"
                                                 value={data.frictionStatement}
-                                                onChange={(val) => handleInputChange('frictionStatement', val)}
+                                                onValueChange={(val) => handleInputChange('frictionStatement', val)}
+                                                markdown
                                                 placeholder="What is the problem?"
                                                 minHeight="6rem"
                                             />
@@ -1457,11 +1456,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         <div>
                                             <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Proposed Solution</label>
-                                            <MarkdownTextarea
+                                            <SmartTextarea
                                                 id="description"
                                                 name="description"
                                                 value={data.description}
-                                                onChange={(val) => handleInputChange('description', val)}
+                                                onValueChange={(val) => handleInputChange('description', val)}
+                                                markdown
                                                 className="min-h-[100px]"
                                                 placeholder="Describe the proposed solution..."
                                                 minHeight="100px"
@@ -1474,9 +1474,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Strategy Alignment
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.strategyAlignment || ''}
-                                                    onChange={(val) => handleInputChange('strategyAlignment', val)}
+                                                    onValueChange={(val) => handleInputChange('strategyAlignment', val)}
+                                                    markdown
                                                     placeholder="Strategic relevance..."
                                                     minHeight="6rem"
                                                 />
@@ -1485,9 +1486,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Tech Alignment
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.techAlignment || ''}
-                                                    onChange={(val) => handleInputChange('techAlignment', val)}
+                                                    onValueChange={(val) => handleInputChange('techAlignment', val)}
+                                                    markdown
                                                     placeholder="Technical fit..."
                                                     minHeight="6rem"
                                                 />
@@ -1541,9 +1543,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Context & Notes
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.notes || ''}
-                                                    onChange={(val) => handleInputChange('notes', val)}
+                                                    onValueChange={(val) => handleInputChange('notes', val)}
+                                                    markdown
                                                     placeholder="Add facilitator notes, context, or key constraints..."
                                                     minHeight="6rem"
                                                 />
@@ -1760,11 +1763,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                             {/* Execution Plan Narrative */}
                                             <div className="bg-muted/30 p-4 rounded-xl border border-input">
                                                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     id="executionPlan"
                                                     name="executionPlan"
                                                     value={data.executionPlan || ''}
-                                                    onChange={(val) => handleInputChange('executionPlan', val)}
+                                                    onValueChange={(val) => handleInputChange('executionPlan', val)}
+                                                    markdown
                                                     placeholder="Use AI to draft a plan or write your own..."
                                                     minHeight="12rem"
                                                 />
@@ -1797,14 +1801,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     { label: 'System Guardrails', field: 'systemGuardrails', placeholder: '• Human review for >$1M...' },
                                                 ].map((item) => (
                                                     <div key={item.field} className="p-4 bg-muted/30 rounded-xl border border-input hover:border-primary/50 transition-colors focus-within:ring-2 focus-within:ring-ring/20 h-full min-h-[160px]">
-                                                        <BulletListEditor
+                                                        <SmartTextarea
                                                             label={item.label}
                                                             id={item.field}
                                                             name={item.field}
                                                             value={data[item.field as keyof OpportunityState] as string || ''}
-                                                            onChange={(val) => handleInputChange(item.field as keyof OpportunityState, val)}
+                                                            onValueChange={(val) => handleInputChange(item.field as keyof OpportunityState, val)}
+                                                            bulletList="manual"
                                                             placeholder={item.placeholder}
-                                                        />                       </div>
+                                                        />
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -1832,11 +1838,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                         {/* Business Case Narrative */}
                                         <div className="bg-muted/30 p-4 rounded-xl border border-input">
                                             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
-                                            <MarkdownTextarea
+                                            <SmartTextarea
                                                 id="businessCase"
                                                 name="businessCase"
                                                 value={data.businessCase || ''}
-                                                onChange={(val) => handleInputChange('businessCase', val)}
+                                                onValueChange={(val) => handleInputChange('businessCase', val)}
+                                                markdown
                                                 placeholder="Executive Summary, ROI, and Strategic Value..."
                                                 minHeight="12rem"
                                             />
