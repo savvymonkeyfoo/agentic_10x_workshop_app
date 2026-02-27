@@ -1278,7 +1278,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 {/* Left Panel: Input Tabs */}
                 <div className="bg-background/50 backdrop-blur-xl border border-border rounded-2xl shadow-xl p-8 flex flex-col h-full">
                     {/* Tabs Header */}
-                    <div className="flex space-x-6 border-b border-border mb-6 pb-2">
+                    <div className="flex space-x-6 mb-6 pb-2">
                         {TABS.map((tab) => {
                             let isTabValid = false;
                             if (tab.id === 'A') isTabValid = completenessStatus.tabs.opportunity;
