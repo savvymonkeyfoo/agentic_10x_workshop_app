@@ -1,4 +1,5 @@
 import * as React from "react";
+import ReactMarkdown from "react-markdown";
 import { Textarea } from "./textarea";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ interface SmartTextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextA
   // Feature flags
   autoGrow?: boolean;
   bulletList?: "manual" | "auto" | false; // manual = user adds bullets, auto = starts with bullet on focus
+  markdown?: boolean; // Toggle between markdown preview and edit
   variant?: "default" | "title"; // title = large text, no bullets
 
   // Styling
@@ -22,6 +24,7 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
     onValueChange,
     autoGrow = false,
     bulletList = false,
+    markdown = false,
     variant = "default",
     label,
     minHeight = "60px",
@@ -31,9 +34,19 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
     ...props
   }, ref) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const [isEditing, setIsEditing] = React.useState(!markdown);
 
     // Merge refs
     React.useImperativeHandle(ref, () => textareaRef.current!);
+
+    // Auto-focus when switching to editing mode in markdown
+    React.useEffect(() => {
+      if (markdown && isEditing && textareaRef.current) {
+        textareaRef.current.focus();
+        const len = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(len, len);
+      }
+    }, [isEditing, markdown]);
 
     // Auto-grow logic
     React.useLayoutEffect(() => {
@@ -45,6 +58,9 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
 
     // Handle bullet list auto-start on focus
     const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      if (markdown) {
+        setIsEditing(true);
+      }
       if (bulletList === "auto" && value === "") {
         onValueChange("• ");
         // Set cursor after bullet
@@ -55,6 +71,14 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
         }, 0);
       }
       onFocus?.(e);
+    };
+
+    // Handle blur for markdown mode
+    const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      if (markdown) {
+        setIsEditing(false);
+      }
+      props.onBlur?.(e);
     };
 
     // Handle Enter key for bullet lists
@@ -99,6 +123,38 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
       onValueChange(e.target.value);
     };
 
+    const hasContent = value && value.trim().length > 0;
+
+    // Markdown preview mode
+    if (markdown && !isEditing) {
+      return (
+        <div className="space-y-2">
+          {label && (
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              {label}
+            </label>
+          )}
+          <div
+            onClick={() => setIsEditing(true)}
+            className={cn(
+              "w-full bg-input border border-input rounded-lg p-3 cursor-text hover:border-ring transition-all",
+              !hasContent && "text-muted-foreground",
+              className
+            )}
+            style={{ minHeight }}
+          >
+            {hasContent ? (
+              <article className="prose dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-foreground prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:my-2 prose-p:text-foreground prose-ul:my-2 prose-ul:text-foreground prose-li:my-1 prose-strong:text-foreground">
+                <ReactMarkdown>{value}</ReactMarkdown>
+              </article>
+            ) : (
+              <span className="text-sm">{props.placeholder}</span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2">
         {label && (
@@ -111,6 +167,7 @@ export const SmartTextarea = React.forwardRef<HTMLTextAreaElement, SmartTextarea
           value={value}
           onChange={handleChange}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className={cn(variantClasses, className)}
           style={{ minHeight: autoGrow ? minHeight : undefined }}
