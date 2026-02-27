@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { GripVertical, Infinity, Trash2, Info, Zap, CheckCircle } from 'lucide-react';
 
@@ -145,9 +146,14 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
             {!isPromoted && !isSelectMode && (
                 <CardFooter className="p-2 bg-muted/30 flex items-center justify-between rounded-b-lg border-t border-border">
                     <GripVertical size={14} className="text-muted-foreground group-hover:text-foreground" />
-                    <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded-md group/trash">
-                        <Trash2 size={16} className="text-muted-foreground group-hover/trash:text-destructive" />
-                    </button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                    >
+                        <Trash2 size={16} />
+                    </Button>
                 </CardFooter>
             )}
         </Card>
