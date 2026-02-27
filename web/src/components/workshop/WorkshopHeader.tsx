@@ -52,7 +52,7 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
                         <Image src={clientLogoUrl} alt={`${clientName} logo`} fill className="object-contain" sizes="28px" />
                     </div>
                 ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[10px] font-bold">
+                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold">
                         {clientName?.substring(0, 2).toUpperCase() || 'WK'}
                     </div>
                 )}

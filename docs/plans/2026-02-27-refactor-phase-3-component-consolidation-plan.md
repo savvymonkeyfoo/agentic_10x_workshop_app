@@ -312,13 +312,13 @@ rm web/src/components/ui/SpiderChart.tsx
 
 #### Acceptance Criteria
 
-- [ ] Shared SpiderChart enhanced with semantic color tokens
-- [ ] Ghost state implemented for empty data
-- [ ] Qualitative tooltips implemented
-- [ ] All import sites updated to shared version
-- [ ] UI SpiderChart deleted
-- [ ] Charts render correctly in all 4 themes
-- [ ] No visual regressions in analysis/reporting pages
+- [x] Shared SpiderChart enhanced with semantic color tokens
+- [x] Ghost state implemented for empty data
+- [x] Qualitative tooltips implemented
+- [x] All import sites updated to shared version
+- [x] UI SpiderChart deleted
+- [x] Charts render correctly in all 4 themes
+- [x] No visual regressions in analysis/reporting pages
 
 **Estimated Time:** 1-2 hours
 

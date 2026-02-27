@@ -107,7 +107,7 @@ export function VRCCSlider({ label, value, onChange, disabled = false }: VRCCSli
                 {[1, 2, 3, 4, 5].map(tick => (
                     <div key={tick} className="flex flex-col items-center">
                         <div className="h-1 w-px bg-muted-foreground/30 mb-1"></div>
-                        <span className="text-[10px] text-muted-foreground">{tick}</span>
+                        <span className="text-xs text-muted-foreground">{tick}</span>
                     </div>
                 ))}
             </div>

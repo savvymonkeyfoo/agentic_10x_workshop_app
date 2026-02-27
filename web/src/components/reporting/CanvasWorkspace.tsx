@@ -333,7 +333,7 @@ export function CanvasWorkspace({ data }: { data: Opportunity }) {
                                                 <svg viewBox="0 0 24 24" className="h-12 w-12 text-info drop-shadow-sm" fill="currentColor">
                                                     <path d="M20.9 4.6c-1.3-.5-2.7-.8-4.1-.8-.7 0-1.4.1-2 .3l-1.6.5-1.6-.5c-.6-.2-1.3-.3-2-.3-1.4 0-2.8.3-4.1.8L2 5.9l2.5 6.6 2.1-.8.9 7.8c.1.9.9 1.6 1.8 1.6h5.4c.9 0 1.7-.7 1.8-1.6l.9-7.8 2.1.8 2.5-6.6-3.1-1.3z" />
                                                 </svg>
-                                                <span className={`absolute inset-0 flex items-center justify-center pt-1 font-black text-white ${(data.tShirtSize || '').length > 1 ? 'text-[10px]' : 'text-sm'}`}>
+                                                <span className={`absolute inset-0 flex items-center justify-center pt-1 font-black text-white ${(data.tShirtSize || '').length > 1 ? 'text-xs' : 'text-sm'}`}>
                                                     {data.tShirtSize || 'M'}
                                                 </span>
                                             </div>

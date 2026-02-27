@@ -123,12 +123,12 @@ const DropZone = ({ id, title, items, colorClass, placeholder, onDelete, onAdd }
                 <h4 className="text-xs font-bold text-secondary uppercase tracking-widest">{title}</h4>
                 <div className="flex items-center gap-2">
                     {/* Count Badge */}
-                    <span className="text-[10px] bg-surface-hover text-tertiary px-2 py-0.5 rounded-full">{items.length}</span>
+                    <span className="text-xs bg-surface-hover text-tertiary px-2 py-0.5 rounded-full">{items.length}</span>
                     {/* Add Button */}
                     {onAdd && (
                         <button
                             onClick={onAdd}
-                            className="text-[10px] font-bold text-info hover:text-info hover:bg-info-subtle px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+                            className="text-xs font-bold text-info hover:text-info hover:bg-info-subtle px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
                         >
                             <Plus size={10} /> Add New
                         </button>

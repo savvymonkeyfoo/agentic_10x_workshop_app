@@ -59,7 +59,7 @@ export function SmartTextarea({
 
     return (
         <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
+            <label htmlFor={id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
                 {label}
             </label>
             <textarea

@@ -114,14 +114,14 @@ export function IdeaCard({ card, onClick, onDelete, isSelectMode, isSelected, on
                             🔒 Promoted
                         </Badge>
                     ) : (
-                        <Badge variant="outline" className={cn("text-[10px] border px-2 py-0.5 font-bold tracking-wide", sourceConfig.class)}>
+                        <Badge variant="outline" className={cn("text-xs border px-2 py-0.5 font-bold tracking-wide", sourceConfig.class)}>
                             {sourceConfig.icon} {sourceConfig.label}
                         </Badge>
                     )}
 
                     {/* Only show Tier in Ideation Phase (and if not promoted/intelligence mode hidden logic) */}
                     {!isIntelligenceCard && !isPromoted && (
-                        <Badge variant="outline" className={cn("text-[10px] font-bold", tierConfig.badgeClass)}>
+                        <Badge variant="outline" className={cn("text-xs font-bold", tierConfig.badgeClass)}>
                             {tierConfig.label}
                         </Badge>
                     )}

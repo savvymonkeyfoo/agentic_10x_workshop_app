@@ -118,7 +118,7 @@ export function SmartBulletEditor({ value, onChange, colorClass = "text-foregrou
                     const newItems = [...items, ''];
                     setItems(newItems);
                 }}
-                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground ml-1 px-2 py-1 rounded hover:bg-accent transition-colors"
+                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground ml-1 px-2 py-1 rounded hover:bg-accent transition-colors"
             >
                 <Plus className="w-3 h-3" /> Add Point
             </button>

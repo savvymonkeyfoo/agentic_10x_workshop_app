@@ -85,7 +85,7 @@ export function ThemePicker() {
                                     </div>
 
                                     {style === item.value && (
-                                        <div className="h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px]">
+                                        <div className="h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
                                             ✓
                                         </div>
                                     )}

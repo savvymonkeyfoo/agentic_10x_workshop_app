@@ -68,7 +68,7 @@ export function StrategicProfile({ data, dfvAssessment = DEFAULT_DFV_ASSESSMENT 
                         {efficiency.toFixed(1)}x
                     </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground text-right max-w-[150px] leading-tight opacity-70">
+                <p className="text-xs text-muted-foreground text-right max-w-[150px] leading-tight opacity-70">
                     Projected ROI Multiplier based on Business Value.
                 </p>
             </div>

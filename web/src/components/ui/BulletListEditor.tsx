@@ -99,7 +99,7 @@ export function BulletListEditor({ value, onChange, placeholder, label, id, name
     return (
         <div className="flex flex-col gap-1 w-full">
             {label && (
-                <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
+                <label htmlFor={id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
                     {label}
                 </label>
             )}

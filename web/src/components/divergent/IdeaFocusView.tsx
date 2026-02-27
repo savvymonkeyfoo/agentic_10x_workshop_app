@@ -89,9 +89,9 @@ function ThreeStepPicker({ value, onChange, question }: any) {
 
 function SyncIndicator({ status }: { status: 'idle' | 'saving' | 'saved' }) {
     if (status === 'saving') {
-        return <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight text-primary fade-in"><Spinner size="sm" /> Saving changes...</div>;
+        return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-tight text-primary fade-in"><Spinner size="sm" /> Saving changes...</div>;
     }
-    return <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight text-muted-foreground fade-in"><Check size={12} className="text-emerald-500" /> Changes saved</div>;
+    return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-tight text-muted-foreground fade-in"><Check size={12} className="text-emerald-500" /> Changes saved</div>;
 }
 
 // --- MAIN COMPONENT ---
@@ -374,7 +374,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
 
                         {/* FULL WIDTH DESCRIPTION (Card Body) */}
                         <div className="space-y-4">
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
                                 Description
                             </label>
                             <textarea
@@ -389,7 +389,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                         {/* HIGH-LEVEL EXPLORATION GRID (Friction & Tech) */}
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
                                     <Info size={12} className="text-primary" /> Friction Point
                                 </label>
                                 <textarea
@@ -400,7 +400,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                                 />
                             </div>
                             <div className="space-y-4">
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
                                     <Zap size={12} className="text-warning" /> Tech Alignment
                                 </label>
                                 <textarea
@@ -458,7 +458,7 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                         <h3 className="font-black text-foreground flex items-center gap-2">
                             <Wand2 className="text-intelligence" size={20} /> Intelligence & Insights
                         </h3>
-                        <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">Strategic Recommendations</p>
+                        <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-tighter">Strategic Recommendations</p>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -496,18 +496,18 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                                                         <div className="flex gap-2 pt-2 border-t border-border/50">
                                                             <Button
                                                                 size="sm"
-                                                                className="flex-1 h-7 text-[10px] font-black bg-primary/10 text-primary hover:bg-primary/20"
+                                                                className="flex-1 h-7 text-xs font-black bg-primary/10 text-primary hover:bg-primary/20"
                                                                 onClick={() => initiateApplySuggestion(suggestion)}
                                                             >
                                                                 <Check size={12} className="mr-1" /> Apply
                                                             </Button>
-                                                            <Button size="sm" variant="ghost" className="h-7 text-[10px] text-muted-foreground font-bold" onClick={() => setSuggestions(s => s.filter(x => x.id !== suggestion.id))}>Dismiss</Button>
+                                                            <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground font-bold" onClick={() => setSuggestions(s => s.filter(x => x.id !== suggestion.id))}>Dismiss</Button>
                                                         </div>
                                                     </motion.div>
                                                 ))}
                                             </AnimatePresence>
                                             {suggestions.filter(s => s.lensId === 'general').length === 0 && (
-                                                <p className="text-[10px] text-muted-foreground italic text-center py-2">No active suggestions.</p>
+                                                <p className="text-xs text-muted-foreground italic text-center py-2">No active suggestions.</p>
                                             )}
                                         </div>
                                     </div>
@@ -545,18 +545,18 @@ export function IdeaFocusView({ item, onClose, onUpdate, initialLens }: IdeaFocu
                                                             <div className="flex gap-2 pt-2 border-t border-border/50">
                                                                 <Button
                                                                     size="sm"
-                                                                    className="flex-1 h-7 text-[10px] font-black bg-primary/10 text-primary hover:bg-primary/20"
+                                                                    className="flex-1 h-7 text-xs font-black bg-primary/10 text-primary hover:bg-primary/20"
                                                                     onClick={() => initiateApplySuggestion(suggestion)}
                                                                 >
                                                                     <Check size={12} className="mr-1" /> Apply
                                                                 </Button>
-                                                                <Button size="sm" variant="ghost" className="h-7 text-[10px] text-muted-foreground font-bold" onClick={() => setSuggestions(s => s.filter(x => x.id !== suggestion.id))}>Dismiss</Button>
+                                                                <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground font-bold" onClick={() => setSuggestions(s => s.filter(x => x.id !== suggestion.id))}>Dismiss</Button>
                                                             </div>
                                                         </motion.div>
                                                     ))}
                                                 </AnimatePresence>
                                                 {suggestions.filter(s => s.lensId === lens.id).length === 0 && (
-                                                    <p className="text-[10px] text-muted-foreground italic text-center py-2">No strategic insights generated.</p>
+                                                    <p className="text-xs text-muted-foreground italic text-center py-2">No strategic insights generated.</p>
                                                 )}
                                             </div>
                                         </div>

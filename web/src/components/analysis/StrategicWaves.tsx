@@ -34,9 +34,9 @@ const DraggableCard = ({ project }: { project: ProjectNode }) => {
         <div id={`card-${project.id}`} ref={setNodeRef} style={style} {...listeners} {...attributes} className="bg-card dark:bg-card p-3 rounded shadow-sm border border-border hover:shadow-md cursor-grab active:cursor-grabbing mb-3 group relative z-10">
             <div className="flex justify-between items-start mb-2">
                 <span className="font-bold text-foreground text-sm leading-tight">{project.name || project.projectName}</span>
-                <span className="text-[10px] font-mono bg-muted px-1 rounded text-muted-foreground shrink-0 ml-2">{project.tShirtSize || '-'}</span>
+                <span className="text-xs font-mono bg-muted px-1 rounded text-muted-foreground shrink-0 ml-2">{project.tShirtSize || '-'}</span>
             </div>
-            <div className="text-[10px] text-muted-foreground">Val: {project.scoreValue}/5 • Cplx: {project.scoreComplexity}/5</div>
+            <div className="text-xs text-muted-foreground">Val: {project.scoreValue}/5 • Cplx: {project.scoreComplexity}/5</div>
         </div>
     );
 };

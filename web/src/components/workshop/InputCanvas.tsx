@@ -162,7 +162,7 @@ const SmartTextarea = ({
 
     return (
         <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
+            <label htmlFor={id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
                 {label}
             </label>
             <textarea
@@ -258,7 +258,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                 <div className="space-y-3">
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Trigger / Input</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Trigger / Input</span>
                         <textarea
                             value={phase.inputs || ''}
                             onChange={(e) => {
@@ -274,7 +274,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Actions Taken</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Actions Taken</span>
                         <textarea
                             value={phase.actions || ''}
                             onChange={(e) => {
@@ -289,7 +289,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Artifact / Output</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Artifact / Output</span>
                         <textarea
                             value={phase.outputs || ''}
                             onChange={(e) => {
@@ -422,7 +422,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">As a [Role]...</label>
+                    <label htmlFor="vp_role" className="block text-xs uppercase font-bold text-muted-foreground mb-1">As a [Role]...</label>
                     <textarea
                         ref={roleRef}
                         id="vp_role"
@@ -435,7 +435,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">I want to [Outcome]...</label>
+                    <label htmlFor="vp_outcome" className="block text-xs uppercase font-bold text-muted-foreground mb-1">I want to [Outcome]...</label>
                     <textarea
                         ref={outcomeRef}
                         id="vp_outcome"
@@ -448,7 +448,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">With [Solution]...</label>
+                    <label htmlFor="vp_solution" className="block text-xs uppercase font-bold text-muted-foreground mb-1">With [Solution]...</label>
                     <textarea
                         ref={solutionRef}
                         id="vp_solution"
@@ -461,7 +461,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">So that [Need]...</label>
+                    <label htmlFor="vp_need" className="block text-xs uppercase font-bold text-muted-foreground mb-1">So that [Need]...</label>
                     <textarea
                         ref={needRef}
                         id="vp_need"
@@ -1335,7 +1335,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         {isComplete || isGlobalReady ? (
                             <Check className="w-5 h-5 text-white" strokeWidth={3} />
                         ) : (
-                            <span className="text-[10px] font-bold">
+                            <span className="text-xs font-bold">
                                 {Math.round(isGlobalReady ? 100 : completeness)}%
                             </span>
                         )}
@@ -1401,7 +1401,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-bold text-foreground">Magic Fill</div>
-                                                    <div className="text-[10px] text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
+                                                    <div className="text-xs text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
                                                 </div>
                                             </div>
                                             <Button
@@ -1683,7 +1683,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                                     </button>
                                                                                 ))}
                                                                             </div>
-                                                                            <div className="text-[10px] text-center text-muted-foreground font-medium h-4">
+                                                                            <div className="text-xs text-center text-muted-foreground font-medium h-4">
                                                                                 {AUTONOMY_LABELS[phase.autonomy] || 'Select autonomy level'}
                                                                             </div>
                                                                         </div>
@@ -1759,7 +1759,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                             {/* Execution Plan Narrative */}
                                             <div className="bg-muted/30 p-4 rounded-xl border border-input">
-                                                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
+                                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
                                                 <MarkdownTextarea
                                                     id="executionPlan"
                                                     name="executionPlan"
@@ -1831,7 +1831,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         {/* Business Case Narrative */}
                                         <div className="bg-muted/30 p-4 rounded-xl border border-input">
-                                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
+                                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
                                             <MarkdownTextarea
                                                 id="businessCase"
                                                 name="businessCase"
@@ -1889,7 +1889,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                     </div>
 
                                                                     {/* Label */}
-                                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-primary' : 'text-muted-foreground/60 group-hover:text-muted-foreground'}`}>
+                                                                    <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-primary' : 'text-muted-foreground/60 group-hover:text-muted-foreground'}`}>
                                                                         {size}
                                                                     </span>
 
@@ -1925,7 +1925,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 {/* Stacked Benefit Inputs */}
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label htmlFor="benefitRevenue" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Rev. Uplift ($)</label>
+                                                        <label htmlFor="benefitRevenue" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Rev. Uplift ($)</label>
                                                         <CurrencyInput
                                                             id="benefitRevenue"
                                                             name="benefitRevenue"
@@ -1936,7 +1936,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitCostAvoidance" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Cost Avoid. ($)</label>
+                                                        <label htmlFor="benefitCostAvoidance" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Cost Avoid. ($)</label>
                                                         <CurrencyInput
                                                             id="benefitCostAvoidance"
                                                             name="benefitCostAvoidance"
@@ -1947,7 +1947,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitEfficiency" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Hrs Saved</label>
+                                                        <label htmlFor="benefitEfficiency" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Hrs Saved</label>
                                                         <CurrencyInput
                                                             id="benefitEfficiency"
                                                             name="benefitEfficiency"
@@ -1960,7 +1960,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div className="pt-2 border-t border-input mt-2">
-                                                        <label htmlFor="benefitEstCost" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Est. Implementation Cost ($)</label>
+                                                        <label htmlFor="benefitEstCost" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Est. Implementation Cost ($)</label>
                                                         <CurrencyInput
                                                             id="benefitEstCost"
                                                             name="benefitEstCost"

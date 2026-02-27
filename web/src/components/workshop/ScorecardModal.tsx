@@ -208,7 +208,7 @@ export function ScorecardModal({ cardTitle, initialScores, onSave, onClose }: Sc
                             <AccordionTrigger className="py-3 hover:no-underline">
                                 <div className="flex items-center gap-2">
                                     <span className="font-bold text-foreground">{dimension.category}</span>
-                                    <Badge variant="outline" className="text-[10px] bg-muted/50 text-muted-foreground">
+                                    <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground">
                                         {dimension.questions.length} factors
                                     </Badge>
                                 </div>
