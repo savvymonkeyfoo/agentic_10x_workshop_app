@@ -106,86 +106,6 @@ const SortablePhaseCard = ({ id, children }: { id: string, children: React.React
     );
 };
 
-// --- HELPER COMPONENT: Auto-Growing Textarea with Smart Bullets ---
-const SmartTextarea = ({
-    value,
-    onChange,
-    placeholder,
-    label,
-    className,
-    id,
-    name
-}: {
-    value: string;
-    onChange: (val: string) => void;
-    placeholder: string;
-    label: string;
-    className?: string;
-    id?: string;
-    name?: string;
-}) => {
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const props = { value, onChange, placeholder, label, className }; // Capture props for easier access
-
-    // 1. Auto-Resize on EVERY value change
-    React.useLayoutEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    }, [value]);
-
-    // 2. Smart Bullet Logic
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const target = e.target as HTMLTextAreaElement;
-            const start = target.selectionStart;
-            const end = target.selectionEnd;
-
-            // Insert newline + bullet
-            const newValue = value.substring(0, start) + "\n• " + value.substring(end);
-
-            onChange(newValue);
-
-            // Restore cursor position after state update
-            setTimeout(() => {
-                if (textareaRef.current) {
-                    textareaRef.current.selectionStart = start + 3;
-                    textareaRef.current.selectionEnd = start + 3;
-                }
-            }, 0);
-        }
-    };
-
-    return (
-        <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <label htmlFor={id} className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
-                {label}
-            </label>
-            <textarea
-                id={id}
-                name={name}
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                    if (!value) onChange('• ');
-                }}
-                className={
-                    // Allow override or use default yellow
-                    props.className
-                        ? props.className
-                        : "w-full text-sm leading-relaxed bg-input border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none resize-none overflow-hidden min-h-[40px] placeholder-muted-foreground/40 text-foreground font-medium transition-all"
-                }
-                placeholder={placeholder}
-                rows={1}
-            />
-        </div>
-    );
-};
-
 // --- HELPER COMPONENT: Simple Auto-Growing Textarea for Titles ---
 const TitleTextarea = ({
     value,
@@ -1649,7 +1569,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-inputs-${phase.id}`}
                                                                         name={`phase-inputs-${phase.id}`}
                                                                         value={phase.inputs || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'inputs', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'inputs', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
@@ -1657,7 +1577,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-actions-${phase.id}`}
                                                                         name={`phase-actions-${phase.id}`}
                                                                         value={phase.actions || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'actions', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'actions', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
@@ -1665,7 +1585,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-outputs-${phase.id}`}
                                                                         name={`phase-outputs-${phase.id}`}
                                                                         value={phase.outputs || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'outputs', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'outputs', val)}
                                                                         placeholder="• List items..."
                                                                     />
 
