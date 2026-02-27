@@ -18,8 +18,6 @@ import { getWorkshopNamespace } from '@/lib/pinecone';
 export async function deleteAsset(assetId: string) {
     if (!assetId) return { success: false, error: "Asset ID required" };
 
-    console.log(`[deleteAsset] Starting atomic delete for: ${assetId}`);
-
     try {
         // 1. Fetch asset to get URL and workshopId
         const asset = await prisma.asset.findUnique({
@@ -31,7 +29,6 @@ export async function deleteAsset(assetId: string) {
         }
 
         // 2. Delete from Vercel Blob
-        console.log(`[deleteAsset] Deleting from Blob: ${asset.url}`);
         try {
             await del(asset.url);
         } catch (blobError) {
@@ -39,7 +36,6 @@ export async function deleteAsset(assetId: string) {
         }
 
         // 3. Delete from Pinecone (all chunks for this asset)
-        console.log(`[deleteAsset] Deleting from Pinecone namespace: ${asset.workshopId}`);
         try {
             const namespace = getWorkshopNamespace(asset.workshopId);
 
@@ -52,7 +48,6 @@ export async function deleteAsset(assetId: string) {
             if (chunks.length > 0) {
                 const vectorIds = chunks.map(c => `${assetId}_chunk_${c.chunkIndex}`);
                 await namespace.deleteMany(vectorIds);
-                console.log(`[deleteAsset] Deleted ${vectorIds.length} vectors`);
             }
         } catch (pineconeError) {
             console.warn(`[deleteAsset] Pinecone delete failed:`, pineconeError);
@@ -60,12 +55,10 @@ export async function deleteAsset(assetId: string) {
         }
 
         // 4. Delete from Prisma (cascades to DocumentChunk via onDelete: Cascade)
-        console.log(`[deleteAsset] Deleting from Prisma...`);
         await prisma.asset.delete({
             where: { id: assetId }
         });
 
-        console.log(`[deleteAsset] Complete for: ${assetId}`);
         revalidatePath(`/workshop/${asset.workshopId}/research`);
         return { success: true };
 

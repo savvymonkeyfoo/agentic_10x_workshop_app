@@ -41,7 +41,7 @@ export const DfvChartSmall = ({ data }: { data: any }) => {
                     <span className="text-[9px] font-bold text-gray-500 uppercase">Feasibility</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-warning-subtle0" />
                     <span className="text-[9px] font-bold text-gray-500 uppercase">Viability</span>
                 </div>
             </div>

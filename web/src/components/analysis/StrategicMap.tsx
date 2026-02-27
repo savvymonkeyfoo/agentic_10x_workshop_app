@@ -123,9 +123,9 @@ export default function StrategicMap({ opportunities, edges: _edges = [] }: { op
         // Wave 1: Green, Wave 2: Blue
         // Based on previous design: Rank 1 = Green, Rank 2 = Blue
         if (rank === 1) return 'bg-emerald-500 border-emerald-600';
-        if (rank === 2) return 'bg-blue-500 border-blue-600';
+        if (rank === 2) return 'bg-info-subtle border-info';
         if (rank === 3) return 'bg-violet-500 border-violet-600';
-        return 'bg-slate-500 border-slate-600';
+        return 'bg-surface-subtle border-muted';
     };
 
     return (

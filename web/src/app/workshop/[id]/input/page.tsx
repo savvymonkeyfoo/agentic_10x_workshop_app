@@ -22,7 +22,7 @@ export default async function InputPage({ params }: PageProps) {
 
     return (
         <div className="h-full w-full">
-            <Suspense fallback={<div className="p-8 text-slate-400">Loading workspace...</div>}>
+            <Suspense fallback={<div className="p-8 text-tertiary">Loading workspace...</div>}>
                 <InputCanvas 
                     initialOpportunities={opportunities} 
                     workshopId={workshopId} 

@@ -2,13 +2,27 @@
 import { generateObject } from 'ai';
 import { AI_CONFIG } from '@/lib/ai-config';
 import { z } from 'zod';
+import { draftExecutionSchema } from '@/lib/validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function draftExecutionPlan(context: any) {
+    // Validate input
+    const validation = draftExecutionSchema.safeParse(context);
+    if (!validation.success) {
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        return {
+            success: false,
+            data: null,
+            error: errors
+        };
+    }
+
+    const validatedContext = validation.data;
+
     try {
         // 1. GROUNDING CHECK: Is there actually enough data to generate a plan?
-        const hasWorkflow = context.phases && Array.isArray(context.phases) && context.phases.length > 0;
-        const hasGoal = context.friction && context.friction.length > 5;
+        const hasWorkflow = validatedContext.phases && Array.isArray(validatedContext.phases) && validatedContext.phases.length > 0;
+        const hasGoal = validatedContext.friction && validatedContext.friction.length > 5;
 
         // If no context exists, return "Holding Pattern" text instead of hallucinations.
         if (!hasWorkflow && !hasGoal) {
@@ -43,11 +57,11 @@ export async function draftExecutionPlan(context: any) {
         TASK: Draft a high-level Execution Strategy for this AI Opportunity.
 
         INPUT CONTEXT:
-        - Opportunity Name: "${context.name}"
-        - Problem/Goal: "${context.friction}"
-        - Strategic Horizon: "${context.strategy}"
-        - Estimated Benefit: $${context.revenue} Revenue / $${context.costAvoidance} Cost Avoidance
-        - Proposed Workflow: ${JSON.stringify(context.phases)}
+        - Opportunity Name: "${validatedContext.name}"
+        - Problem/Goal: "${validatedContext.friction}"
+        - Strategic Horizon: "${validatedContext.strategy}"
+        - Estimated Benefit: $${validatedContext.revenue} Revenue / $${validatedContext.costAvoidance} Cost Avoidance
+        - Proposed Workflow: ${JSON.stringify(validatedContext.phases)}
 
         STRICT RULES:
         1. GROUNDING: Do NOT invent features. If the workflow says "Email Triage", do NOT invent a "Mobile App".

@@ -56,6 +56,40 @@ const config: Config = {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))',
+					subtle: 'hsl(var(--warning-subtle))',
+					muted: 'hsl(var(--warning-muted))'
+				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))',
+					subtle: 'hsl(var(--success-subtle))',
+					muted: 'hsl(var(--success-muted))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					subtle: 'hsl(var(--info-subtle))',
+					muted: 'hsl(var(--info-muted))'
+				},
+				intelligence: {
+					DEFAULT: 'hsl(var(--intelligence))',
+					foreground: 'hsl(var(--intelligence-foreground))',
+					subtle: 'hsl(var(--intelligence-subtle))',
+					muted: 'hsl(var(--intelligence-muted))'
+				},
+				text: {
+					primary: 'hsl(var(--text-primary))',
+					secondary: 'hsl(var(--text-secondary))',
+					tertiary: 'hsl(var(--text-tertiary))',
+					disabled: 'hsl(var(--text-disabled))'
+				},
+				surface: {
+					subtle: 'hsl(var(--surface-subtle))',
+					hover: 'hsl(var(--surface-hover))'
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

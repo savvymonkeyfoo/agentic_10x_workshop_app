@@ -2,6 +2,7 @@ import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { processAssetForRAG } from '@/lib/rag-service';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 // Route Segment Config
 export const dynamic = 'force-dynamic';
@@ -27,8 +28,46 @@ export const maxDuration = 300; // Allow up to 5 minutes for upload + indexing l
  * - workshopId: string - The workshop to attach the asset to
  * - assetType: string - "DOSSIER" or "BACKLOG"
  */
+// File size limits (in bytes)
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB for images
+
+// Allowed MIME types for RAG uploads
+const ALLOWED_RAG_TYPES = [
+    'application/pdf',
+    'text/plain',
+    'text/markdown',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/msword', // .doc
+];
+
+// Allowed MIME types for generic uploads (images)
+const ALLOWED_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml'
+];
+
 export async function POST(request: Request): Promise<NextResponse> {
     console.log(`[Upload] ========== New Upload Request ==========`);
+
+    // Rate limiting: Prevent abuse of expensive upload/indexing operations
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
+    const { success, remaining } = await apiRateLimiter.limit(ip);
+
+    if (!success) {
+        console.warn(`[Upload] Rate limit exceeded for IP: ${ip}`);
+        return NextResponse.json(
+            {
+                error: 'Too many upload requests',
+                details: 'Please wait a moment before uploading again',
+                remainingRequests: remaining
+            },
+            { status: 429 }
+        );
+    }
 
     try {
         const form = await request.formData();
@@ -41,6 +80,14 @@ export async function POST(request: Request): Promise<NextResponse> {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
+        // Validate file size limit
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({
+                error: 'File too large',
+                details: `Maximum file size is 50MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`
+            }, { status: 413 });
+        }
+
         // ---------------------------------------------------------
         // PATH A: GENERIC UPLOAD (e.g. Client Logo)
         // If workshopId or assetType is missing, treat as simple upload
@@ -48,10 +95,22 @@ export async function POST(request: Request): Promise<NextResponse> {
         if (!workshopId || !assetType) {
             console.log('[Upload] Generic upload detected (no workshopId/assetType). Processing as simple file...');
 
-            // basic validation for generic uploads (images only to be safe?)
-            if (!file.type.startsWith('image/')) {
-                console.error('[Upload] Generic upload rejected: Not an image');
-                return NextResponse.json({ error: 'Only image uploads are allowed in generic mode' }, { status: 400 });
+            // Validate file type (images only for generic uploads)
+            if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                console.error('[Upload] Generic upload rejected: Invalid file type:', file.type);
+                return NextResponse.json({
+                    error: 'Invalid file type',
+                    details: 'Only image files (JPEG, PNG, GIF, WebP, SVG) are allowed for generic uploads',
+                    allowedTypes: ALLOWED_IMAGE_TYPES
+                }, { status: 400 });
+            }
+
+            // Validate image size
+            if (file.size > MAX_IMAGE_SIZE) {
+                return NextResponse.json({
+                    error: 'Image too large',
+                    details: `Maximum image size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`
+                }, { status: 413 });
             }
 
             if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -74,6 +133,16 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         if (!['DOSSIER', 'BACKLOG', 'MARKET_SIGNAL'].includes(assetType)) {
             return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
+        }
+
+        // Validate file type for RAG uploads (documents only)
+        if (!ALLOWED_RAG_TYPES.includes(file.type)) {
+            console.error('[Upload] RAG upload rejected: Invalid file type:', file.type);
+            return NextResponse.json({
+                error: 'Invalid file type for RAG upload',
+                details: 'Only PDF, TXT, MD, DOC, and DOCX files are allowed for document uploads',
+                allowedTypes: ALLOWED_RAG_TYPES
+            }, { status: 400 });
         }
 
         console.log(`[Upload] File: ${file.name}, Size: ${file.size}, Type: ${assetType}`);

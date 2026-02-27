@@ -27,9 +27,9 @@ export function CanvasSidebar({ opportunities }: CanvasSidebarProps) {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Projects</h2>
-                <div className="text-xs text-slate-400">Select to view canvas</div>
+            <div className="p-4 border-b border-border">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-secondary mb-1">Projects</h2>
+                <div className="text-xs text-tertiary">Select to view canvas</div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -45,26 +45,26 @@ export function CanvasSidebar({ opportunities }: CanvasSidebarProps) {
                                 "flex items-start gap-3 p-3 rounded-lg text-sm transition-all group",
                                 isActive
                                     ? "bg-brand-blue/10 text-brand-blue border border-brand-blue/20"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent"
+                                    : "hover:bg-surface-hover text-primary border border-transparent"
                             )}
                         >
                             <div className="shrink-0 mt-0.5">
                                 {isComplete ? (
-                                    <CheckCircle2 size={16} className="text-green-500" />
+                                    <CheckCircle2 size={16} className="text-success" />
                                 ) : (
-                                    <CircleDashed size={16} className="text-gray-400" />
+                                    <CircleDashed size={16} className="text-tertiary" />
                                 )}
                             </div>
 
                             <div className="flex flex-col overflow-hidden">
                                 <span className={cn(
                                     "font-medium whitespace-normal line-clamp-2 leading-tight",
-                                    isComplete ? "text-gray-700 dark:text-gray-200" : "text-gray-400 italic"
+                                    isComplete ? "text-primary" : "text-tertiary italic"
                                 )}>
                                     {opp.projectName || "Untitled Project"}
                                 </span>
                                 {!isComplete && (
-                                    <span className="text-[9px] uppercase font-bold text-amber-500 mt-1">Incomplete</span>
+                                    <span className="text-[9px] uppercase font-bold text-warning mt-1">Incomplete</span>
                                 )}
                             </div>
                         </Link>
@@ -72,7 +72,7 @@ export function CanvasSidebar({ opportunities }: CanvasSidebarProps) {
                 })}
 
                 {opportunities.length === 0 && (
-                    <div className="text-center p-4 text-slate-400 text-xs text-balance">
+                    <div className="text-center p-4 text-tertiary text-xs text-balance">
                         No opportunities found. Go to &apos;Input&apos; to create one.
                     </div>
                 )}

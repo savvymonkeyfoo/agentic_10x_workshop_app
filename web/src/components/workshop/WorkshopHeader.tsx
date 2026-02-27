@@ -62,7 +62,7 @@ export function WorkshopHeader({ clientName, clientLogoUrl }: WorkshopHeaderProp
             </div>
 
             {/* Vertical Divider */}
-            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
+            <div className="h-5 w-px bg-surface-hover dark:bg-surface-hover" />
 
             {/* Navigation Items (No container, individual buttons with icons) */}
             {NAV_ITEMS.map(item => {

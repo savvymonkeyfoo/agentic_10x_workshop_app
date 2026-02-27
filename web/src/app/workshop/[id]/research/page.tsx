@@ -30,10 +30,10 @@ async function ResearchDataLoader({ workshopId }: { workshopId: string }) {
 export default function ResearchPage({ params }: { params: { id: string } }) {
     return (
         <Suspense fallback={
-            <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+            <div className="flex h-screen w-full items-center justify-center bg-surface-subtle">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                    <p className="text-sm font-medium text-slate-500">Loading Research Data...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-intelligence" />
+                    <p className="text-sm font-medium text-secondary">Loading Research Data...</p>
                 </div>
             </div>
         }>

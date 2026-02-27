@@ -45,6 +45,37 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* Semantic State Colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    --warning-subtle: 48 100% 96%;
+    --warning-muted: 45 86% 62%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 138 76% 97%;
+    --success-subtle: 143 85% 96%;
+    --success-muted: 142 69% 58%;
+
+    --info: 221 83% 53%;
+    --info-foreground: 210 40% 98%;
+    --info-subtle: 214 95% 93%;
+    --info-muted: 217 91% 60%;
+
+    --intelligence: 239 84% 67%;
+    --intelligence-foreground: 225 100% 98%;
+    --intelligence-subtle: 226 100% 97%;
+    --intelligence-muted: 243 75% 59%;
+
+    /* Text Emphasis Levels */
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215 16% 47%;
+    --text-tertiary: 215 16% 65%;
+    --text-disabled: 214 32% 91%;
+
+    /* Surface Levels */
+    --surface-subtle: 210 40% 98%;
+    --surface-hover: 210 40% 96.1%;
   }
 
   /* CAPGEMINI DARK */
@@ -78,6 +109,37 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* Semantic State Colors (Dark) */
+    --warning: 48 96% 53%;
+    --warning-foreground: 24 9.8% 10%;
+    --warning-subtle: 24 5.7% 10%;
+    --warning-muted: 45 86% 62%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 138 76% 97%;
+    --success-subtle: 142 13% 15%;
+    --success-muted: 142 69% 58%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 222 47% 11%;
+    --info-subtle: 222 47% 11%;
+    --info-muted: 217 91% 60%;
+
+    --intelligence: 243 75% 59%;
+    --intelligence-foreground: 225 100% 98%;
+    --intelligence-subtle: 234 89% 11%;
+    --intelligence-muted: 239 84% 67%;
+
+    /* Text Emphasis Levels (Dark) */
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20% 65%;
+    --text-tertiary: 215 16% 47%;
+    --text-disabled: 217 33% 17%;
+
+    /* Surface Levels (Dark) */
+    --surface-subtle: 217 33% 12%;
+    --surface-hover: 217 32.6% 17.5%;
   }
 
   /* CLAUDE / MANUSCRIPT (Light) */

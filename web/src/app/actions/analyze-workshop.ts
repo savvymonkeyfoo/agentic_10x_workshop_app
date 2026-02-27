@@ -41,8 +41,6 @@ export async function analyzeWorkshop(workshopId: string) {
 - HAS: [${(o.capabilitiesExisting || []).join(', ') || 'None'}]`
         ).join('\n\n');
 
-        console.log("[Analyze] Strategic Dossier:\n", context);
-
         // 3. The 'Council of Agents' Prompt
         const { object } = await generateObject({
             model: AI_CONFIG.strategicModel,
@@ -91,32 +89,34 @@ DATA DOSSIER:
 ${context}`
         });
 
-        console.log("[Analyze] AI Response:", JSON.stringify(object, null, 2));
+        // 4. Update Database using transaction for atomicity
+        await prisma.$transaction(async (tx) => {
+            // Update all opportunities in parallel within transaction
+            await Promise.all(
+                object.strategy.sequence.map(item =>
+                    tx.opportunity.update({
+                        where: { id: item.id },
+                        data: {
+                            sequenceRank: item.rank,
+                            strategicRationale: item.rationale
+                        }
+                    })
+                )
+            );
 
-        // 4. Update Database (Sequential to prevent race conditions)
-        for (const item of object.strategy.sequence) {
-            console.log(`[Analyze] Updating ${item.id} to rank ${item.rank} `);
-            await prisma.opportunity.update({
-                where: { id: item.id },
+            // Save FULL Strategy to Workshop
+            await tx.workshop.update({
+                where: { id: workshopId },
                 data: {
-                    sequenceRank: item.rank,
-                    strategicRationale: item.rationale
+                    strategyNarrative: object.strategy.final_narrative,
+                    strategyDependencies: object.strategy.dependency_analysis,
+                    strategyRisks: object.strategy.risk_analysis,
+                    dependencyGraph: object.strategy.edges as any // Store the calculated edges
                 }
             });
-        }
-
-        // 5. Save FULL Strategy to Workshop
-        await prisma.workshop.update({
-            where: { id: workshopId },
-            data: {
-                strategyNarrative: object.strategy.final_narrative,
-                strategyDependencies: object.strategy.dependency_analysis,
-                strategyRisks: object.strategy.risk_analysis,
-                dependencyGraph: object.strategy.edges as any // Store the calculated edges
-            }
         });
 
-        revalidatePath(`/ workshop / ${workshopId}/analysis`);
+        revalidatePath(`/workshop/${workshopId}/analysis`);
 
         // 5. Enrich with project names for UI
         const enrichedSequence = object.strategy.sequence.map(s => {

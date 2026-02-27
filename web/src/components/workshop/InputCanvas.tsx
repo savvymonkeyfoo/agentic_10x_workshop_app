@@ -10,13 +10,12 @@ import { VRCCSlider } from '@/components/ui/VRCCSlider';
 import { StrategicProfile } from '@/components/workshop/StrategicProfile';
 import { saveOpportunity } from '@/app/actions/save-opportunity';
 import { getOpportunities } from '@/app/actions/get-opportunities';
-import { deletePromotedOpportunity } from '@/app/actions/delete-opportunity';
+import { deleteOpportunity } from '@/app/actions/delete-opportunity';
 import { demoteFromCapture } from '@/app/actions/promotion';
 import { OpportunityTileNavigator } from '@/components/workshop/OpportunityTileNavigator';
 import { DEFAULT_DFV_ASSESSMENT, DFVAssessmentInput } from '@/components/ui/DFVAssessmentInput';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
-import { DeleteConfirmationModal } from '@/components/ui/DeleteConfirmationModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
 import { BulletListEditor } from '@/components/ui/BulletListEditor';
@@ -84,9 +83,9 @@ const TABS = [
 
 // --- Config: Strategic Horizons ---
 const HORIZONS = [
-    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-blue-500 text-white', border: 'border-blue-500' },
-    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-amber-500 text-white', border: 'border-amber-500' },
-    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-purple-500 text-white', border: 'border-purple-500' }
+    { id: 'Growth & Scalability', label: 'Growth & Scalability', color: 'bg-info text-white', border: 'border-info' },
+    { id: 'Operational Throughput', label: 'Operational Throughput', color: 'bg-warning-subtle text-white', border: 'border-warning' },
+    { id: 'Strategic Advantage', label: 'Strategic Advantage', color: 'bg-intelligence text-white', border: 'border-intelligence' }
 ] as const;
 
 
@@ -240,17 +239,17 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
 }) => {
     return (
         <Reorder.Item value={phase} id={phase.id} className="flex items-center cursor-grab active:cursor-grabbing">
-            <div className="bg-[#fff9c4] rounded-sm shadow-md border-t border-yellow-200 p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
-                <div className="flex justify-between items-start border-b border-yellow-200/50 pb-2 mb-1">
+            <div className="bg-warning-subtle rounded-sm shadow-md border-t border-warning-subtle p-4 w-[320px] shrink-0 flex flex-col gap-3 group hover:rotate-1 hover:scale-[1.01] transition-transform duration-200 origin-top mx-2 select-none">
+                <div className="flex justify-between items-start border-b border-warning-subtle/50 pb-2 mb-1">
                     <input
                         type="text"
                         value={phase.name}
                         onChange={(e) => updatePhase(phase.id, 'name', e.target.value)}
-                        className="font-bold text-slate-800 text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50"
+                        className="font-bold text-primary text-lg bg-transparent border-none focus:ring-0 outline-none w-full placeholder-yellow-600/50"
                         placeholder="Phase Name..."
                         onPointerDown={(e) => e.stopPropagation()}
                     />
-                    <button onClick={(e) => { e.stopPropagation(); requestDelete(phase.id); }} className="text-yellow-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); requestDelete(phase.id); }} className="text-warning hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
                         <X size={16} />
                     </button>
                 </div>
@@ -258,7 +257,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                 <div className="space-y-3">
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Trigger / Input</span>
+                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Trigger / Input</span>
                         <textarea
                             value={phase.inputs || ''}
                             onChange={(e) => {
@@ -267,14 +266,14 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                                 e.target.style.height = 'auto';
                                 e.target.style.height = e.target.scrollHeight + 'px';
                             }}
-                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            className="w-full text-sm leading-relaxed bg-warning-subtle/50 border-b border-warning-subtle focus:border-warning outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-primary"
                             placeholder="e.g. Email received, End of Month..."
                             rows={1}
                         />
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Actions Taken</span>
+                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Actions Taken</span>
                         <textarea
                             value={phase.actions || ''}
                             onChange={(e) => {
@@ -282,14 +281,14 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                                 e.target.style.height = 'auto';
                                 e.target.style.height = e.target.scrollHeight + 'px';
                             }}
-                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            className="w-full text-sm leading-relaxed bg-warning-subtle/50 border-b border-warning-subtle focus:border-warning outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-primary"
                             placeholder="e.g. Validate data, Calculate score..."
                             rows={1}
                         />
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-yellow-700 uppercase tracking-wider">Artifact / Output</span>
+                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Artifact / Output</span>
                         <textarea
                             value={phase.outputs || ''}
                             onChange={(e) => {
@@ -297,7 +296,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                                 e.target.style.height = 'auto';
                                 e.target.style.height = e.target.scrollHeight + 'px';
                             }}
-                            className="w-full text-sm leading-relaxed bg-yellow-50/50 border-b border-yellow-200 focus:border-yellow-500 outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-slate-700"
+                            className="w-full text-sm leading-relaxed bg-warning-subtle/50 border-b border-warning-subtle focus:border-warning outline-none resize-none overflow-hidden min-h-[28px] placeholder-yellow-600/40 text-primary"
                             placeholder="e.g. PDF Report, Approval flag..."
                             rows={1}
                         />
@@ -311,8 +310,8 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                                 key={level}
                                 onClick={() => updatePhase(phase.id, 'autonomy', level as any)}
                                 className={`w-8 h-6 flex items-center justify-center text-[9px] font-bold rounded-full transition-all ${phase.autonomy === level
-                                    ? 'bg-slate-800 text-white shadow-sm scale-110'
-                                    : 'text-yellow-800 hover:bg-yellow-200'
+                                    ? 'bg-card text-white shadow-sm scale-110'
+                                    : 'text-warning hover:bg-warning-subtle'
                                     }`}
                             >
                                 {level}
@@ -322,7 +321,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                 </div>
             </div>
 
-            <div className="text-slate-300 dark:text-slate-600">
+            <div className="text-disabled dark:text-secondary">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -950,7 +949,13 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 setSaveStatus('saved');
                 fetchOpportunities(); // Refresh list to match
             } else {
-                setSaveStatus('error');
+                // Silently ignore validation errors during autosave (expected while typing)
+                // Only show error for actual save failures (network/database errors)
+                if (result.error && result.error.includes('Validation failed')) {
+                    setSaveStatus('idle'); // Don't show error for validation failures
+                } else {
+                    setSaveStatus('error'); // Show error for actual save failures
+                }
             }
         } catch (e) {
             console.error("Autosave failed", e);
@@ -1039,7 +1044,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 toast.success(`"${opportunityToDelete.projectName}" returned to Ideation`);
             } else {
                 // DELETE: Permanently remove (Capture-only item)
-                await deletePromotedOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
+                await deleteOpportunity({ opportunityId: opportunityToDelete.id, workshopId });
                 toast.success(`"${opportunityToDelete.projectName}" deleted`);
             }
 
@@ -1229,7 +1234,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
         <div className="min-h-screen bg-background text-foreground font-sans flex flex-col relative">
 
             {/* Confirmation Modal (Opportunity) - Conditional Demote vs Delete */}
-            <DeleteConfirmationModal
+            <ConfirmModal
                 isOpen={!!opportunityToDelete}
                 title={opportunityToDelete?.showInIdeation
                     ? "Remove from Capture?"
@@ -1239,15 +1244,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     : `Are you sure you want to permanently delete "${opportunityToDelete?.projectName || 'this item'}"? This action cannot be undone.`}
                 onClose={() => setOpportunityToDelete(null)}
                 onConfirm={confirmDeleteOpportunity}
-                isDeleting={isDeletingOpportunity}
-                variant={opportunityToDelete?.showInIdeation ? 'demote' : 'delete'}
+                isLoading={isDeletingOpportunity}
+                variant={opportunityToDelete?.showInIdeation ? 'demote' : 'danger'}
                 confirmLabel={opportunityToDelete?.showInIdeation
                     ? 'Yes, Remove from Capture'
                     : 'Yes, Delete Permanently'}
             />
 
-            <ActionConfirmationModal
+            <ConfirmModal
                 isOpen={showOverwriteModal}
+                variant="warning"
                 title="Overwrite Execution Plan?"
                 description="You have already entered content in the Execution Strategy fields. Using AI Recommendation will overwrite your current notes with a new draft. This action cannot be undone."
                 confirmLabel="Yes, Overwrite"
@@ -1275,17 +1281,17 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                             onClick={(e) => e.stopPropagation()}
                         >
                             <h3 className="text-xl font-bold mb-2">Delete Phase?</h3>
-                            <p className="text-slate-600 mb-6">Are you sure you want to delete this phase? This action cannot be undone.</p>
+                            <p className="text-secondary mb-6">Are you sure you want to delete this phase? This action cannot be undone.</p>
                             <div className="flex justify-end gap-3">
                                 <button
                                     onClick={() => setDeleteModalId(null)}
-                                    className="px-4 py-2 rounded text-slate-500 hover:bg-slate-100 font-medium"
+                                    className="px-4 py-2 rounded text-secondary hover:bg-surface-subtle font-medium"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={confirmDeletePhase}
-                                    className="px-4 py-2 rounded text-sm font-bold bg-status-risk text-white hover:bg-red-600"
+                                    className="px-4 py-2 rounded text-sm font-bold bg-status-risk text-white hover:bg-destructive"
                                 >
                                     Delete
                                 </button>
@@ -1323,7 +1329,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                     {/* Completeness Ring */}
                     <div className={`h-9 w-9 rounded-full border-4 flex items-center justify-center transition-all duration-300 ${isComplete || isGlobalReady
                         ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200'
-                        : 'bg-transparent border-input text-emerald-600'
+                        : 'bg-transparent border-input text-success'
                         }`}>
                         {isComplete || isGlobalReady ? (
                             <Check className="w-5 h-5 text-white" strokeWidth={3} />
@@ -1366,10 +1372,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
-                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
-                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
-                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
-                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
+                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
+                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
+                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
 
                                     {tab.label}
                                     {isTabValid && <span className="w-1.5 h-1.5 rounded-full bg-status-safe" />}

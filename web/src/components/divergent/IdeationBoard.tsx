@@ -78,7 +78,7 @@ function CanvasBoard({ children }: { children: React.ReactNode }) {
     return (
         <div
             ref={setNodeRef}
-            className="w-[3000px] h-[3000px] bg-slate-50 relative overflow-hidden"
+            className="w-[3000px] h-[3000px] bg-surface-subtle relative overflow-hidden"
             style={{
                 backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
                 backgroundSize: '20px 20px',
@@ -370,13 +370,13 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
     return (
         <WorkshopPageShell
             header={
-                <div className="px-8 py-4 flex justify-between items-center bg-white border-b border-slate-200 shadow-sm z-20 relative">
+                <div className="px-8 py-4 flex justify-between items-center bg-card border-b border-border shadow-sm z-20 relative">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="sm" onClick={() => router.push(`/workshop/${workshopId}/analysis`)}>
                             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Analysis
                         </Button>
-                        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <LayoutGrid className="w-5 h-5 text-indigo-600" />
+                        <h1 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <LayoutGrid className="w-5 h-5 text-intelligence" />
                             Ideation Whiteboard
                         </h1>
                     </div>
@@ -384,14 +384,14 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                         {/* SELECT MODE TOGGLE */}
                         <Button
                             variant={isSelectMode ? "secondary" : "ghost"}
-                            className={cn(isSelectMode && "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200")}
+                            className={cn(isSelectMode && "bg-info-subtle text-info hover:bg-info-subtle border border-info")}
                             onClick={handleTopBarAction}
                         >
                             {isSelectMode ? <Check className="w-4 h-4 mr-2" /> : <MousePointer2 className="w-4 h-4 mr-2" />}
                             {isSelectMode ? "Done Selecting" : "Select Ideas"}
                         </Button>
 
-                        <div className="h-6 w-px bg-slate-200 mx-2" />
+                        <div className="h-6 w-px bg-border mx-2" />
 
                         <Button onClick={handleNewIdea} className="shadow-sm hover:shadow-md transition-all">
                             <Plus className="w-4 h-4 mr-2" /> New Idea
@@ -401,7 +401,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                 </div>
             }
         >
-            <div className="flex-1 overflow-auto relative bg-slate-100">
+            <div className="flex-1 overflow-auto relative bg-surface-hover">
                 <DndContext
                     sensors={sensors}
                     collisionDetection={pointerWithin}
@@ -453,14 +453,14 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                 {/* FLOATING STATUS BAR - Shows current selection count */}
                 {isSelectMode && selectedItems.size > 0 && (
                     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                        <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-slate-700">
+                        <div className="bg-foreground text-background px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-border">
                             <div className="flex items-center gap-2">
-                                <div className="bg-blue-500 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                                <div className="bg-info text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                                     {selectedItems.size}
                                 </div>
                                 <span className="font-semibold text-sm">Ideas in Capture</span>
                             </div>
-                            <span className="text-slate-400 text-xs">Click cards to add/remove</span>
+                            <span className="text-tertiary text-xs">Click cards to add/remove</span>
                         </div>
                     </div>
                 )}
@@ -483,11 +483,11 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                             <DialogTitle>Delete Opportunity?</DialogTitle>
                         </DialogHeader>
                         <div className="flex flex-col items-center justify-center py-6 text-center">
-                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                                <AlertTriangle className="w-8 h-8 text-red-600" strokeWidth={2.5} />
+                            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                <AlertTriangle className="w-8 h-8 text-destructive" strokeWidth={2.5} />
                             </div>
-                            <p className="text-slate-500 mb-8 leading-relaxed">
-                                Are you sure you want to delete <span className="font-bold text-slate-800">"{itemToDelete?.title || 'this item'}"</span>?
+                            <p className="text-secondary mb-8 leading-relaxed">
+                                Are you sure you want to delete <span className="font-bold text-primary">"{itemToDelete?.title || 'this item'}"</span>?
                                 <br />
                                 This action cannot be undone.
                             </p>
@@ -495,7 +495,7 @@ export function IdeationBoard({ workshopId }: IdeationBoardProps) {
                                 <Button
                                     variant="outline"
                                     onClick={() => setItemToDelete(null)}
-                                    className="flex-1 font-bold text-slate-600"
+                                    className="flex-1 font-bold text-secondary"
                                 >
                                     Cancel
                                 </Button>

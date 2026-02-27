@@ -170,16 +170,16 @@ export function AIStrategistPanel({
                                 </summary>
                                 <div className="space-y-4 mt-3 pl-6">
                                     {displayDependencies && (
-                                        <div className="bg-blue-500/10 border-l-4 border-blue-500 p-5 rounded-r-lg shadow-sm mb-4">
-                                            <h4 className="text-blue-600 dark:text-blue-400 font-bold uppercase text-xs tracking-widest mb-3">Dependency Analysis</h4>
+                                        <div className="bg-info/10 border-l-4 border-info p-5 rounded-r-lg shadow-sm mb-4">
+                                            <h4 className="text-info font-bold uppercase text-xs tracking-widest mb-3">Dependency Analysis</h4>
                                             <div className="text-sm">
                                                 {renderContent(displayDependencies)}
                                             </div>
                                         </div>
                                     )}
                                     {displayRisks && (
-                                        <div className="bg-amber-500/10 border-l-4 border-amber-500 p-5 rounded-r-lg shadow-sm mb-6">
-                                            <h4 className="text-amber-600 dark:text-amber-400 font-bold uppercase text-xs tracking-widest mb-3">Risk Mitigation Strategy</h4>
+                                        <div className="bg-warning/10 border-l-4 border-warning p-5 rounded-r-lg shadow-sm mb-6">
+                                            <h4 className="text-warning font-bold uppercase text-xs tracking-widest mb-3">Risk Mitigation Strategy</h4>
                                             <div className="text-sm">
                                                 {renderContent(displayRisks)}
                                             </div>
@@ -193,7 +193,7 @@ export function AIStrategistPanel({
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center justify-between">
                                 <span>Execution Waves</span>
-                                <span className="px-2 py-0.5 bg-green-500/10 text-green-600 rounded text-[10px]">Optimised</span>
+                                <span className="px-2 py-0.5 bg-success/10 text-success rounded text-[10px]">Optimised</span>
                             </h3>
 
                             {/* Group items by rank */}
@@ -204,7 +204,7 @@ export function AIStrategistPanel({
 
                                 if (waveItems.length === 0) return null;
 
-                                const waveColors = ['bg-emerald-500', 'bg-blue-500', 'bg-violet-500', 'bg-slate-500'];
+                                const waveColors = ['bg-success', 'bg-info', 'bg-intelligence', 'bg-muted'];
                                 const waveNames = ['Wave 1: Mobilize', 'Wave 2: Scale', 'Wave 3: Optimise', 'Wave 4: Defer'];
 
                                 return (
@@ -270,9 +270,9 @@ export function AIStrategistPanel({
                                                                 <div className="mb-3 flex flex-col gap-2 pb-3 border-b border-border">
                                                                     {requires.length > 0 && (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-1 py-0.5 rounded w-fit">REQUIRES</span>
+                                                                            <span className="text-[10px] font-bold text-warning bg-warning/10 px-1 py-0.5 rounded w-fit">REQUIRES</span>
                                                                             {requires.map((req, i) => (
-                                                                                <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-amber-500/30 ml-1">
+                                                                                <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-warning/30 ml-1">
                                                                                     <span className="font-semibold">{req.name}</span>
                                                                                     {req.reason && <span className="block text-[10px] text-muted-foreground italic mt-0.5">"{req.reason}"</span>}
                                                                                 </div>

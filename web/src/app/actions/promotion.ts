@@ -2,11 +2,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { safeAction } from '@/lib/safe-action';
+import { promotionSchema } from '@/lib/validation';
 
 /**
  * UNIFIED PROMOTION ACTION
- * 
+ *
  * With unified SQL storage, promotion sets showInCapture = true
  * The item can optionally remain visible in ideation (showInIdeation stays true)
  */
@@ -18,30 +18,44 @@ interface PromoteOptions {
 }
 
 export async function promoteToCapture(options: PromoteOptions) {
-    return await safeAction(async () => {
-        const { workshopId, opportunityIds, keepInIdeation = true } = options;
-        if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-            throw new Error('Invalid arguments');
+    try {
+        // Validate input
+        const validation = promotionSchema.safeParse(options);
+        if (!validation.success) {
+            const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            return {
+                success: false,
+                error: `Validation failed: ${errors}`
+            };
         }
 
-        // Set showInCapture = true (makes visible in Capture view)
-        // Optionally keep showInIdeation = true (stays on whiteboard)
-        const result = await prisma.opportunity.updateMany({
-            where: {
-                id: { in: opportunityIds },
-                workshopId
-            },
-            data: {
-                showInCapture: true,
-                showInIdeation: keepInIdeation,
-                promotionStatus: 'PROMOTED',
-                boardStatus: 'placed'
-            }
+        const { workshopId, opportunityIds, keepInIdeation = true } = validation.data;
+
+        // Use transaction for atomicity
+        const count = await prisma.$transaction(async (tx) => {
+            // Set showInCapture = true (makes visible in Capture view)
+            // Optionally keep showInIdeation = true (stays on whiteboard)
+            const result = await tx.opportunity.updateMany({
+                where: {
+                    id: { in: opportunityIds },
+                    workshopId
+                },
+                data: {
+                    showInCapture: true,
+                    showInIdeation: keepInIdeation,
+                    promotionStatus: 'PROMOTED',
+                    boardStatus: 'placed'
+                }
+            });
+            return result.count;
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { count: result.count };
-    }, 'Failed to promote opportunities');
+        return { success: true, data: { count } };
+    } catch (error) {
+        console.error('Failed to promote opportunities:', error);
+        return { success: false, error: 'Failed to promote opportunities' };
+    }
 }
 
 /**
@@ -51,9 +65,9 @@ export async function promoteToCapture(options: PromoteOptions) {
  * Items remain visible in Ideation
  */
 export async function demoteFromCapture({ workshopId, opportunityIds }: { workshopId: string; opportunityIds: string[] }) {
-    return await safeAction(async () => {
+    try {
         if (!workshopId || !opportunityIds || opportunityIds.length === 0) {
-            throw new Error('Invalid arguments');
+            return { success: false, error: 'Invalid arguments' };
         }
 
         const result = await prisma.opportunity.updateMany({
@@ -68,6 +82,9 @@ export async function demoteFromCapture({ workshopId, opportunityIds }: { worksh
         });
 
         revalidatePath(`/workshop/${workshopId}`);
-        return { count: result.count };
-    }, 'Failed to demote opportunities');
+        return { success: true, data: { count: result.count } };
+    } catch (error) {
+        console.error('Failed to demote opportunities:', error);
+        return { success: false, error: 'Failed to demote opportunities' };
+    }
 }

@@ -23,12 +23,12 @@ export function MatrixChart({ x, y, className = '' }: MatrixChartProps) {
     const bottom = Math.min(95, Math.max(5, (valY / 5) * 100));
 
     return (
-        <div className={`w-full h-full relative border border-slate-200 bg-white rounded-lg ${className}`}>
+        <div className={`w-full h-full relative border border-muted bg-white rounded-lg ${className}`}>
             {/* Quadrants */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-                <div className="border-r border-b border-dashed border-slate-100" />
-                <div className="border-b border-dashed border-slate-100" />
-                <div className="border-r border-dashed border-slate-100" />
+                <div className="border-r border-b border-dashed border-muted" />
+                <div className="border-b border-dashed border-muted" />
+                <div className="border-r border-dashed border-muted" />
                 <div />
             </div>
             {/* Labels */}
@@ -51,7 +51,7 @@ export function MatrixChart({ x, y, className = '' }: MatrixChartProps) {
             </div>
             {/* The Dot */}
             <div
-                className="absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 translate-y-1/2 transition-all duration-500"
+                className="absolute w-4 h-4 bg-info rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 translate-y-1/2 transition-all duration-500"
                 style={{ left: `${left}%`, bottom: `${bottom}%` }}
             />
         </div>

@@ -30,9 +30,9 @@ export default async function ReportingLayout({
     const opportunities = await getOpportunities(params.id);
 
     return (
-        <div className="flex bg-slate-50 dark:bg-slate-900 min-h-[calc(100vh-80px)]">
+        <div className="flex bg-surface-subtle dark:bg-background min-h-[calc(100vh-80px)]">
             {/* Sidebar */}
-            <div className="w-[250px] shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hidden lg:block">
+            <div className="w-[250px] shrink-0 border-r border-muted dark:border-border bg-white dark:bg-background hidden lg:block">
                 <CanvasSidebar opportunities={opportunities} />
             </div>
             {/* Main Content */}
