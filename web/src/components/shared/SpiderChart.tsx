@@ -61,16 +61,16 @@ export function SpiderChart({ data, className = '', width: _width, height: _heig
             const rawVal = isInverted ? 6 - chartVal : chartVal;
 
             if (isEmpty) return (
-                <div className="bg-white/90 backdrop-blur-md p-2 rounded border border-muted text-xs shadow-xl">
-                    <span className="text-tertiary italic">No Data</span>
+                <div className="bg-popover/90 backdrop-blur-md p-2 rounded border border-border text-xs shadow-xl">
+                    <span className="text-muted-foreground italic">No Data</span>
                 </div>
             );
 
             return (
-                <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl border border-muted text-xs shadow-xl">
-                    <p className="font-bold text-brand-navy mb-1">{subject}</p>
-                    <p className="text-secondary">
-                        Score: <span className="font-bold">{rawVal}/5</span> <span className="text-tertiary">{getQualitative(subject, rawVal)}</span>
+                <div className="bg-popover/90 backdrop-blur-md p-3 rounded-xl border border-border text-xs shadow-xl">
+                    <p className="font-bold text-foreground mb-1">{subject}</p>
+                    <p className="text-muted-foreground">
+                        Score: <span className="font-bold">{rawVal}/5</span> <span className="text-muted-foreground opacity-70">{getQualitative(subject, rawVal)}</span>
                     </p>
                 </div>
             );
@@ -95,10 +95,10 @@ export function SpiderChart({ data, className = '', width: _width, height: _heig
         }
         return (
             <g transform={`translate(${x},${y})`}>
-                <text x={0} y={0} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="fill-slate-900 dark:fill-white" fontSize={10} fontWeight={600}>
+                <text x={0} y={0} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="text-foreground fill-current text-xs font-semibold" fontSize={10} fontWeight={600}>
                     {label}
                 </text>
-                <text x={0} y={12} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="fill-slate-500 dark:fill-slate-400" fontSize={8}>
+                <text x={0} y={12} dy={0} textAnchor={textAnchor as "start" | "middle" | "end"} className="text-muted-foreground fill-current text-[8px]" fontSize={8}>
                     {subLabel}
                 </text>
             </g>
@@ -109,17 +109,17 @@ export function SpiderChart({ data, className = '', width: _width, height: _heig
         <div className={`w-full h-full transition-opacity duration-500 ${isEmpty ? 'opacity-30' : 'opacity-100'} ${className}`}>
             <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-                    <PolarGrid stroke="var(--glass-border)" />
+                    <PolarGrid stroke="hsl(var(--border))" />
                     <PolarAngleAxis dataKey="subject" tick={renderTick} />
                     <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
                     <Radar
                         name="Project Profile"
                         dataKey="A"
-                        stroke={isEmpty ? "var(--text-secondary)" : "var(--chart-stroke)"}
+                        stroke={isEmpty ? "hsl(var(--muted-foreground))" : "hsl(var(--primary))"}
                         strokeWidth={isEmpty ? 1 : 3}
                         strokeDasharray={isEmpty ? "4 4" : undefined}
-                        fill={isEmpty ? "transparent" : "var(--chart-fill)"}
-                        fillOpacity={0.6}
+                        fill={isEmpty ? "transparent" : "hsl(var(--primary))"}
+                        fillOpacity={0.2}
                     />
                     {showTooltip && <Tooltip content={<CustomTooltip />} cursor={false} />}
                 </RadarChart>

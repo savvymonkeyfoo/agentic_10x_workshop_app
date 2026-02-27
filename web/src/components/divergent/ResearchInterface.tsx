@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Search, Zap, Loader2, Sparkles, BrainCircuit } from 'lucide-react';
+import { ArrowRight, CheckCircle, Search, Zap, Sparkles, BrainCircuit } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkshopPageShell } from '@/components/layouts/WorkshopPageShell';
@@ -322,7 +323,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         <div className={cn("w-3 h-3 rounded-full", intelligenceState === 'analyzing' ? "bg-success animate-pulse" : "bg-muted")} />
                         <h3 className="font-bold text-primary flex items-center gap-2">
                             Deep-Chain Analysis Engine
-                            {intelligenceState === 'analyzing' && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
+                            {intelligenceState === 'analyzing' && <Spinner size="sm" className="text-emerald-500 ml-2" />}
                         </h3>
                     </div>
                     <div className="flex gap-3">
@@ -359,21 +360,22 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 </div>
             }
         >
-            <div className="flex justify-between items-center mb-8 pb-2 border-b border-muted">
+            <div className="flex justify-between items-center mb-8 pb-2">
                 <div className="flex space-x-8">
                     {Tabs.map((tab) => (
-                        <button
+                        <Button
                             key={tab.id}
+                            variant="ghost"
                             onClick={() => !tab.disabled && setActiveTab(tab.id)}
                             disabled={tab.disabled}
                             className={cn(
-                                "pb-4 text-xs font-bold tracking-widest transition-all relative",
+                                "pb-4 text-xs font-bold tracking-widest transition-all relative h-auto px-0",
                                 activeTab === tab.id ? "text-brand-blue" : tab.disabled ? "text-disabled cursor-not-allowed" : "text-tertiary hover:text-secondary"
                             )}
                         >
                             {tab.label}
                             {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-blue" />}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 <div>
@@ -444,7 +446,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                         )}
                         {intelligenceState === 'initializing' && (
                             <div className="flex flex-col items-center justify-center h-[500px]">
-                                <Loader2 className="w-12 h-12 text-intelligence animate-spin mb-4" /><h3 className="font-bold text-lg text-primary">Hydrating Deep-Chain Context...</h3><p className="text-secondary text-sm">Parsing backlog logic and loading technical DNA</p>
+                                <Spinner size="lg" className="text-intelligence mb-4" /><h3 className="font-bold text-lg text-primary">Hydrating Deep-Chain Context...</h3><p className="text-secondary text-sm">Parsing backlog logic and loading technical DNA</p>
                             </div>
                         )}
                         {(intelligenceState === 'analyzing' || intelligenceState === 'complete') && (

@@ -2,22 +2,22 @@
 
 import React, { useState } from 'react';
 import { WorkshopModal } from './WorkshopModal';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export function NewWorkshopButton() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
         <>
-            <button
-                type="button"
+            <Button
                 onClick={() => setIsOpen(true)}
-                className="px-6 py-3 bg-brand-blue text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                size="lg"
+                className="shadow-lg hover:shadow-xl"
             >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="w-5 h-5" />
                 New Workshop
-            </button>
+            </Button>
 
             {isOpen && <WorkshopModal onClose={() => setIsOpen(false)} />}
         </>

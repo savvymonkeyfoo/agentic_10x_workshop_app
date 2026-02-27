@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { SpiderChart } from '@/components/ui/SpiderChart';
+import { SpiderChart } from '@/components/shared/SpiderChart';
 import { MiniMatrix } from '@/components/ui/MiniMatrix';
 import { VennDiagram } from '@/components/ui/VennDiagram';
 import { DFVAssessment, DEFAULT_DFV_ASSESSMENT } from '@/components/ui/DFVAssessmentInput';
@@ -68,7 +68,7 @@ export function StrategicProfile({ data, dfvAssessment = DEFAULT_DFV_ASSESSMENT 
                         {efficiency.toFixed(1)}x
                     </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground text-right max-w-[150px] leading-tight opacity-70">
+                <p className="text-xs text-muted-foreground text-right max-w-[150px] leading-tight opacity-70">
                     Projected ROI Multiplier based on Business Value.
                 </p>
             </div>

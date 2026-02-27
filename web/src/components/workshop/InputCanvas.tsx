@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Plus, Maximize2, Minimize2, Sparkles, Loader2 } from 'lucide-react';
+import { Check, X, Plus, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -18,9 +19,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { draftExecutionPlan } from '@/app/actions/draft-execution';
-import { BulletListEditor } from '@/components/ui/BulletListEditor';
-import { MarkdownTextarea } from '@/components/ui/MarkdownTextarea';
-import { SmartBulletEditor } from '@/components/ui/smart-bullet-editor';
+import { SmartTextarea } from '@/components/ui/smart-textarea';
 import CapabilitiesManager from './CapabilitiesManager';
 
 import { OpportunityState, WorkflowPhase } from '@/types/workshop';
@@ -107,86 +106,6 @@ const SortablePhaseCard = ({ id, children }: { id: string, children: React.React
     );
 };
 
-// --- HELPER COMPONENT: Auto-Growing Textarea with Smart Bullets ---
-const SmartTextarea = ({
-    value,
-    onChange,
-    placeholder,
-    label,
-    className,
-    id,
-    name
-}: {
-    value: string;
-    onChange: (val: string) => void;
-    placeholder: string;
-    label: string;
-    className?: string;
-    id?: string;
-    name?: string;
-}) => {
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const props = { value, onChange, placeholder, label, className }; // Capture props for easier access
-
-    // 1. Auto-Resize on EVERY value change
-    React.useLayoutEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    }, [value]);
-
-    // 2. Smart Bullet Logic
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const target = e.target as HTMLTextAreaElement;
-            const start = target.selectionStart;
-            const end = target.selectionEnd;
-
-            // Insert newline + bullet
-            const newValue = value.substring(0, start) + "\n• " + value.substring(end);
-
-            onChange(newValue);
-
-            // Restore cursor position after state update
-            setTimeout(() => {
-                if (textareaRef.current) {
-                    textareaRef.current.selectionStart = start + 3;
-                    textareaRef.current.selectionEnd = start + 3;
-                }
-            }, 0);
-        }
-    };
-
-    return (
-        <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <label htmlFor={id} className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
-                {label}
-            </label>
-            <textarea
-                id={id}
-                name={name}
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                    if (!value) onChange('• ');
-                }}
-                className={
-                    // Allow override or use default yellow
-                    props.className
-                        ? props.className
-                        : "w-full text-sm leading-relaxed bg-input border border-input rounded-lg p-3 focus:ring-2 focus:ring-inset focus:ring-ring outline-none resize-none overflow-hidden min-h-[40px] placeholder-muted-foreground/40 text-foreground font-medium transition-all"
-                }
-                placeholder={placeholder}
-                rows={1}
-            />
-        </div>
-    );
-};
-
 // --- HELPER COMPONENT: Simple Auto-Growing Textarea for Titles ---
 const TitleTextarea = ({
     value,
@@ -257,7 +176,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                 <div className="space-y-3">
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Trigger / Input</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Trigger / Input</span>
                         <textarea
                             value={phase.inputs || ''}
                             onChange={(e) => {
@@ -273,7 +192,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Actions Taken</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Actions Taken</span>
                         <textarea
                             value={phase.actions || ''}
                             onChange={(e) => {
@@ -288,7 +207,7 @@ const PhaseCard = ({ phase, updatePhase, requestDelete }: {
                     </div>
 
                     <div className="flex flex-col gap-1" onPointerDown={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Artifact / Output</span>
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Artifact / Output</span>
                         <textarea
                             value={phase.outputs || ''}
                             onChange={(e) => {
@@ -421,7 +340,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="vp_role" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">As a [Role]...</label>
+                    <label htmlFor="vp_role" className="block text-xs uppercase font-bold text-muted-foreground mb-1">As a [Role]...</label>
                     <textarea
                         ref={roleRef}
                         id="vp_role"
@@ -434,7 +353,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_outcome" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">I want to [Outcome]...</label>
+                    <label htmlFor="vp_outcome" className="block text-xs uppercase font-bold text-muted-foreground mb-1">I want to [Outcome]...</label>
                     <textarea
                         ref={outcomeRef}
                         id="vp_outcome"
@@ -447,7 +366,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_solution" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">With [Solution]...</label>
+                    <label htmlFor="vp_solution" className="block text-xs uppercase font-bold text-muted-foreground mb-1">With [Solution]...</label>
                     <textarea
                         ref={solutionRef}
                         id="vp_solution"
@@ -460,7 +379,7 @@ const ValuePropBuilder = ({ value, onChange }: { value: string, onChange: (val: 
                     />
                 </div>
                 <div>
-                    <label htmlFor="vp_need" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">So that [Need]...</label>
+                    <label htmlFor="vp_need" className="block text-xs uppercase font-bold text-muted-foreground mb-1">So that [Need]...</label>
                     <textarea
                         ref={needRef}
                         id="vp_need"
@@ -1334,7 +1253,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                         {isComplete || isGlobalReady ? (
                             <Check className="w-5 h-5 text-white" strokeWidth={3} />
                         ) : (
-                            <span className="text-[10px] font-bold">
+                            <span className="text-xs font-bold">
                                 {Math.round(isGlobalReady ? 100 : completeness)}%
                             </span>
                         )}
@@ -1359,7 +1278,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                 {/* Left Panel: Input Tabs */}
                 <div className="bg-background/50 backdrop-blur-xl border border-border rounded-2xl shadow-xl p-8 flex flex-col h-full">
                     {/* Tabs Header */}
-                    <div className="flex space-x-6 border-b border-border mb-6 pb-2">
+                    <div className="flex space-x-6 mb-6 pb-2">
                         {TABS.map((tab) => {
                             let isTabValid = false;
                             if (tab.id === 'A') isTabValid = completenessStatus.tabs.opportunity;
@@ -1372,10 +1291,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`pb-2 text-xs font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
-                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
-                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Loader2 className="w-3 h-3 animate-spin text-intelligence" />}
+                                    {tab.id === 'A' && magicFillStatus.valueProp === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'B' && magicFillStatus.workflow === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'C' && magicFillStatus.execution === 'loading' && <Spinner size="sm" className="text-intelligence" />}
+                                    {tab.id === 'D' && magicFillStatus.businessCase === 'loading' && <Spinner size="sm" className="text-intelligence" />}
 
                                     {tab.label}
                                     {isTabValid && <span className="w-1.5 h-1.5 rounded-full bg-status-safe" />}
@@ -1400,7 +1319,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-bold text-foreground">Magic Fill</div>
-                                                    <div className="text-[10px] text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
+                                                    <div className="text-xs text-muted-foreground font-medium">Auto-generate Value Prop, Workflow, Execution, and Value Case from your description.</div>
                                                 </div>
                                             </div>
                                             <Button
@@ -1410,7 +1329,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 disabled={isMagicFilling}
                                                 className="gap-2 text-xs font-bold"
                                             >
-                                                {isMagicFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                {isMagicFilling ? <Spinner size="sm" /> : <Sparkles className="w-3 h-3" />}
                                                 {isMagicFilling ? "Analysing..." : "Start Magic Fill"}
                                             </Button>
                                         </div>
@@ -1444,11 +1363,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         <div>
                                             <label htmlFor="frictionStatement" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Friction / Problem</label>
-                                            <MarkdownTextarea
+                                            <SmartTextarea
                                                 id="frictionStatement"
                                                 name="frictionStatement"
                                                 value={data.frictionStatement}
-                                                onChange={(val) => handleInputChange('frictionStatement', val)}
+                                                onValueChange={(val) => handleInputChange('frictionStatement', val)}
+                                                markdown
                                                 placeholder="What is the problem?"
                                                 minHeight="6rem"
                                             />
@@ -1456,11 +1376,12 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
 
                                         <div>
                                             <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Proposed Solution</label>
-                                            <MarkdownTextarea
+                                            <SmartTextarea
                                                 id="description"
                                                 name="description"
                                                 value={data.description}
-                                                onChange={(val) => handleInputChange('description', val)}
+                                                onValueChange={(val) => handleInputChange('description', val)}
+                                                markdown
                                                 className="min-h-[100px]"
                                                 placeholder="Describe the proposed solution..."
                                                 minHeight="100px"
@@ -1473,9 +1394,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Strategy Alignment
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.strategyAlignment || ''}
-                                                    onChange={(val) => handleInputChange('strategyAlignment', val)}
+                                                    onValueChange={(val) => handleInputChange('strategyAlignment', val)}
+                                                    markdown
                                                     placeholder="Strategic relevance..."
                                                     minHeight="6rem"
                                                 />
@@ -1484,9 +1406,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Tech Alignment
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.techAlignment || ''}
-                                                    onChange={(val) => handleInputChange('techAlignment', val)}
+                                                    onValueChange={(val) => handleInputChange('techAlignment', val)}
+                                                    markdown
                                                     placeholder="Technical fit..."
                                                     minHeight="6rem"
                                                 />
@@ -1523,7 +1446,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'VALUE_PROP'}
                                                     className="gap-2 text-xs font-bold"
                                                 >
-                                                    {isEnriching === 'VALUE_PROP' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'VALUE_PROP' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'VALUE_PROP' ? "Drafting..." : "Generate CVP"}
                                                 </Button>
                                             </div>
@@ -1540,9 +1463,10 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                                                     Context & Notes
                                                 </label>
-                                                <MarkdownTextarea
+                                                <SmartTextarea
                                                     value={data.notes || ''}
-                                                    onChange={(val) => handleInputChange('notes', val)}
+                                                    onValueChange={(val) => handleInputChange('notes', val)}
+                                                    markdown
                                                     placeholder="Add facilitator notes, context, or key constraints..."
                                                     minHeight="6rem"
                                                 />
@@ -1569,7 +1493,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'WORKFLOW'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50"
                                                 >
-                                                    {isEnriching === 'WORKFLOW' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'WORKFLOW' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     Suggest Workflow
                                                 </button>
 
@@ -1645,7 +1569,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-inputs-${phase.id}`}
                                                                         name={`phase-inputs-${phase.id}`}
                                                                         value={phase.inputs || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'inputs', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'inputs', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
@@ -1653,7 +1577,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-actions-${phase.id}`}
                                                                         name={`phase-actions-${phase.id}`}
                                                                         value={phase.actions || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'actions', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'actions', val)}
                                                                         placeholder="• List items..."
                                                                     />
                                                                     <SmartTextarea
@@ -1661,7 +1585,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                         id={`phase-outputs-${phase.id}`}
                                                                         name={`phase-outputs-${phase.id}`}
                                                                         value={phase.outputs || ''}
-                                                                        onChange={(val) => updatePhase(phase.id, 'outputs', val)}
+                                                                        onValueChange={(val) => updatePhase(phase.id, 'outputs', val)}
                                                                         placeholder="• List items..."
                                                                     />
 
@@ -1682,7 +1606,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                                     </button>
                                                                                 ))}
                                                                             </div>
-                                                                            <div className="text-[10px] text-center text-muted-foreground font-medium h-4">
+                                                                            <div className="text-xs text-center text-muted-foreground font-medium h-4">
                                                                                 {AUTONOMY_LABELS[phase.autonomy] || 'Select autonomy level'}
                                                                             </div>
                                                                         </div>
@@ -1751,19 +1675,20 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'EXECUTION'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {isEnriching === 'EXECUTION' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION' ? "Drafting..." : "Draft Execution Plan"}
                                                 </button>
                                             </div>
 
                                             {/* Execution Plan Narrative */}
                                             <div className="bg-muted/30 p-4 rounded-xl border border-input">
-                                                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
-                                                <MarkdownTextarea
+                                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Execution Plan (Narrative)</h3>
+                                                <SmartTextarea
                                                     id="executionPlan"
                                                     name="executionPlan"
                                                     value={data.executionPlan || ''}
-                                                    onChange={(val) => handleInputChange('executionPlan', val)}
+                                                    onValueChange={(val) => handleInputChange('executionPlan', val)}
+                                                    markdown
                                                     placeholder="Use AI to draft a plan or write your own..."
                                                     minHeight="12rem"
                                                 />
@@ -1780,7 +1705,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     disabled={isEnriching === 'EXECUTION_PARAMS'}
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {isEnriching === 'EXECUTION_PARAMS' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                    {isEnriching === 'EXECUTION_PARAMS' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                     {isEnriching === 'EXECUTION_PARAMS' ? "Drafting..." : "Draft Execution Parameters"}
                                                 </button>
                                             </div>
@@ -1796,14 +1721,16 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                     { label: 'System Guardrails', field: 'systemGuardrails', placeholder: '• Human review for >$1M...' },
                                                 ].map((item) => (
                                                     <div key={item.field} className="p-4 bg-muted/30 rounded-xl border border-input hover:border-primary/50 transition-colors focus-within:ring-2 focus-within:ring-ring/20 h-full min-h-[160px]">
-                                                        <BulletListEditor
+                                                        <SmartTextarea
                                                             label={item.label}
                                                             id={item.field}
                                                             name={item.field}
                                                             value={data[item.field as keyof OpportunityState] as string || ''}
-                                                            onChange={(val) => handleInputChange(item.field as keyof OpportunityState, val)}
+                                                            onValueChange={(val) => handleInputChange(item.field as keyof OpportunityState, val)}
+                                                            bulletList="manual"
                                                             placeholder={item.placeholder}
-                                                        />                       </div>
+                                                        />
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -1823,19 +1750,20 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 disabled={isEnriching === 'BUSINESS_CASE'}
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50"
                                             >
-                                                {isEnriching === 'BUSINESS_CASE' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                {isEnriching === 'BUSINESS_CASE' ? <Spinner size="sm" /> : <Sparkles size={12} />}
                                                 {isEnriching === 'BUSINESS_CASE' ? "Authoring..." : "Draft Business Case"}
                                             </button>
                                         </div>
 
                                         {/* Business Case Narrative */}
                                         <div className="bg-muted/30 p-4 rounded-xl border border-input">
-                                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
-                                            <MarkdownTextarea
+                                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Business Case Narrative</h3>
+                                            <SmartTextarea
                                                 id="businessCase"
                                                 name="businessCase"
                                                 value={data.businessCase || ''}
-                                                onChange={(val) => handleInputChange('businessCase', val)}
+                                                onValueChange={(val) => handleInputChange('businessCase', val)}
+                                                markdown
                                                 placeholder="Executive Summary, ROI, and Strategic Value..."
                                                 minHeight="12rem"
                                             />
@@ -1888,7 +1816,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                                     </div>
 
                                                                     {/* Label */}
-                                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-primary' : 'text-muted-foreground/60 group-hover:text-muted-foreground'}`}>
+                                                                    <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-primary' : 'text-muted-foreground/60 group-hover:text-muted-foreground'}`}>
                                                                         {size}
                                                                     </span>
 
@@ -1924,7 +1852,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                 {/* Stacked Benefit Inputs */}
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label htmlFor="benefitRevenue" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Rev. Uplift ($)</label>
+                                                        <label htmlFor="benefitRevenue" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Rev. Uplift ($)</label>
                                                         <CurrencyInput
                                                             id="benefitRevenue"
                                                             name="benefitRevenue"
@@ -1935,7 +1863,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitCostAvoidance" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Cost Avoid. ($)</label>
+                                                        <label htmlFor="benefitCostAvoidance" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Cost Avoid. ($)</label>
                                                         <CurrencyInput
                                                             id="benefitCostAvoidance"
                                                             name="benefitCostAvoidance"
@@ -1946,7 +1874,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label htmlFor="benefitEfficiency" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Hrs Saved</label>
+                                                        <label htmlFor="benefitEfficiency" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Hrs Saved</label>
                                                         <CurrencyInput
                                                             id="benefitEfficiency"
                                                             name="benefitEfficiency"
@@ -1959,7 +1887,7 @@ export default function InputCanvas({ initialOpportunities, workshopId }: { init
                                                         />
                                                     </div>
                                                     <div className="pt-2 border-t border-input mt-2">
-                                                        <label htmlFor="benefitEstCost" className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Est. Implementation Cost ($)</label>
+                                                        <label htmlFor="benefitEstCost" className="block text-xs uppercase font-bold text-muted-foreground mb-1">Est. Implementation Cost ($)</label>
                                                         <CurrencyInput
                                                             id="benefitEstCost"
                                                             name="benefitEstCost"

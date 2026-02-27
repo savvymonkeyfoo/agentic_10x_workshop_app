@@ -12,7 +12,7 @@ export const WorkshopCard = ({ title, children, className = '', noPadding = fals
         <div className={`relative flex flex-col rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md ${className}`}>
             {/* Standardized Top-Left Header */}
             <div className="px-3 pt-3 pb-0">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{title}</span>
+                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{title}</span>
             </div>
 
             {/* Content Area */}

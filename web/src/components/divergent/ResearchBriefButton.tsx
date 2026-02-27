@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Brain, Sparkles, Loader2, FileSearch, GitCompare, FileText, Zap } from "lucide-react";
+import { Brain, Sparkles, FileSearch, GitCompare, FileText, Zap } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -119,7 +120,7 @@ export function ResearchBriefButton({
                             >
                                 {isLoading ? (
                                     <div className="flex items-center">
-                                        {stepInfo.icon || <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                                        {stepInfo.icon || <Spinner size="md" className="mr-2" />}
                                         <div className="flex flex-col items-start">
                                             <span className="text-sm">{stepInfo.text}</span>
                                             {currentStep === 'architecting' && (

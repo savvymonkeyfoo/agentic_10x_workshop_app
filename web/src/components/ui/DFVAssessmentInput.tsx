@@ -60,7 +60,7 @@ export function StarRatingInput({ label, dimension, onChange, color }: StarRatin
             {/* Justification Toggle */}
             <button
                 onClick={() => setShowJustification(!showJustification)}
-                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
                 <span>{showJustification ? '▼' : '▶'}</span>
                 <span>Add justification (optional)</span>

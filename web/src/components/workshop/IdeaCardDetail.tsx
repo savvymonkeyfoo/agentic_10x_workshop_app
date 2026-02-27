@@ -13,7 +13,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Brain, Loader2, CheckCircle2 } from 'lucide-react';
+import { Brain, CheckCircle2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { ScorecardModal } from './ScorecardModal';
 import { getTierFromScore } from '@/lib/scoring-constants';
 
@@ -127,7 +128,7 @@ export function IdeaCardDetail({ card, onSave, onClose: _onClose }: IdeaCardDeta
                 {/* Auto-Save Status */}
                 {saveStatus === 'saving' ? (
                     <div className="flex items-center gap-1 text-xs text-tertiary">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+                        <Spinner size="sm" /> Saving...
                     </div>
                 ) : (
                     <div className="flex items-center gap-1 text-xs text-success font-medium">

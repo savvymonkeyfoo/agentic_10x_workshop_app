@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { analyzeWorkshop } from '@/app/actions/analyze-workshop';
+import { Button } from '@/components/ui/button';
 import { AIStrategistPanel } from './AIStrategistPanel';
 import StrategicMap from './StrategicMap';
 import StrategicWaves from './StrategicWaves';
+import { Grid3x3, Waves } from 'lucide-react';
 
 // Types for node and opportunity data
 interface NodeData {
@@ -107,32 +109,24 @@ export default function AnalysisDashboard({
                 {/* View Toggle Header */}
                 <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
                     <div className="flex items-center gap-1 bg-card rounded-lg p-1 shadow-lg border border-border">
-                        <button
+                        <Button
+                            variant={viewMode === 'MATRIX' ? 'default' : 'ghost'}
+                            size="sm"
                             onClick={() => setViewMode('MATRIX')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'MATRIX'
-                                ? 'bg-primary text-primary-foreground shadow'
-                                : 'text-muted-foreground hover:bg-muted/50'
-                                }`}
+                            className="gap-2"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <circle cx="8" cy="8" r="3" strokeWidth={2} />
-                                <circle cx="16" cy="16" r="4" strokeWidth={2} />
-                                <circle cx="17" cy="7" r="2" strokeWidth={2} />
-                            </svg>
+                            <Grid3x3 className="w-4 h-4" />
                             Matrix
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant={viewMode === 'WAVES' ? 'default' : 'ghost'}
+                            size="sm"
                             onClick={() => setViewMode('WAVES')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'WAVES'
-                                ? 'bg-primary text-primary-foreground shadow'
-                                : 'text-muted-foreground hover:bg-muted/50'
-                                }`}
+                            className="gap-2"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                            </svg>
+                            <Waves className="w-4 h-4" />
                             Waves
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

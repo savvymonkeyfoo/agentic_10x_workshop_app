@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DndContext, useDraggable, useDroppable, DragOverlay, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import { X, GripVertical, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { X, GripVertical, Plus, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { recommendCapabilities } from '@/app/actions/recommend-capabilities';
 import { WorkflowPhase } from '@/types/workshop';
 
@@ -62,13 +64,17 @@ const AddCapModal = ({ isOpen, onClose, onConfirm, title }: AddCapModalProps) =>
                     }}
                 />
                 <div className="flex justify-end gap-2">
-                    <button onClick={onClose} className="px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-surface-hover rounded">Cancel</button>
-                    <button
+                    <Button variant="secondary" size="sm" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="default"
+                        size="sm"
                         onClick={() => { if (val.trim()) { onConfirm(val); setVal(""); } }}
-                        className="px-3 py-1.5 text-xs font-semibold text-white bg-info hover:bg-info/90 rounded shadow-sm"
+                        className="shadow-sm"
                     >
                         Add Item
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -122,15 +128,17 @@ const DropZone = ({ id, title, items, colorClass, placeholder, onDelete, onAdd }
                 <h4 className="text-xs font-bold text-secondary uppercase tracking-widest">{title}</h4>
                 <div className="flex items-center gap-2">
                     {/* Count Badge */}
-                    <span className="text-[10px] bg-surface-hover text-tertiary px-2 py-0.5 rounded-full">{items.length}</span>
+                    <span className="text-xs bg-surface-hover text-tertiary px-2 py-0.5 rounded-full">{items.length}</span>
                     {/* Add Button */}
                     {onAdd && (
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={onAdd}
-                            className="text-[10px] font-bold text-info hover:text-info hover:bg-info-subtle px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+                            className="text-xs h-6"
                         >
-                            <Plus size={10} /> Add New
-                        </button>
+                            <Plus size={10} className="mr-1" /> Add New
+                        </Button>
                     )}
                 </div>
             </div>
@@ -334,14 +342,16 @@ export default function CapabilitiesManager({
                 <div className="bg-surface-subtle rounded-xl border border-muted p-4 transition-all">
                     <div className="flex justify-between items-center mb-4">
                         <h4 className="text-xs font-bold text-tertiary uppercase tracking-widest">Enterprise Capability Bank</h4>
-                        <button
+                        <Button
+                            variant="ai"
+                            size="sm"
                             onClick={handleAIRecommend}
                             disabled={isRecommending || !workflowContext}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-intelligence to-intelligence text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="shadow-md hover:shadow-lg"
                         >
-                            {isRecommending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                            {isRecommending ? <Spinner size="sm" className="mr-2" /> : <Sparkles size={12} className="mr-2" />}
                             {isRecommending ? "Analysing..." : "Recommend"}
-                        </button>
+                        </Button>
                     </div>
                     <div className="flex flex-wrap gap-2 min-h-[60px]">
                         {bank.map(cap => (

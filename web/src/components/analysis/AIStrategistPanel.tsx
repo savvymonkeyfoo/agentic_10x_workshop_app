@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Zap, RotateCw } from 'lucide-react';
 
 interface SequenceItem {
     id: string;
@@ -110,24 +113,26 @@ export function AIStrategistPanel({
                 </div>
 
                 {!hasData && !isLoading && (
-                    <button
+                    <Button
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                        className="w-full mt-4 shadow-lg"
+                        size="lg"
                     >
-                        <span>Generate Strategy</span>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </button>
+                        Generate Strategy
+                        <Zap className="w-4 h-4" />
+                    </Button>
                 )}
 
                 {hasData && (
-                    <button
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-2 text-primary hover:bg-primary/10 font-semibold rounded-lg border border-primary/20 transition-all text-sm"
+                        className="w-full mt-4"
                     >
-                        ↻ Re-analyse
-                    </button>
+                        <RotateCw className="w-4 h-4" />
+                        Re-analyse
+                    </Button>
                 )}
             </header>
 
@@ -135,7 +140,7 @@ export function AIStrategistPanel({
                 {isLoading && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 text-primary">
-                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <Spinner size="md" className="text-primary" />
                             <span className="text-sm font-semibold">Analyzing portfolio...</span>
                         </div>
                         <div className="space-y-3 animate-pulse">
@@ -193,7 +198,7 @@ export function AIStrategistPanel({
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center justify-between">
                                 <span>Execution Waves</span>
-                                <span className="px-2 py-0.5 bg-success/10 text-success rounded text-[10px]">Optimised</span>
+                                <span className="px-2 py-0.5 bg-success/10 text-success rounded text-xs">Optimised</span>
                             </h3>
 
                             {/* Group items by rank */}
@@ -214,11 +219,11 @@ export function AIStrategistPanel({
                                             <div className={`w-6 h-6 rounded-lg ${waveColors[waveNum - 1]} flex items-center justify-center text-primary-foreground text-xs font-bold`}>
                                                 {waveNum}
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                                 {waveNames[waveNum - 1]}
                                             </span>
                                             {waveItems.length > 1 && (
-                                                <span className="text-[10px] text-muted-foreground ml-auto">
+                                                <span className="text-xs text-muted-foreground ml-auto">
                                                     ⇄ Parallel
                                                 </span>
                                             )}
@@ -270,22 +275,22 @@ export function AIStrategistPanel({
                                                                 <div className="mb-3 flex flex-col gap-2 pb-3 border-b border-border">
                                                                     {requires.length > 0 && (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-[10px] font-bold text-warning bg-warning/10 px-1 py-0.5 rounded w-fit">REQUIRES</span>
+                                                                            <span className="text-xs font-bold text-warning bg-warning/10 px-1 py-0.5 rounded w-fit">REQUIRES</span>
                                                                             {requires.map((req, i) => (
                                                                                 <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-warning/30 ml-1">
                                                                                     <span className="font-semibold">{req.name}</span>
-                                                                                    {req.reason && <span className="block text-[10px] text-muted-foreground italic mt-0.5">"{req.reason}"</span>}
+                                                                                    {req.reason && <span className="block text-xs text-muted-foreground italic mt-0.5">"{req.reason}"</span>}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
                                                                     )}
                                                                     {enables.length > 0 && (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.5 rounded w-fit">ENABLES</span>
+                                                                            <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-1 py-0.5 rounded w-fit">ENABLES</span>
                                                                             {enables.map((enb, i) => (
                                                                                 <div key={i} className="text-xs text-muted-foreground pl-1 border-l-2 border-emerald-500/30 ml-1">
                                                                                     <span className="font-semibold">{enb.name}</span>
-                                                                                    {enb.reason && <span className="block text-[10px] text-muted-foreground italic mt-0.5">"{enb.reason}"</span>}
+                                                                                    {enb.reason && <span className="block text-xs text-muted-foreground italic mt-0.5">"{enb.reason}"</span>}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
@@ -293,7 +298,7 @@ export function AIStrategistPanel({
                                                                 </div>
                                                             )}
 
-                                                            <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Strategic Logic</p>
+                                                            <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Strategic Logic</p>
                                                             <p className="text-xs text-muted-foreground leading-relaxed">
                                                                 {item.rationale || "No rationale provided."}
                                                             </p>

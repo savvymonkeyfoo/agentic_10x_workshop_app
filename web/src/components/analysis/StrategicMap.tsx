@@ -188,13 +188,13 @@ export default function StrategicMap({ opportunities, edges: _edges = [] }: { op
                                     {node.sequenceRank}
                                 </div>
                             )}
-                            <span className="text-[11px] font-semibold leading-tight line-clamp-2 drop-shadow-sm">
+                            <span className="text-xs font-semibold leading-tight line-clamp-2 drop-shadow-sm">
                                 {node.projectName}
                             </span>
                         </div>
 
                         {/* Footer: Value */}
-                        <div className="text-[10px] font-mono text-white/80 text-right mt-1 border-t border-white/20 pt-1">
+                        <div className="text-xs font-mono text-white/80 text-right mt-1 border-t border-white/20 pt-1">
                             {node.impactLabel} Impact
                         </div>
                     </motion.div>

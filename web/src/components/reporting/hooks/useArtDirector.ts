@@ -17,7 +17,7 @@ export function useArtDirector(data: ArtDirectorData) {
         titleClass: titleLen > 30 ? "text-4xl leading-tight" : "text-6xl leading-none",
         sectionHeaderClass: "text-xs font-bold text-tertiary uppercase tracking-widest mb-2 border-b border-muted pb-1",
 
-        riskContentClass: riskLen > 400 ? "text-[10px] leading-snug" : riskLen > 200 ? "text-xs leading-relaxed" : "text-sm leading-relaxed",
+        riskContentClass: riskLen > 400 ? "text-xs leading-snug" : riskLen > 200 ? "text-xs leading-relaxed" : "text-sm leading-relaxed",
 
         frictionClass: frictionLen > 200 ? "text-sm leading-snug" : "text-xl leading-relaxed text-primary",
 

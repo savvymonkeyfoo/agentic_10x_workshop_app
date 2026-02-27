@@ -42,7 +42,7 @@ const TShirtIcon = ({ size, isActive, scale }: { size: string; isActive: boolean
             y="26"
             textAnchor="middle"
             dominantBaseline="middle"
-            className={`font-bold text-[10px] transition-colors duration-200 ${isActive ? 'fill-primary-foreground' : 'fill-muted-foreground'}`}
+            className={`font-bold text-xs transition-colors duration-200 ${isActive ? 'fill-primary-foreground' : 'fill-muted-foreground'}`}
             style={{ fontSize: 10 / scale }}
         >
             {size}
