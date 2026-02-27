@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Zap, RotateCw } from 'lucide-react';
 
 interface SequenceItem {
     id: string;
@@ -111,24 +113,26 @@ export function AIStrategistPanel({
                 </div>
 
                 {!hasData && !isLoading && (
-                    <button
+                    <Button
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                        className="w-full mt-4 shadow-lg"
+                        size="lg"
                     >
-                        <span>Generate Strategy</span>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </button>
+                        Generate Strategy
+                        <Zap className="w-4 h-4" />
+                    </Button>
                 )}
 
                 {hasData && (
-                    <button
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={onAnalyze}
-                        className="w-full mt-4 py-2 text-primary hover:bg-primary/10 font-semibold rounded-lg border border-primary/20 transition-all text-sm"
+                        className="w-full mt-4"
                     >
-                        ↻ Re-analyse
-                    </button>
+                        <RotateCw className="w-4 h-4" />
+                        Re-analyse
+                    </Button>
                 )}
             </header>
 
