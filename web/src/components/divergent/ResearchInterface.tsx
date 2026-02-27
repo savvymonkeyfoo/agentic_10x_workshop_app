@@ -360,7 +360,7 @@ export function ResearchInterface({ workshopId, assets, initialBriefs = [] }: Re
                 </div>
             }
         >
-            <div className="flex justify-between items-center mb-8 pb-2 border-b border-muted">
+            <div className="flex justify-between items-center mb-8 pb-2">
                 <div className="flex space-x-8">
                     {Tabs.map((tab) => (
                         <Button
